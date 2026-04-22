@@ -12,6 +12,7 @@ with events as (
 sessions as (
 
     select
+        concat(cast(session_id as string), '-', cast(user_id as string)) as session_sk,
         session_id,
         user_id,
         min(event_created_at) as session_start_at,
@@ -23,12 +24,12 @@ sessions as (
         timestamp_diff(max(event_created_at), min(event_created_at), second) as session_duration_seconds,
         round(timestamp_diff(max(event_created_at), min(event_created_at), second) / 60.0, 2) as session_duration_minutes,
         count(*) as total_events,
-        countif(event_type = 'page_view') as page_view_events,
-        countif(event_type = 'purchase') as purchase_events,
-        countif(event_type = 'cancel') as cancel_events,
-        max(case when event_type = 'page_view' then 1 else 0 end) as has_page_view,
-        max(case when event_type = 'purchase' then 1 else 0 end) as has_purchase,
-        max(case when event_type = 'cancel' then 1 else 0 end) as has_cancel,
+        countif(lower(event_type) = 'page_view') as page_view_events,
+        countif(lower(event_type) = 'purchase') as purchase_events,
+        countif(lower(event_type) = 'cancel') as cancel_events,
+        max(case when lower(event_type) = 'page_view' then 1 else 0 end) as has_page_view,
+        max(case when lower(event_type) = 'purchase' then 1 else 0 end) as has_purchase,
+        max(case when lower(event_type) = 'cancel' then 1 else 0 end) as has_cancel,
         any_value(traffic_source) as traffic_source,
         any_value(browser) as browser
     from events
@@ -46,6 +47,7 @@ users as (
 final as (
 
     select
+        s.session_sk,
         s.session_id,
         s.user_id,
         s.session_start_at,
@@ -66,13 +68,12 @@ final as (
         case when s.has_purchase = 1 then 1 else 0 end as is_converted,
         s.traffic_source,
         case
-            when s.traffic_source in ('facebook', 'youtube', 'adwords', 'display') then 'paid'
-            when s.traffic_source in ('email') then 'owned'
-            when s.traffic_source in ('search', 'organic') then 'organic'
+            when lower(s.traffic_source) in ('facebook', 'youtube', 'adwords', 'display') then 'paid'
+            when lower(s.traffic_source) = 'email' then 'owned'
+            when lower(s.traffic_source) in ('search', 'organic') then 'organic'
             else 'other'
         end as channel_group,
         s.browser,
-
         u.age_segment,
         u.gender,
         u.country,
@@ -80,7 +81,6 @@ final as (
         u.city,
         u.signup_traffic_source,
         u.signup_channel_group
-
     from sessions s
     left join users u
         on s.user_id = u.user_id
