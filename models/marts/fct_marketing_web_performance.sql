@@ -16,11 +16,18 @@ sessions as (
         user_id,
         min(event_created_at) as session_start_at,
         max(event_created_at) as session_end_at,
+        datetime(min(event_created_at), "Europe/Istanbul") as session_start_at_local,
+        datetime(max(event_created_at), "Europe/Istanbul") as session_end_at_local,
+        date(datetime(min(event_created_at), "Europe/Istanbul")) as session_date,
+        extract(hour from datetime(min(event_created_at), "Europe/Istanbul")) as session_hour,
         timestamp_diff(max(event_created_at), min(event_created_at), second) as session_duration_seconds,
         count(*) as total_events,
         countif(event_type = 'page_view') as page_view_events,
         countif(event_type = 'purchase') as purchase_events,
         countif(event_type = 'cancel') as cancel_events,
+        max(case when event_type = 'page_view' then 1 else 0 end) as has_page_view,
+        max(case when event_type = 'purchase' then 1 else 0 end) as has_purchase,
+        max(case when event_type = 'cancel' then 1 else 0 end) as has_cancel,
         any_value(traffic_source) as traffic_source,
         any_value(browser) as browser
     from events
@@ -35,47 +42,25 @@ users as (
 
 ),
 
-orders as (
-
-    select *
-    from {{ ref('int_orders_enriched') }}
-    where user_id is not null
-
-),
-
-order_summary as (
-
-    select
-        user_id,
-        count(distinct order_id) as total_orders,
-        count(distinct case when order_item_status = 'complete' then order_id end) as completed_orders,
-        sum(case when order_item_status = 'complete' then sale_price else 0 end) as revenue,
-        sum(case when order_item_status = 'returned' then sale_price else 0 end) as returned_revenue
-    from orders
-    group by user_id
-
-),
-
 final as (
 
     select
         s.session_id,
         s.user_id,
-
         s.session_start_at,
         s.session_end_at,
-
-        datetime(s.session_start_at, "Europe/Istanbul") as session_start_at_local,
-        datetime(s.session_end_at, "Europe/Istanbul") as session_end_at_local,
-
-        date(datetime(s.session_start_at, "Europe/Istanbul")) as session_date,
-        extract(hour from datetime(s.session_start_at, "Europe/Istanbul")) as session_hour,
-
+        s.session_start_at_local,
+        s.session_end_at_local,
+        s.session_date,
+        s.session_hour,
         s.session_duration_seconds,
         s.total_events,
         s.page_view_events,
         s.purchase_events,
         s.cancel_events,
+        s.has_page_view,
+        s.has_purchase,
+        s.has_cancel,
         s.traffic_source,
         s.browser,
 
@@ -83,17 +68,12 @@ final as (
         u.gender,
         u.country,
         u.state,
-
-        coalesce(o.total_orders, 0) as total_orders,
-        coalesce(o.completed_orders, 0) as completed_orders,
-        coalesce(o.revenue, 0) as revenue,
-        coalesce(o.returned_revenue, 0) as returned_revenue
+        u.city,
+        u.signup_traffic_source
 
     from sessions s
     left join users u
         on s.user_id = u.user_id
-    left join order_summary o
-        on s.user_id = o.user_id
 
 )
 
