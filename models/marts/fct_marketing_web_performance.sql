@@ -21,6 +21,7 @@ sessions as (
         date(datetime(min(event_created_at), "Europe/Istanbul")) as session_date,
         extract(hour from datetime(min(event_created_at), "Europe/Istanbul")) as session_hour,
         timestamp_diff(max(event_created_at), min(event_created_at), second) as session_duration_seconds,
+        round(timestamp_diff(max(event_created_at), min(event_created_at), second) / 60.0, 2) as session_duration_minutes,
         count(*) as total_events,
         countif(event_type = 'page_view') as page_view_events,
         countif(event_type = 'purchase') as purchase_events,
@@ -54,6 +55,7 @@ final as (
         s.session_date,
         s.session_hour,
         s.session_duration_seconds,
+        s.session_duration_minutes,
         s.total_events,
         s.page_view_events,
         s.purchase_events,
@@ -61,7 +63,14 @@ final as (
         s.has_page_view,
         s.has_purchase,
         s.has_cancel,
+        case when s.has_purchase = 1 then 1 else 0 end as is_converted,
         s.traffic_source,
+        case
+            when s.traffic_source in ('facebook', 'youtube', 'adwords', 'display') then 'paid'
+            when s.traffic_source in ('email') then 'owned'
+            when s.traffic_source in ('search', 'organic') then 'organic'
+            else 'other'
+        end as channel_group,
         s.browser,
 
         u.age_segment,
@@ -69,7 +78,8 @@ final as (
         u.country,
         u.state,
         u.city,
-        u.signup_traffic_source
+        u.signup_traffic_source,
+        u.signup_channel_group
 
     from sessions s
     left join users u

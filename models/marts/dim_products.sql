@@ -16,6 +16,7 @@ final as (
         cost,
         retail_price,
         safe_subtract(retail_price, cost) as unit_margin,
+        safe_divide(retail_price - cost, retail_price) as unit_margin_pct,
         sku,
         distribution_center_id
     from products

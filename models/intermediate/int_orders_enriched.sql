@@ -43,7 +43,7 @@ final as (
 
         u.gender,
         u.country,
-        u.signup_traffic_source
+        u.signup_traffic_source as traffic_source
 
     from order_items oi
     left join products p
