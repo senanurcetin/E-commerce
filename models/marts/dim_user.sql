@@ -23,7 +23,6 @@ final as (
         longitude,
         signup_traffic_source,
         user_created_at,
-
         case
             when age is null then 'unknown'
             when age < 25 then '18-24'
@@ -31,7 +30,6 @@ final as (
             when age between 35 and 44 then '35-44'
             else '45+'
         end as age_segment
-
     from users
 
 )

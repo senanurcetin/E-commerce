@@ -9,15 +9,15 @@ final as (
 
     select
         product_id,
-        cost,
-        retail_price,
-        category,
         product_name,
+        category,
         brand,
         department,
+        cost,
+        retail_price,
+        safe_subtract(retail_price, cost) as unit_margin,
         sku,
         distribution_center_id
-
     from products
 
 )
