@@ -1,0 +1,161 @@
+version: 2
+
+models:
+  - name: stg_events
+    description: Cleaned staging model for website user events data.
+    columns:
+      - name: event_id
+        description: Unique identifier for each event.
+        tests:
+          - not_null
+          - unique
+
+      - name: user_id
+        description: Identifier of the user who triggered the event.
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_users')
+                field: user_id
+
+      - name: session_id
+        description: Session identifier grouping multiple user events.
+
+      - name: event_created_at
+        description: Timestamp when the event occurred.
+        tests:
+          - not_null
+
+      - name: traffic_source
+        description: Acquisition source of the event such as email, ads, or organic search.
+
+      - name: event_type
+        description: Type of event such as page view, cart, purchase, or cancel.
+
+  - name: stg_order_items
+    description: Cleaned staging model for order item level sales transactions.
+    columns:
+      - name: order_item_id
+        description: Unique identifier for each order item.
+        tests:
+          - not_null
+          - unique
+
+      - name: order_id
+        description: Identifier for the order.
+        tests:
+          - not_null
+
+      - name: user_id
+        description: User who placed the order.
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_users')
+                field: user_id
+
+      - name: product_id
+        description: Product included in the order item.
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_products')
+                field: product_id
+
+      - name: order_status
+        description: Status of the order item.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['complete', 'processing', 'shipped', 'cancelled', 'returned']
+
+      - name: sale_price
+        description: Sale price of the product.
+        tests:
+          - not_null
+
+      - name: created_at
+        description: Timestamp when the order item was created.
+        tests:
+          - not_null
+
+  - name: stg_products
+    description: Cleaned staging model for product master data.
+    columns:
+      - name: product_id
+        description: Unique identifier for each product.
+        tests:
+          - not_null
+          - unique
+
+      - name: product_name
+        description: Product name. Some source records may contain null values.
+
+      - name: category
+        description: Product category.
+
+      - name: brand
+        description: Brand of the product.
+
+      - name: department
+        description: Department classification of the product.
+
+      - name: retail_price
+        description: Retail price of the product.
+        tests:
+          - not_null
+
+      - name: cost
+        description: Cost of the product.
+        tests:
+          - not_null
+
+  - name: stg_users
+    description: Cleaned staging model for user master data.
+    columns:
+      - name: user_id
+        description: Unique identifier for each user.
+        tests:
+          - not_null
+          - unique
+
+      - name: first_name
+        description: User's first name.
+
+      - name: last_name
+        description: User's last name.
+
+      - name: email
+        description: User email address.
+
+      - name: age
+        description: Age of the user.
+
+      - name: gender
+        description: Gender of the user.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['M', 'F']
+
+      - name: country
+        description: Country of the user.
+
+      - name: traffic_source
+        description: Acquisition source of the user.
+
+      - name: user_created_at
+        description: Timestamp when the user account was created.
+        tests:
+          - not_null
+
+      - name: latitude
+        description: Latitude coordinate of the user location.
+
+      - name: longitude
+        description: Longitude coordinate of the user location.
+
+      - name: user_geom_wkt
+        description: User geography converted from GEOGRAPHY to WKT text format.
