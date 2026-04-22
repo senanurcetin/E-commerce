@@ -32,6 +32,12 @@ models:
       - name: event_type
         description: Type of event such as page view, cart, purchase, or cancel.
 
+      - name: browser
+        description: Browser used during the event.
+
+      - name: page_uri
+        description: Page path visited during the event.
+
   - name: stg_order_items
     description: Cleaned staging model for order item level sales transactions.
     columns:
@@ -64,19 +70,19 @@ models:
                 to: ref('stg_products')
                 field: product_id
 
-      - name: order_status
+      - name: order_item_status
         description: Status of the order item.
         tests:
           - accepted_values:
               arguments:
-                values: ['complete', 'processing', 'shipped', 'cancelled', 'returned']
+                values: ['complete', 'processing', 'shipped', 'cancelled', 'returned', 'unknown']
 
       - name: sale_price
         description: Sale price of the product.
         tests:
           - not_null
 
-      - name: created_at
+      - name: order_item_created_at
         description: Timestamp when the order item was created.
         tests:
           - not_null
@@ -138,13 +144,13 @@ models:
         tests:
           - accepted_values:
               arguments:
-                values: ['M', 'F']
+                values: ['m', 'f', 'unknown']
 
       - name: country
         description: Country of the user.
 
-      - name: traffic_source
-        description: Acquisition source of the user.
+      - name: signup_traffic_source
+        description: Acquisition source recorded on the user profile.
 
       - name: user_created_at
         description: Timestamp when the user account was created.
@@ -156,6 +162,3 @@ models:
 
       - name: longitude
         description: Longitude coordinate of the user location.
-
-      - name: user_geom_wkt
-        description: User geography converted from GEOGRAPHY to WKT text format.

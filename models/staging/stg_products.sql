@@ -10,16 +10,29 @@ renamed as (
     select
         cast(id as int64) as product_id,
         cast(cost as numeric) as cost,
-        trim(category) as category,
-        trim(name) as product_name,
-        trim(brand) as brand,
         cast(retail_price as numeric) as retail_price,
-        trim(department) as department,
-        cast(sku as string) as sku,
+
+        coalesce(lower(nullif(trim(category), '')), 'unknown') as category,
+        coalesce(nullif(trim(name), ''), 'unknown') as product_name,
+        coalesce(nullif(trim(brand), ''), 'unknown') as brand,
+        coalesce(lower(nullif(trim(department), '')), 'unknown') as department,
+        coalesce(nullif(trim(sku), ''), 'unknown') as sku,
+
         cast(distribution_center_id as int64) as distribution_center_id
+
     from source
+    where id is not null
 
 )
 
-select *
+select
+    product_id,
+    cost,
+    retail_price,
+    category,
+    product_name,
+    brand,
+    department,
+    sku,
+    distribution_center_id
 from renamed

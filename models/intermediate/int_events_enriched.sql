@@ -1,28 +1,48 @@
 with events as (
-    select * from {{ ref('stg_events') }}
+
+    select *
+    from {{ ref('stg_events') }}
+
 ),
 
 users as (
-    select * from {{ ref('stg_users') }}
+
+    select *
+    from {{ ref('stg_users') }}
+
 ),
 
-joined as (
+final as (
+
     select
         e.event_id,
         e.user_id,
         e.session_id,
+        e.sequence_number,
         e.event_created_at,
-        e.event_type,
+        e.ip_address,
+        e.city,
+        e.state,
+        e.postal_code,
+        e.browser,
+        e.traffic_source,
         e.page_uri,
-        e.traffic_source as event_source,
+        e.event_type,
 
-        u.country,
-        u.gender,
+        u.first_name,
+        u.last_name,
+        u.email,
         u.age,
-        u.traffic_source as user_acquisition_source
+        u.gender,
+        u.country,
+        u.signup_traffic_source,
+        u.user_created_at
+
     from events e
     left join users u
         on e.user_id = u.user_id
+
 )
 
-select * from joined
+select *
+from final

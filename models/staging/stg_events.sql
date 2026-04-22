@@ -14,16 +14,33 @@ renamed as (
         cast(session_id as string) as session_id,
         cast(created_at as timestamp) as event_created_at,
         cast(ip_address as string) as ip_address,
-        trim(city) as city,
-        trim(state) as state,
-        trim(postal_code) as postal_code,
-        lower(trim(browser)) as browser,
-        lower(trim(traffic_source)) as traffic_source,
-        trim(uri) as page_uri,
-        lower(trim(event_type)) as event_type
+
+        coalesce(nullif(trim(city), ''), 'unknown') as city,
+        coalesce(nullif(trim(state), ''), 'unknown') as state,
+        coalesce(nullif(trim(postal_code), ''), 'unknown') as postal_code,
+
+        coalesce(lower(nullif(trim(browser), '')), 'unknown') as browser,
+        coalesce(lower(nullif(trim(traffic_source), '')), 'unknown') as traffic_source,
+        coalesce(nullif(trim(uri), ''), 'unknown') as page_uri,
+        coalesce(lower(nullif(trim(event_type), '')), 'unknown') as event_type
+
     from source
+    where id is not null
 
 )
 
-select *
+select
+    event_id,
+    user_id,
+    sequence_number,
+    session_id,
+    event_created_at,
+    ip_address,
+    city,
+    state,
+    postal_code,
+    browser,
+    traffic_source,
+    page_uri,
+    event_type
 from renamed
