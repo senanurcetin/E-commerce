@@ -8,6 +8,16 @@ models:
         tests:
           - not_null
           - unique
+      - name: gender
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['m', 'f', 'unknown']
+      - name: age_segment
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['18-24', '25-34', '35-44', '45+', 'unknown']
 
   - name: dim_products
     description: Product dimension table for category and brand analysis.
@@ -16,6 +26,12 @@ models:
         tests:
           - not_null
           - unique
+      - name: retail_price
+        tests:
+          - not_null
+      - name: cost
+        tests:
+          - not_null
 
   - name: fct_marketing_web_performance
     description: Session-level fact table for web performance and traffic source analysis.
@@ -24,7 +40,6 @@ models:
         tests:
           - not_null
           - unique
-
       - name: user_id
         tests:
           - not_null
@@ -32,6 +47,9 @@ models:
               arguments:
                 to: ref('dim_user')
                 field: user_id
+      - name: traffic_source
+        tests:
+          - not_null
 
   - name: fct_order_marketing
     description: Order-level fact table for revenue and marketing performance analysis.
@@ -40,7 +58,6 @@ models:
         tests:
           - not_null
           - unique
-
       - name: user_id
         tests:
           - not_null
@@ -48,3 +65,15 @@ models:
               arguments:
                 to: ref('dim_user')
                 field: user_id
+      - name: product_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_id
+      - name: order_item_status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['complete', 'processing', 'returned', 'cancelled', 'shipped', 'unknown']

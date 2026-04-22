@@ -8,13 +8,6 @@ with orders as (
 
 ),
 
-users as (
-
-    select *
-    from {{ ref('dim_user') }}
-
-),
-
 final as (
 
     select
@@ -24,14 +17,29 @@ final as (
         product_id,
         order_item_status,
         order_item_created_at,
+        datetime(order_item_created_at, "Europe/Istanbul") as order_item_created_at_local,
+        date(datetime(order_item_created_at, "Europe/Istanbul")) as order_date,
+        extract(hour from datetime(order_item_created_at, "Europe/Istanbul")) as order_hour,
+
         sale_price,
+        case when order_item_status = 'complete' then sale_price else 0 end as revenue,
+        case when order_item_status = 'returned' then sale_price else 0 end as returned_revenue,
+        case when order_item_status = 'complete' then 1 else 0 end as is_completed_order,
+        case when order_item_status = 'returned' then 1 else 0 end as is_returned_order,
+
         product_name,
         category,
         brand,
         department,
         gender,
         country,
-        signup_traffic_source as traffic_source
+        traffic_source,
+        case
+            when traffic_source in ('facebook', 'youtube', 'adwords', 'display') then 'paid'
+            when traffic_source in ('email') then 'owned'
+            when traffic_source in ('search', 'organic') then 'organic'
+            else 'other'
+        end as channel_group
 
     from orders
 
