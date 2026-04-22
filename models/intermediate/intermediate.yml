@@ -1,0 +1,114 @@
+version: 2
+
+models:
+  - name: int_orders_enriched
+    description: Combined dataset of order items, products, and users for sales analysis.
+    columns:
+      - name: order_item_id
+        description: Unique identifier for each order item.
+        tests:
+          - not_null
+          - unique
+
+      - name: order_id
+        description: Identifier for the order.
+
+      - name: user_id
+        description: User who placed the order.
+
+      - name: product_id
+        description: Product included in the order.
+
+      - name: order_status
+        description: Current status of the order item.
+
+      - name: sale_price
+        description: Sale price of the product.
+        tests:
+          - not_null
+
+      - name: order_item_created_at
+        description: Timestamp when the order item was created.
+        tests:
+          - not_null
+
+      - name: shipped_at
+        description: Timestamp when the order item was shipped.
+
+      - name: delivered_at
+        description: Timestamp when the order item was delivered.
+
+      - name: returned_at
+        description: Timestamp when the order item was returned.
+
+      - name: product_name
+        description: Original product name from the source product table.
+
+      - name: product_name_reporting
+        description: Product name prepared for reporting with fallback value for missing names.
+
+      - name: category
+        description: Product category.
+
+      - name: brand
+        description: Product brand.
+
+      - name: department
+        description: Product department.
+
+      - name: retail_price
+        description: Retail price of the product.
+
+      - name: cost
+        description: Cost of the product.
+
+      - name: gender
+        description: Gender of the user.
+
+      - name: age
+        description: Age of the user.
+
+      - name: country
+        description: Country of the user.
+
+      - name: user_acquisition_source
+        description: Marketing source that brought the user.
+
+  - name: int_events_enriched
+    description: Combined dataset of events and users for traffic and behavior analysis.
+    columns:
+      - name: event_id
+        description: Unique identifier for each event.
+        tests:
+          - not_null
+          - unique
+
+      - name: user_id
+        description: User who triggered the event.
+
+      - name: session_id
+        description: Session identifier.
+
+      - name: event_created_at
+        description: Timestamp of the event.
+
+      - name: event_type
+        description: Type of event.
+
+      - name: page_uri
+        description: Page visited by the user.
+
+      - name: event_source
+        description: Traffic source of the event.
+
+      - name: country
+        description: User country.
+
+      - name: gender
+        description: User gender.
+
+      - name: age
+        description: User age.
+
+      - name: user_acquisition_source
+        description: Original acquisition source of the user.

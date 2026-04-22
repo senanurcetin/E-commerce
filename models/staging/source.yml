@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: e_ticaret_raw
+    database: workintech-working
+    schema: e_ticaret
+    tables:
+      - name: events
+      - name: order_items
+      - name: products
+      - name: users
