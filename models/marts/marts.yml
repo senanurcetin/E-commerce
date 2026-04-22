@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: dim_user
+    description: User dimension table enriched with demographic segmentation.
+    columns:
+      - name: user_id
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_products
+    description: Product dimension table for category and brand analysis.
+    columns:
+      - name: product_id
+        tests:
+          - not_null
+          - unique
+
+  - name: fct_marketing_web_performance
+    description: Final fact table at session grain combining session metrics, user segments, and order summary metrics.
+    columns:
+      - name: session_id
+        tests:
+          - not_null
+
+      - name: user_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_user')
+                field: user_id
