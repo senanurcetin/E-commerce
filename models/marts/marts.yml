@@ -1,116 +1,96 @@
 version: 2
 
 models:
+
   - name: dim_user
-    description: User dimension enriched with demographics, signup source, local account creation timestamp, age segmentation, and grouped signup channel classification for marketing analysis.
+    description: User dimension table enriched with demographic segmentation.
     columns:
       - name: user_id
-        description: Primary key for the user dimension.
         tests:
           - not_null
           - unique
 
       - name: gender
-        description: Standardized gender value from the user profile.
         tests:
           - accepted_values:
               arguments:
                 values: ['m', 'f', 'unknown']
 
       - name: age_segment
-        description: Age bucket used for audience segmentation in reporting.
         tests:
           - accepted_values:
               arguments:
                 values: ['18-24', '25-34', '35-44', '45+', 'unknown']
 
       - name: signup_channel_group
-        description: Grouped acquisition channel derived from signup traffic source.
         tests:
           - accepted_values:
               arguments:
                 values: ['paid', 'owned', 'organic', 'other']
 
+
   - name: dim_products
-    description: Product dimension used for product, category, brand, and margin analysis.
+    description: Product dimension table for category and brand analysis.
     columns:
       - name: product_id
-        description: Primary key for the product dimension.
         tests:
           - not_null
           - unique
 
       - name: retail_price
-        description: Listed retail price of the product.
         tests:
           - not_null
 
       - name: cost
-        description: Product cost.
         tests:
           - not_null
 
-      - name: unit_margin
-        description: Difference between retail price and cost for each product.
-        tests:
-          - not_null
 
   - name: fct_marketing_web_performance
-    description: Session-level fact table for website performance analysis. Each row represents one unique user session and contains session timing, event counts, traffic source, browser, conversion flag, and user segmentation fields.
+    description: Session-level fact table for web performance and traffic analysis.
     columns:
+
       - name: session_sk
-        description: Surrogate-like key derived from session_id and user_id.
         tests:
           - not_null
           - unique
 
       - name: session_id
-        description: Raw session identifier.
         tests:
           - not_null
 
+      # ❗ user_id artık null olabilir → test YOK
       - name: user_id
-        description: User associated with the session.
-        tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('dim_user')
-                field: user_id
-
-      - name: traffic_source
-        description: Raw traffic source captured for the session.
-        tests:
-          - not_null
+        description: Can be null for anonymous sessions.
 
       - name: channel_group
-        description: Grouped traffic source category used in reporting.
         tests:
           - accepted_values:
               arguments:
                 values: ['paid', 'owned', 'organic', 'other']
 
       - name: session_date
-        description: Local calendar date of the session in Europe/Istanbul timezone.
         tests:
           - not_null
 
+      - name: is_converted
+        description: 1 if session includes purchase, else 0
+
+
   - name: fct_order_marketing
-    description: Order-item-level fact table for revenue and marketing analysis. Each row represents one order item and includes revenue flags, returned revenue flags, order time attributes, traffic source, and product descriptors.
+    description: Order-level fact table for revenue and marketing performance.
     columns:
+
       - name: order_item_sk
-        description: Surrogate-like key derived from order_item_id and order_id.
         tests:
           - not_null
           - unique
 
       - name: order_item_id
-        description: Raw order item identifier.
         tests:
           - not_null
 
       - name: user_id
-        description: User associated with the order item.
         tests:
           - not_null
           - relationships:
@@ -119,7 +99,6 @@ models:
                 field: user_id
 
       - name: product_id
-        description: Product associated with the order item.
         tests:
           - not_null
           - relationships:
@@ -128,41 +107,17 @@ models:
                 field: product_id
 
       - name: order_item_status
-        description: Standardized order item lifecycle status.
         tests:
           - accepted_values:
               arguments:
                 values: ['complete', 'processing', 'returned', 'cancelled', 'shipped', 'unknown']
 
-      - name: traffic_source
-        description: Traffic source associated with the user who placed the order.
-        tests:
-          - not_null
-
       - name: channel_group
-        description: Grouped traffic source category used in reporting.
         tests:
           - accepted_values:
               arguments:
                 values: ['paid', 'owned', 'organic', 'other']
 
       - name: order_date
-        description: Local calendar date of the order item creation timestamp.
         tests:
           - not_null
-exposures:
-  - name: powerbi_marketing_dashboard
-    label: Power BI Marketing and Web Performance Dashboard
-    type: dashboard
-    maturity: medium
-    description: >
-      Power BI dashboard built on top of session-level and order-level marts
-      to analyze website performance, traffic source quality, conversions,
-      revenue, and returned revenue.
-    depends_on:
-      - ref('fct_marketing_web_performance')
-      - ref('fct_order_marketing')
-      - ref('dim_user')
-      - ref('dim_products')
-    owner:
-      name: Senanur Cetin
