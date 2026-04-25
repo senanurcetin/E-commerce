@@ -19,7 +19,7 @@ renamed as (
 
         coalesce(nullif(trim(city), ''), 'unknown') as city,
         coalesce(nullif(trim(state), ''), 'unknown') as state,
-        coalesce(nullif(trim(country), ''), 'unknown') as country,
+        {{ normalize_country("nullif(trim(country), '')") }} as country,
         coalesce(nullif(trim(postal_code), ''), 'unknown') as postal_code,
         coalesce(nullif(trim(street_address), ''), 'unknown') as street_address,
 

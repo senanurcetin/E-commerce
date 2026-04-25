@@ -112,6 +112,9 @@ models:
               arguments:
                 values: ['complete', 'processing', 'returned', 'cancelled', 'shipped', 'unknown']
 
+      - name: traffic_source
+        description: Order-level attributed traffic source derived from the nearest purchase event for the same user, with signup source as fallback.
+
       - name: channel_group
         tests:
           - accepted_values:

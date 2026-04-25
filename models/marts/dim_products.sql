@@ -9,7 +9,14 @@ final as (
 
     select
         product_id,
-        product_name,
+        case
+            when product_name != 'unknown' then product_name
+            when brand != 'unknown' and category != 'unknown' then concat(brand, ' - ', category)
+            when brand != 'unknown' then brand
+            when category != 'unknown' then category
+            when sku != 'unknown' then concat('sku-', substr(sku, 1, 8))
+            else 'unknown'
+        end as product_name,
         category,
         brand,
         department,

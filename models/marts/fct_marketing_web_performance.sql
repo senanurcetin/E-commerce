@@ -1,4 +1,11 @@
-{{ config(materialized='view') }}
+{{ config(
+    materialized='table',
+    partition_by={
+        "field": "session_date",
+        "data_type": "date"
+    },
+    cluster_by=['channel_group', 'traffic_source', 'user_id']
+) }}
 
 with events as (
 
@@ -40,8 +47,8 @@ sessions as (
         max(case when lower(event_type) = 'purchase' then 1 else 0 end) as has_purchase,
         max(case when lower(event_type) = 'cancel' then 1 else 0 end) as has_cancel,
 
-        any_value(traffic_source) as traffic_source,
-        any_value(browser) as browser
+        array_agg(traffic_source ignore nulls order by sequence_number, event_created_at limit 1)[safe_offset(0)] as traffic_source,
+        array_agg(browser ignore nulls order by sequence_number, event_created_at limit 1)[safe_offset(0)] as browser
 
     from events
     group by session_id, user_id
@@ -83,12 +90,7 @@ final as (
 
         coalesce(s.traffic_source, 'unknown') as traffic_source,
 
-        case
-            when lower(coalesce(s.traffic_source, 'unknown')) in ('facebook', 'youtube', 'adwords', 'display') then 'paid'
-            when lower(coalesce(s.traffic_source, 'unknown')) = 'email' then 'owned'
-            when lower(coalesce(s.traffic_source, 'unknown')) in ('search', 'organic') then 'organic'
-            else 'other'
-        end as channel_group,
+        {{ marketing_channel_group('s.traffic_source') }} as channel_group,
 
         coalesce(s.browser, 'unknown') as browser,
 

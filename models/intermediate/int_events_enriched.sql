@@ -27,6 +27,7 @@ final as (
         e.browser,
         e.traffic_source,
         e.page_uri,
+        e.event_type_raw,
         e.event_type,
 
         u.first_name,

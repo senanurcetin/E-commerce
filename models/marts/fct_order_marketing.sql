@@ -1,4 +1,11 @@
-{{ config(materialized='view') }}
+{{ config(
+    materialized='table',
+    partition_by={
+        "field": "order_date",
+        "data_type": "date"
+    },
+    cluster_by=['channel_group', 'traffic_source', 'user_id', 'product_id']
+) }}
 
 with orders as (
 
@@ -33,12 +40,7 @@ final as (
         gender,
         country,
         traffic_source,
-        case
-            when lower(traffic_source) in ('facebook', 'youtube', 'adwords', 'display') then 'paid'
-            when lower(traffic_source) = 'email' then 'owned'
-            when lower(traffic_source) in ('search', 'organic') then 'organic'
-            else 'other'
-        end as channel_group
+        {{ marketing_channel_group('traffic_source') }} as channel_group
     from orders
 
 )

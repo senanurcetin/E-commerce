@@ -29,8 +29,15 @@ models:
       - name: traffic_source
         description: Acquisition source of the event such as email, ads, or organic search.
 
+      - name: event_type_raw
+        description: Raw website event label from the source system before normalization.
+
       - name: event_type
-        description: Type of event such as page view, cart, purchase, or cancel.
+        description: Normalized event type used for funnel analysis.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['page_view', 'cart', 'purchase', 'cancel', 'unknown']
 
       - name: browser
         description: Browser used during the event.
@@ -147,7 +154,7 @@ models:
                 values: ['m', 'f', 'unknown']
 
       - name: country
-        description: Country of the user.
+        description: User country normalized to a consistent English naming convention for reporting.
 
       - name: signup_traffic_source
         description: Acquisition source recorded on the user profile.

@@ -19,7 +19,7 @@ models:
       - name: product_id
         description: Product included in the order.
 
-      - name: order_status
+      - name: order_item_status
         description: Current status of the order item.
 
       - name: sale_price
@@ -32,20 +32,17 @@ models:
         tests:
           - not_null
 
-      - name: shipped_at
+      - name: order_item_shipped_at
         description: Timestamp when the order item was shipped.
 
-      - name: delivered_at
+      - name: order_item_delivered_at
         description: Timestamp when the order item was delivered.
 
-      - name: returned_at
+      - name: order_item_returned_at
         description: Timestamp when the order item was returned.
 
       - name: product_name
         description: Original product name from the source product table.
-
-      - name: product_name_reporting
-        description: Product name prepared for reporting with fallback value for missing names.
 
       - name: category
         description: Product category.
@@ -71,8 +68,8 @@ models:
       - name: country
         description: Country of the user.
 
-      - name: user_acquisition_source
-        description: Marketing source that brought the user.
+      - name: traffic_source
+        description: Order-level traffic source attributed from the nearest purchase event for the same user, falling back to signup source when needed.
 
   - name: int_events_enriched
     description: Combined dataset of events and users for traffic and behavior analysis.
@@ -92,13 +89,16 @@ models:
       - name: event_created_at
         description: Timestamp of the event.
 
+      - name: event_type_raw
+        description: Raw event label from the source system.
+
       - name: event_type
-        description: Type of event.
+        description: Normalized event type for funnel analysis.
 
       - name: page_uri
         description: Page visited by the user.
 
-      - name: event_source
+      - name: traffic_source
         description: Traffic source of the event.
 
       - name: country
@@ -110,5 +110,5 @@ models:
       - name: age
         description: User age.
 
-      - name: user_acquisition_source
+      - name: signup_traffic_source
         description: Original acquisition source of the user.

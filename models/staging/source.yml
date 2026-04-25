@@ -6,6 +6,80 @@ sources:
     schema: e_ticaret
     tables:
       - name: events
+        config:
+          loaded_at_field: created_at
+          freshness:
+            warn_after:
+              count: 7
+              period: day
+            error_after:
+              count: 30
+              period: day
+        columns:
+          - name: id
+            tests:
+              - not_null
+              - unique
+          - name: created_at
+            tests:
+              - not_null
+
       - name: order_items
+        config:
+          loaded_at_field: created_at
+          freshness:
+            warn_after:
+              count: 7
+              period: day
+            error_after:
+              count: 30
+              period: day
+        columns:
+          - name: id
+            tests:
+              - not_null
+              - unique
+          - name: user_id
+            tests:
+              - not_null
+          - name: product_id
+            tests:
+              - not_null
+          - name: created_at
+            tests:
+              - not_null
+          - name: sale_price
+            tests:
+              - not_null
+
       - name: products
+        columns:
+          - name: id
+            tests:
+              - not_null
+              - unique
+          - name: retail_price
+            tests:
+              - not_null
+          - name: cost
+            tests:
+              - not_null
+
       - name: users
+        config:
+          loaded_at_field: created_at
+          freshness:
+            warn_after:
+              count: 7
+              period: day
+            error_after:
+              count: 30
+              period: day
+        columns:
+          - name: id
+            tests:
+              - not_null
+              - unique
+          - name: created_at
+            tests:
+              - not_null

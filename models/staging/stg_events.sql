@@ -5,7 +5,7 @@ with source as (
 
 ),
 
-renamed as (
+cleaned as (
 
     select
         cast(id as int64) as event_id,
@@ -22,10 +22,32 @@ renamed as (
         coalesce(lower(nullif(trim(browser), '')), 'unknown') as browser,
         coalesce(lower(nullif(trim(traffic_source), '')), 'unknown') as traffic_source,
         coalesce(nullif(trim(uri), ''), 'unknown') as page_uri,
-        coalesce(lower(nullif(trim(event_type), '')), 'unknown') as event_type
+        coalesce(lower(nullif(trim(event_type), '')), 'unknown') as event_type_raw
 
     from source
     where id is not null
+
+),
+
+renamed as (
+
+    select
+        event_id,
+        user_id,
+        sequence_number,
+        session_id,
+        event_created_at,
+        ip_address,
+        city,
+        state,
+        postal_code,
+        browser,
+        traffic_source,
+        page_uri,
+        event_type_raw,
+        {{ normalize_event_type('event_type_raw') }} as event_type
+
+    from cleaned
 
 )
 
@@ -42,5 +64,6 @@ select
     browser,
     traffic_source,
     page_uri,
+    event_type_raw,
     event_type
 from renamed

@@ -33,12 +33,7 @@ final as (
             else '45+'
         end as age_segment,
 
-        case
-            when signup_traffic_source in ('facebook', 'youtube', 'adwords', 'display') then 'paid'
-            when signup_traffic_source in ('email') then 'owned'
-            when signup_traffic_source in ('search', 'organic') then 'organic'
-            else 'other'
-        end as signup_channel_group
+        {{ marketing_channel_group('signup_traffic_source') }} as signup_channel_group
 
     from users
 
