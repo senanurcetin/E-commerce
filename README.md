@@ -1,87 +1,66 @@
 # E-commerce Marketing and Web Performance Analytics
 
-This project models e-commerce behavioral and transactional data using **dbt + BigQuery** to support downstream reporting in **Power BI**.
+Archive proof for analytics engineering, dbt modeling, and e-commerce reporting design.
 
-## Business Questions
+## Why this project exists
 
-This analytics project focuses on two domains:
+This repository shows how raw e-commerce events and order data can be translated into reporting models for traffic-source analysis, conversion behavior, and channel performance.
 
-1. **Website Performance**
-   - What are the main website traffic sources?
-   - How do traffic sources affect conversion behavior?
-   - Are there usability or funnel bottlenecks visible in website interaction data?
+## Portfolio role
 
-2. **Marketing Effectiveness**
-   - Which marketing channels generate the most valuable traffic?
-   - How do different channels compare in terms of completed orders and revenue?
-   - Which customer segments respond better to different acquisition sources?
+`archive proof`
 
-## Tech Stack
+## Business framing
 
-- **BigQuery** for raw and transformed storage
-- **dbt** for data modeling and testing
-- **Power BI** for dashboarding and reporting
+The project is built around two analytics questions:
 
-## dbt Modeling Layers
+- Which traffic sources generate the most valuable sessions and orders?
+- How should event, order, user, and product data be modeled so BI tools can answer those questions reliably?
 
-### Staging
-Raw source cleanup and standardization:
-- `stg_events`
-- `stg_order_items`
-- `stg_users`
-- `stg_products`
+## Architecture snapshot
 
-### Intermediate
-Enriched business-ready transformation layer:
-- `int_events_enriched`
-- `int_orders_enriched`
+- **Warehouse target:** BigQuery
+- **Transformation layer:** dbt
+- **Model structure:** staging, intermediate, and marts
+- **Consumption layer:** Power BI
+- **Project scope:** analytics engineering and reporting design rather than live application delivery
 
-### Marts
-Final reporting models:
-- `dim_user`
-- `dim_products`
+## Key reporting models
+
 - `fct_marketing_web_performance`
 - `fct_order_marketing`
+- `dim_user`
+- `dim_products`
 
-## Final Fact Tables
+## What this proves
 
-### `fct_marketing_web_performance`
-Session-level fact table used for:
-- sessions
-- conversion flags
-- session duration
-- traffic source analysis
-- browser analysis
-- time-of-day analysis
+- You can structure analytics projects with layered dbt conventions.
+- You can translate marketing and product questions into warehouse-ready fact models.
+- You can prepare clean outputs for BI consumption instead of stopping at raw SQL exploration.
 
-### `fct_order_marketing`
-Order-item-level fact table used for:
-- revenue
-- returned revenue
-- completed order counts
-- category / brand analysis
-- traffic source performance
+## Local setup
 
-## Data Quality
+```bash
+python -m pip install dbt-duckdb
+dbt deps
+dbt parse --profiles-dir .github/dbt-profiles
+```
 
-dbt tests are used for:
-- `not_null`
-- `unique`
-- `relationships`
-- `accepted_values`
+## Quality checks
 
-## Notes and Limitations
+The GitHub Actions workflow runs:
 
-This dataset does not include direct campaign cost fields, so:
-- **ROI cannot be calculated directly**
-- **CAC cannot be calculated directly**
+```bash
+dbt deps
+dbt parse --profiles-dir .github/dbt-profiles
+```
 
-Instead, the project focuses on proxy metrics such as:
-- revenue by traffic source
-- session conversion signals
-- completed orders by channel
-- user segment performance
+## Limitations
 
-## Next Step
+- This repo focuses on modeling and reporting logic, not dashboard code.
+- Cost data is limited, so full ROI and CAC analysis is not the main claim.
+- It is kept public as supporting analytics proof, not as a lead portfolio case study.
 
-The marts are designed to be consumed directly in Power BI for dashboarding.
+## License
+
+MIT
