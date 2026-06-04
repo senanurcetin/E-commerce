@@ -1,0 +1,9 @@
+id,first_name,last_name,email,age,gender,created_at,country,city,state,postal_code,street_address,latitude,longitude,traffic_source
+1,Anna,Schmidt,anna.schmidt@example.com,28,F,2022-03-10 08:30:00,Deutschland,Berlin,Berlin,10115,Unter den Linden 1,52.5200,13.4050,facebook
+2,James,Wilson,james.wilson@example.com,35,M,2022-04-05 14:15:00,United States,New York,NY,10001,5th Ave 100,40.7128,-74.0060,email
+3,Sofia,Martinez,sofia.martinez@example.com,22,F,2022-05-20 09:00:00,España,Madrid,Madrid,28001,Gran Via 55,40.4168,-3.7038,adwords
+4,Oliver,Brown,oliver.brown@example.com,45,M,2022-06-01 11:30:00,United Kingdom,London,England,EC1A 1BB,Baker St 221B,51.5074,-0.1278,organic
+5,Camila,Souza,camila.souza@example.com,31,F,2022-07-14 16:45:00,Brasil,Sao Paulo,SP,01310-100,Av Paulista 1000,-23.5505,-46.6333,search
+6,Liam,Johnson,liam.johnson@example.com,29,M,2022-08-22 10:20:00,United States,Los Angeles,CA,90001,Sunset Blvd 8000,34.0522,-118.2437,facebook
+7,Marie,Dupont,marie.dupont@example.com,38,F,2022-09-30 13:00:00,France,Paris,Ile-de-France,75001,Rue de Rivoli 1,48.8566,2.3522,youtube
+8,Mehmet,Yilmaz,mehmet.yilmaz@example.com,52,M,2022-10-11 07:45:00,Turkey,Istanbul,Istanbul,34000,Istiklal Cad 50,41.0082,28.9784,email

@@ -1,30 +1,16 @@
 with users as (
-
-    select *
-    from {{ ref('stg_users') }}
-
+    select * from {{ ref('stg_users') }}
 ),
-
 final as (
-
     select
-        user_id,
-        first_name,
-        last_name,
-        email,
-        age,
-        gender,
-        city,
-        state,
-        country,
-        postal_code,
-        street_address,
-        latitude,
-        longitude,
-        signup_traffic_source,
-        user_created_at,
+        user_id, first_name, last_name, email, age, gender,
+        city, state, country, postal_code, street_address, latitude, longitude,
+        signup_traffic_source, user_created_at,
+        {% if target.type == 'bigquery' %}
         datetime(user_created_at, "Europe/Istanbul") as user_created_at_local,
-
+        {% else %}
+        user_created_at as user_created_at_local,
+        {% endif %}
         case
             when age is null then 'unknown'
             when age < 25 then '18-24'
@@ -32,12 +18,7 @@ final as (
             when age between 35 and 44 then '35-44'
             else '45+'
         end as age_segment,
-
         {{ marketing_channel_group('signup_traffic_source') }} as signup_channel_group
-
     from users
-
 )
-
-select *
-from final
+select * from final

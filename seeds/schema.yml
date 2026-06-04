@@ -1,0 +1,41 @@
+version: 2
+
+seeds:
+  - name: users
+    config:
+      column_types:
+        id: bigint
+        age: bigint
+        latitude: double
+        longitude: double
+        created_at: timestamp
+
+  - name: products
+    config:
+      column_types:
+        id: bigint
+        cost: double
+        retail_price: double
+        distribution_center_id: bigint
+
+  - name: events
+    config:
+      column_types:
+        id: bigint
+        user_id: bigint
+        sequence_number: bigint
+        created_at: timestamp
+
+  - name: order_items
+    config:
+      column_types:
+        id: bigint
+        order_id: bigint
+        user_id: bigint
+        product_id: bigint
+        inventory_item_id: bigint
+        sale_price: double
+        created_at: timestamp
+        shipped_at: timestamp
+        delivered_at: timestamp
+        returned_at: timestamp

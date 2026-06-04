@@ -3,6 +3,6 @@ default:
   outputs:
     ci:
       type: duckdb
-      path: ":memory:"
+      path: "target/ci.duckdb"
       schema: analytics
       threads: 1

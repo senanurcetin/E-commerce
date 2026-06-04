@@ -3,124 +3,243 @@ version: 2
 models:
 
   - name: dim_user
-    description: User dimension table enriched with demographic segmentation.
+    description: User dimension table with demographic segmentation and channel attribution for BI joins.
     columns:
       - name: user_id
+        description: Unique user identifier (primary key).
         tests:
           - not_null
           - unique
-
+      - name: first_name
+        description: User first name from the source system.
+      - name: last_name
+        description: User last name from the source system.
+      - name: email
+        description: User email address.
+      - name: age
+        description: User age in years at the time of signup.
       - name: gender
+        description: User gender, normalized to lowercase m/f/unknown.
         tests:
           - accepted_values:
               arguments:
                 values: ['m', 'f', 'unknown']
-
+      - name: city
+        description: User city.
+      - name: state
+        description: User state or region.
+      - name: country
+        description: User country, normalized to English (e.g. España -> Spain, Brasil -> Brazil).
+      - name: postal_code
+        description: User postal or ZIP code.
+      - name: street_address
+        description: User street address.
+      - name: latitude
+        description: Geographic latitude of the user location.
+      - name: longitude
+        description: Geographic longitude of the user location.
+      - name: signup_traffic_source
+        description: Acquisition channel recorded at the time of user signup (e.g. facebook, email, organic).
+      - name: user_created_at
+        description: UTC timestamp when the user account was created.
+      - name: user_created_at_local
+        description: Signup timestamp in Europe/Istanbul timezone (UTC on non-BigQuery targets).
       - name: age_segment
+        description: Age bucket derived from age. Values 18-24, 25-34, 35-44, 45+, unknown.
         tests:
           - accepted_values:
               arguments:
                 values: ['18-24', '25-34', '35-44', '45+', 'unknown']
-
       - name: signup_channel_group
+        description: High-level channel bucket for the signup source. paid (facebook/youtube/adwords/display), owned (email), organic (search/organic), other.
         tests:
           - accepted_values:
               arguments:
                 values: ['paid', 'owned', 'organic', 'other']
-
 
   - name: dim_products
-    description: Product dimension table for category and brand analysis.
+    description: Product dimension table with margin metrics for category and brand analysis.
     columns:
       - name: product_id
+        description: Unique product identifier (primary key).
         tests:
           - not_null
           - unique
-
-      - name: retail_price
-        tests:
-          - not_null
-
+      - name: product_name
+        description: Clean product name. Falls back to brand-category concatenation or SKU prefix when the source name is null.
+      - name: category
+        description: Product category (lowercase), e.g. electronics, clothing, footwear.
+      - name: brand
+        description: Product brand.
+      - name: department
+        description: Product department classification.
       - name: cost
+        description: Unit cost of the product.
         tests:
           - not_null
-
+      - name: retail_price
+        description: Listed retail price of the product.
+        tests:
+          - not_null
+      - name: unit_margin
+        description: Gross margin per unit (retail_price - cost). Null-safe on BigQuery via SAFE_SUBTRACT.
+      - name: unit_margin_pct
+        description: Gross margin as a percentage of retail price. Null when retail_price is 0.
+      - name: sku
+        description: Stock-keeping unit identifier.
+      - name: distribution_center_id
+        description: Identifier of the distribution center assigned to this product.
 
   - name: fct_marketing_web_performance
-    description: Session-level fact table for web performance and traffic analysis.
+    description: >
+      Session-level fact table for web performance, traffic analysis, and channel conversion measurement.
+      Each row represents one session (session_id + user_id combination).
     columns:
-
       - name: session_sk
+        description: Surrogate key — concat of session_id and user_id (or 'anonymous').
         tests:
           - not_null
           - unique
-
       - name: session_id
+        description: Raw session identifier from the events source.
         tests:
           - not_null
-
-      # ❗ user_id artık null olabilir → test YOK
       - name: user_id
-        description: Can be null for anonymous sessions.
-
+        description: User who generated the session. Can be null for anonymous sessions.
+      - name: session_start_at
+        description: UTC timestamp of the first event in the session.
+      - name: session_end_at
+        description: UTC timestamp of the last event in the session.
+      - name: session_start_at_local
+        description: Session start in Europe/Istanbul timezone (UTC on non-BigQuery targets).
+      - name: session_end_at_local
+        description: Session end in Europe/Istanbul timezone (UTC on non-BigQuery targets).
+      - name: session_date
+        description: Calendar date of the session start (used for partitioning on BigQuery).
+        tests:
+          - not_null
+      - name: session_hour
+        description: Hour of the day (0-23) when the session started.
+      - name: session_duration_seconds
+        description: Session length in seconds (last event minus first event).
+      - name: session_duration_minutes
+        description: Session length in minutes, rounded to 2 decimal places.
+      - name: total_events
+        description: Total number of events fired in the session.
+      - name: page_view_events
+        description: Count of page_view events in the session.
+      - name: purchase_events
+        description: Count of purchase events in the session.
+      - name: cancel_events
+        description: Count of cancel events in the session.
+      - name: has_page_view
+        description: 1 if at least one page_view event occurred in the session, else 0.
+      - name: has_purchase
+        description: 1 if at least one purchase event occurred in the session, else 0.
+      - name: has_cancel
+        description: 1 if at least one cancel event occurred in the session, else 0.
+      - name: is_converted
+        description: 1 if the session resulted in a purchase (alias for has_purchase), else 0.
+      - name: traffic_source
+        description: First non-null traffic source recorded in the session.
       - name: channel_group
+        description: Marketing channel group derived from traffic_source. paid / owned / organic / other.
         tests:
           - accepted_values:
               arguments:
                 values: ['paid', 'owned', 'organic', 'other']
-
-      - name: session_date
-        tests:
-          - not_null
-
-      - name: is_converted
-        description: 1 if session includes purchase, else 0
-
+      - name: browser
+        description: First non-null browser recorded in the session.
+      - name: age_segment
+        description: Age bucket of the user (from dim_user).
+      - name: gender
+        description: Gender of the user (from dim_user).
+      - name: country
+        description: Country of the user (from dim_user).
+      - name: state
+        description: State or region of the user (from dim_user).
+      - name: city
+        description: City of the user (from dim_user).
+      - name: signup_traffic_source
+        description: Original acquisition source when the user signed up.
+      - name: signup_channel_group
+        description: Channel group of the user signup source.
 
   - name: fct_order_marketing
-    description: Order-level fact table for revenue and marketing performance.
+    description: >
+      Order-item-level fact table for revenue, return, and marketing performance analysis.
+      Each row is one order item. Joined with traffic attribution from the nearest purchase event.
     columns:
-
       - name: order_item_sk
+        description: Surrogate key — concat of order_item_id and order_id.
         tests:
           - not_null
           - unique
-
       - name: order_item_id
+        description: Unique identifier for each order item.
         tests:
           - not_null
-
+      - name: order_id
+        description: Order identifier grouping multiple order items.
       - name: user_id
+        description: User who placed the order.
         tests:
           - not_null
           - relationships:
               arguments:
                 to: ref('dim_user')
                 field: user_id
-
       - name: product_id
+        description: Product in this order item.
         tests:
           - not_null
           - relationships:
               arguments:
                 to: ref('dim_products')
                 field: product_id
-
       - name: order_item_status
+        description: Current status of the order item.
         tests:
           - accepted_values:
               arguments:
                 values: ['complete', 'processing', 'returned', 'cancelled', 'shipped', 'unknown']
-
+      - name: order_item_created_at
+        description: UTC timestamp when the order item was created.
+      - name: order_item_created_at_local
+        description: Order creation in Europe/Istanbul timezone (UTC on non-BigQuery targets).
+      - name: order_date
+        description: Calendar date of the order (used for partitioning on BigQuery).
+        tests:
+          - not_null
+      - name: order_hour
+        description: Hour of the day (0-23) when the order was placed.
+      - name: sale_price
+        description: Actual price paid for the product in this order item.
+      - name: revenue
+        description: Revenue recognized for this order item. Equal to sale_price when status is complete, 0 otherwise.
+      - name: returned_revenue
+        description: Revenue lost to returns. Equal to sale_price when status is returned, 0 otherwise.
+      - name: is_completed_order
+        description: 1 if the order item is complete, else 0.
+      - name: is_returned_order
+        description: 1 if the order item was returned, else 0.
+      - name: product_name
+        description: Product name (from dim_products via intermediate layer).
+      - name: category
+        description: Product category.
+      - name: brand
+        description: Product brand.
+      - name: department
+        description: Product department.
+      - name: gender
+        description: Gender of the purchasing user.
+      - name: country
+        description: Country of the purchasing user.
       - name: traffic_source
-        description: Order-level attributed traffic source derived from the nearest purchase event for the same user, with signup source as fallback.
-
+        description: Attributed traffic source for this order. Nearest purchase event source for the user, falling back to signup source.
       - name: channel_group
+        description: Channel group of the attributed traffic source. paid / owned / organic / other.
         tests:
           - accepted_values:
               arguments:
                 values: ['paid', 'owned', 'organic', 'other']
-
-      - name: order_date
-        tests:
-          - not_null

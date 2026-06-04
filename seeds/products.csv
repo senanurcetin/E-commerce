@@ -1,0 +1,7 @@
+id,name,cost,retail_price,category,brand,department,sku,distribution_center_id
+1,ProBook Laptop 15,449.99,749.99,Electronics,TechBrand,Men,SKU-TECH-001,1
+2,UltraRun Running Shoes,44.50,89.99,Footwear,SportBrand,Women,SKU-FOOT-002,2
+3,Winter Parka Jacket,29.80,69.99,Clothing,FashionCo,Men,SKU-CLTH-003,1
+4,SoundPro Headphones,59.90,129.99,Electronics,AudioPro,Men,SKU-ELEC-004,2
+5,Eco Yoga Mat,14.75,34.99,Sports & Outdoors,FitGear,Women,SKU-SPRT-005,3
+6,BrewMaster Coffee Maker,34.50,79.99,Kitchen,HomePlus,Men,SKU-HOME-006,3

@@ -1,65 +1,217 @@
-# E-commerce Marketing and Web Performance Analytics
+# E-commerce Analytics Engineering
 
-Archive proof for analytics engineering, dbt modeling, and e-commerce reporting design.
+[![CI](https://github.com/senanurcetin/E-commerce/actions/workflows/ci.yml/badge.svg)](https://github.com/senanurcetin/E-commerce/actions/workflows/ci.yml)
+![dbt](https://img.shields.io/badge/dbt-1.x-orange)
+![DuckDB](https://img.shields.io/badge/DuckDB-CI%2FLocal-yellow)
+![BigQuery](https://img.shields.io/badge/BigQuery-Production-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-## Why this project exists
+**Analytics engineering case study** — transforms raw e-commerce events and order data into BI-ready mart tables using dbt. Pipeline runs on **DuckDB** (CI and local development) and **BigQuery** (production) using Jinja adapter dispatch.
 
-This repository shows how raw e-commerce events and order data can be translated into reporting models for traffic-source analysis, conversion behavior, and channel performance.
+---
 
-## Portfolio role
+## Business Questions Answered
 
-`archive proof`
+| Question | Model |
+|----------|-------|
+| Which marketing channels drive the most revenue and conversions? | `fct_order_marketing` + `fct_marketing_web_performance` |
+| Where do users drop off in the purchase funnel? | `int_events_enriched` + `analyses/conversion_funnel.sql` |
+| Which products have the highest return rates and net revenue? | `fct_order_marketing` + `analyses/top_products.sql` |
+| How does channel performance compare across sessions and orders? | `analyses/channel_performance.sql` |
 
-## Business framing
+---
 
-The project is built around two analytics questions:
+## Data Architecture
 
-- Which traffic sources generate the most valuable sessions and orders?
-- How should event, order, user, and product data be modeled so BI tools can answer those questions reliably?
-
-## Architecture snapshot
-
-- **Warehouse target:** BigQuery
-- **Transformation layer:** dbt
-- **Model structure:** staging, intermediate, and marts
-- **Consumption layer:** Power BI
-- **Project scope:** analytics engineering and reporting design rather than live application delivery
-
-## Key reporting models
-
-- `fct_marketing_web_performance`
-- `fct_order_marketing`
-- `dim_user`
-- `dim_products`
-
-## What this proves
-
-- You can structure analytics projects with layered dbt conventions.
-- You can translate marketing and product questions into warehouse-ready fact models.
-- You can prepare clean outputs for BI consumption instead of stopping at raw SQL exploration.
-
-## Local setup
-
-```bash
-python -m pip install dbt-duckdb
-dbt deps
-dbt parse --profiles-dir .github/dbt-profiles
+```
+Raw Sources (BigQuery) / Seeds (DuckDB CI)
+    events  order_items  products  users
+              |
+              v
+    +-----------------------------------------+
+    |         STAGING LAYER (views)           |
+    |  stg_events  stg_order_items            |
+    |  stg_products  stg_users                |
+    |  - type casting (dbt.type_* macros)     |
+    |  - null handling and normalization      |
+    |  - country name normalization macro     |
+    +-----------------------------------------+
+              |
+              v
+    +-----------------------------------------+
+    |       INTERMEDIATE LAYER (views)        |
+    |  int_orders_enriched                    |
+    |    order + product + user + attribution |
+    |  int_events_enriched                    |
+    |    event + user enrichment              |
+    +-----------------------------------------+
+              |
+              v
+    +-----------------------------------------+
+    |          MARTS LAYER (tables)           |
+    |  fct_order_marketing                    |
+    |  fct_marketing_web_performance          |
+    |  dim_user    dim_products               |
+    |  - BI-ready, fully documented           |
+    |  - partitioned + clustered (BigQuery)   |
+    +-----------------------------------------+
+              |
+              v
+    +-----------------------------------------+
+    |         ANALYSIS QUERIES                |
+    |  channel_performance.sql                |
+    |  conversion_funnel.sql                  |
+    |  top_products.sql                       |
+    +-----------------------------------------+
 ```
 
-## Quality checks
+---
 
-The GitHub Actions workflow runs:
+## Models
+
+### Staging (4 views)
+
+| Model | Source | Key transformations |
+|-------|--------|---------------------|
+| `stg_events` | events | Type casting, event type normalization macro, null coalesce |
+| `stg_order_items` | order_items | Type casting, status normalization, timestamp cleanup |
+| `stg_products` | products | Type casting, name/brand/category normalization |
+| `stg_users` | users | Country normalization macro (Espana->Spain, Brasil->Brazil), age casting |
+
+### Intermediate (2 views)
+
+| Model | Joins | Key logic |
+|-------|-------|-----------|
+| `int_orders_enriched` | order_items + products + users + events | Traffic attribution: nearest purchase event per order item via window function, fallback to signup source |
+| `int_events_enriched` | events + users | User demographic enrichment on clickstream |
+
+### Marts (4 tables)
+
+| Model | Grain | Key columns |
+|-------|-------|-------------|
+| `fct_order_marketing` | Order item | `revenue`, `returned_revenue`, `channel_group`, `is_completed_order`, `order_date` |
+| `fct_marketing_web_performance` | Session | `session_duration_seconds`, `is_converted`, `channel_group`, `page_view_events`, `session_date` |
+| `dim_user` | User | `age_segment`, `signup_channel_group`, `country` (normalized) |
+| `dim_products` | Product | `unit_margin`, `unit_margin_pct`, `product_name` (with fallback logic) |
+
+### Macros (3)
+
+| Macro | Purpose |
+|-------|---------|
+| `marketing_channel_group(source)` | Groups traffic sources: paid (facebook/youtube/adwords/display), owned (email), organic (search/organic), other |
+| `normalize_event_type(source)` | Maps raw labels (Home, Product, Department) to page_view / cart / purchase / cancel |
+| `normalize_country(source)` | Normalizes non-English country names — adapter-aware regex vs LIKE |
+
+---
+
+## SQL Analysis Queries
+
+Three business analysis queries in `/analyses` — compile with `dbt compile --select analyses/`:
+
+**`channel_performance.sql`** — Net revenue, order count, session conversion rate, and avg session duration by marketing channel and traffic source. Joins `fct_order_marketing` + `fct_marketing_web_performance`.
+
+**`conversion_funnel.sql`** — Page_view to cart to purchase funnel drop-off by channel group. Identifies where acquisition spend is leaking.
+
+**`top_products.sql`** — Product-level gross revenue, net revenue, return rate, and dual ranking (revenue vs return risk).
+
+---
+
+## Data Quality
+
+**73 total dbt tests** across all layers:
+
+| Layer | Tests | Scope |
+|-------|-------|-------|
+| Source | 19 | not_null, unique, freshness (BigQuery only) |
+| Staging | 24 | not_null, unique, accepted_values, relationships |
+| Intermediate | 6 | not_null, unique |
+| Marts | 24 | not_null, unique, accepted_values, relationships |
+| Custom SQL | 4 | Country alias removal, non-negative duration, page view presence, non-negative revenue |
+
+**57 of 73 tests pass in CI** — source tests excluded (require BigQuery access).
+
+---
+
+## Cross-Adapter Compatibility
+
+Models run on DuckDB (CI/local) and BigQuery (production) using Jinja adapter dispatch:
+
+```sql
+-- Timestamp diff
+{% if target.type == 'bigquery' %}
+  TIMESTAMP_DIFF(max_ts, min_ts, SECOND)
+{% else %}
+  DATEDIFF('second', min_ts, max_ts)
+{% endif %}
+
+-- First non-null in array
+{% if target.type == 'bigquery' %}
+  ARRAY_AGG(col IGNORE NULLS ORDER BY seq LIMIT 1)[SAFE_OFFSET(0)]
+{% else %}
+  FIRST(col ORDER BY seq) FILTER (WHERE col IS NOT NULL)
+{% endif %}
+```
+
+Handled: TIMESTAMP_DIFF, TIMESTAMP_SUB/ADD, ARRAY_AGG IGNORE NULLS, COUNTIF, SAFE_DIVIDE, SAFE_SUBTRACT, DATETIME timezone, REGEXP_CONTAINS, type macros.
+
+---
+
+## Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Transformation | dbt 1.x |
+| CI / Local adapter | DuckDB (persistent file) |
+| Production adapter | BigQuery |
+| Packages | dbt-labs/dbt_utils 1.x |
+| BI (production) | Power BI |
+| CI | GitHub Actions |
+
+---
+
+## Local Setup
 
 ```bash
-dbt deps
-dbt parse --profiles-dir .github/dbt-profiles
+pip install dbt-duckdb
+
+dbt deps --profiles-dir .github/dbt-profiles
+
+# Load 57 sample rows across 4 tables
+dbt seed --profiles-dir .github/dbt-profiles
+
+# Run all 10 models
+dbt run --profiles-dir .github/dbt-profiles
+
+# Run 57 data quality tests
+dbt test --profiles-dir .github/dbt-profiles --exclude "source:*"
+
+# Compile analysis queries (view generated SQL without running)
+dbt compile --profiles-dir .github/dbt-profiles --select analyses/
 ```
+
+**Production (BigQuery):** configure `~/.dbt/profiles.yml` pointing to `workintech-working.e_ticaret`, then run without `--profiles-dir`.
+
+---
+
+## Proof Surfaces
+
+| Document | Contents |
+|----------|----------|
+| [`docs/hiring-summary.md`](docs/hiring-summary.md) | Recruiter-facing one-page summary with talking points |
+| [`models/marts/marts.yml`](models/marts/marts.yml) | Full column-level docs for all 4 mart tables |
+| [`analyses/`](analyses/) | Three business SQL analysis queries |
+| CI badge | Passing: seed + run + test (57 tests) on every push |
+
+---
 
 ## Limitations
 
-- This repo focuses on modeling and reporting logic, not dashboard code.
-- Cost data is limited, so full ROI and CAC analysis is not the main claim.
-- It is kept public as supporting analytics proof, not as a lead portfolio case study.
+- Source tests (19) require BigQuery access — excluded from CI
+- Timezone conversion falls back to UTC in DuckDB (no ICU extension required)
+- Seed data is 57 sample rows — representative structure, not statistically significant
+- Production BigQuery credentials are not part of this public repo
+
+---
 
 ## License
 

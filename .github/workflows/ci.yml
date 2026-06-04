@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  dbt-parse:
+  dbt-ci:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,5 +27,14 @@ jobs:
       - name: Install dbt packages
         run: dbt deps --profiles-dir .github/dbt-profiles
 
-      - name: Parse dbt project
+      - name: Parse project (validates all SQL and YAML)
         run: dbt parse --profiles-dir .github/dbt-profiles
+
+      - name: Load seed data (57 sample rows across 4 tables)
+        run: dbt seed --profiles-dir .github/dbt-profiles
+
+      - name: Run all 10 models (staging + intermediate + marts)
+        run: dbt run --profiles-dir .github/dbt-profiles
+
+      - name: Run 57 data quality tests (model layer only)
+        run: dbt test --profiles-dir .github/dbt-profiles --exclude "source:*"

@@ -1,18 +1,22 @@
 with source as (
 
     select *
+    {% if target.type == 'bigquery' %}
     from {{ source('e_ticaret_raw', 'order_items') }}
+    {% else %}
+    from {{ ref('order_items') }}
+    {% endif %}
 
 ),
 
 renamed as (
 
     select
-        cast(id as int64) as order_item_id,
-        cast(order_id as int64) as order_id,
-        cast(user_id as int64) as user_id,
-        cast(product_id as int64) as product_id,
-        cast(inventory_item_id as int64) as inventory_item_id,
+        cast(id as {{ dbt.type_bigint() }}) as order_item_id,
+        cast(order_id as {{ dbt.type_bigint() }}) as order_id,
+        cast(user_id as {{ dbt.type_bigint() }}) as user_id,
+        cast(product_id as {{ dbt.type_bigint() }}) as product_id,
+        cast(inventory_item_id as {{ dbt.type_bigint() }}) as inventory_item_id,
 
         coalesce(lower(nullif(trim(status), '')), 'unknown') as order_item_status,
 
@@ -21,7 +25,7 @@ renamed as (
         cast(delivered_at as timestamp) as order_item_delivered_at,
         cast(returned_at as timestamp) as order_item_returned_at,
 
-        cast(sale_price as numeric) as sale_price
+        cast(sale_price as {{ dbt.type_numeric() }}) as sale_price
 
     from source
     where id is not null

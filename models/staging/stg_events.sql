@@ -1,19 +1,23 @@
 with source as (
 
     select *
+    {% if target.type == 'bigquery' %}
     from {{ source('e_ticaret_raw', 'events') }}
+    {% else %}
+    from {{ ref('events') }}
+    {% endif %}
 
 ),
 
 cleaned as (
 
     select
-        cast(id as int64) as event_id,
-        cast(user_id as int64) as user_id,
-        cast(sequence_number as int64) as sequence_number,
-        cast(session_id as string) as session_id,
+        cast(id as {{ dbt.type_bigint() }}) as event_id,
+        cast(user_id as {{ dbt.type_bigint() }}) as user_id,
+        cast(sequence_number as {{ dbt.type_bigint() }}) as sequence_number,
+        cast(session_id as {{ dbt.type_string() }}) as session_id,
         cast(created_at as timestamp) as event_created_at,
-        cast(ip_address as string) as ip_address,
+        cast(ip_address as {{ dbt.type_string() }}) as ip_address,
 
         coalesce(nullif(trim(city), ''), 'unknown') as city,
         coalesce(nullif(trim(state), ''), 'unknown') as state,

@@ -1,20 +1,24 @@
 with source as (
 
     select *
+    {% if target.type == 'bigquery' %}
     from {{ source('e_ticaret_raw', 'users') }}
+    {% else %}
+    from {{ ref('users') }}
+    {% endif %}
 
 ),
 
 renamed as (
 
     select
-        cast(id as int64) as user_id,
+        cast(id as {{ dbt.type_bigint() }}) as user_id,
 
         coalesce(nullif(trim(first_name), ''), 'unknown') as first_name,
         coalesce(nullif(trim(last_name), ''), 'unknown') as last_name,
         coalesce(nullif(trim(email), ''), 'unknown') as email,
 
-        cast(age as int64) as age,
+        cast(age as {{ dbt.type_bigint() }}) as age,
         coalesce(lower(nullif(trim(gender), '')), 'unknown') as gender,
 
         coalesce(nullif(trim(city), ''), 'unknown') as city,
@@ -23,8 +27,8 @@ renamed as (
         coalesce(nullif(trim(postal_code), ''), 'unknown') as postal_code,
         coalesce(nullif(trim(street_address), ''), 'unknown') as street_address,
 
-        cast(latitude as numeric) as latitude,
-        cast(longitude as numeric) as longitude,
+        cast(latitude as {{ dbt.type_numeric() }}) as latitude,
+        cast(longitude as {{ dbt.type_numeric() }}) as longitude,
 
         coalesce(lower(nullif(trim(traffic_source), '')), 'unknown') as signup_traffic_source,
         cast(created_at as timestamp) as user_created_at
