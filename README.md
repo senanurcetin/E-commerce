@@ -1,12 +1,15 @@
 # E-commerce Analytics Engineering
 
 [![CI](https://github.com/senanurcetin/E-commerce/actions/workflows/ci.yml/badge.svg)](https://github.com/senanurcetin/E-commerce/actions/workflows/ci.yml)
-![dbt](https://img.shields.io/badge/dbt-1.x-orange)
-![DuckDB](https://img.shields.io/badge/DuckDB-CI%2FLocal-yellow)
-![BigQuery](https://img.shields.io/badge/BigQuery-Production-blue)
+![dbt Cloud](https://img.shields.io/badge/dbt%20Cloud-IDE-orange)
+![BigQuery](https://img.shields.io/badge/BigQuery-Warehouse-blue)
+![Power BI](https://img.shields.io/badge/Power%20BI-Dashboard-yellow)
+![DuckDB](https://img.shields.io/badge/DuckDB-CI%2FLocal-lightgrey)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-**Analytics engineering case study** — transforms raw e-commerce events and order data into BI-ready mart tables using dbt. Pipeline runs on **DuckDB** (CI and local development) and **BigQuery** (production) using Jinja adapter dispatch.
+**Analytics engineering case study** — end-to-end pipeline built in **dbt Cloud**, warehoused in **BigQuery**, and visualized in **Power BI**. Transforms raw e-commerce clickstream events and order transactions into BI-ready mart tables through a 3-layer dbt architecture (staging → intermediate → marts).
+
+The repo also runs fully on **DuckDB** (CI and local) using Jinja adapter dispatch, so every model and test can be reproduced without BigQuery access.
 
 ---
 
@@ -156,16 +159,41 @@ Handled: TIMESTAMP_DIFF, TIMESTAMP_SUB/ADD, ARRAY_AGG IGNORE NULLS, COUNTIF, SAF
 
 ---
 
+## End-to-End Workflow
+
+```
+dbt Cloud (IDE)
+  → models authored and tested in dbt Cloud browser IDE
+  → jobs scheduled and run against BigQuery warehouse
+      ↓
+BigQuery (Warehouse)
+  → mart tables materialised as partitioned + clustered tables
+  → source freshness monitored via dbt source tests
+      ↓
+Power BI (Dashboard)
+  → mart tables connected as DirectQuery or import datasets
+  → channel performance, funnel, and product revenue dashboards
+      ↓
+GitHub (Version control + CI)
+  → all SQL and YAML versioned here
+  → CI re-runs seed + run + test on DuckDB for every push
+```
+
+> **Power BI screenshots:** add your dashboard images to `docs/assets/` and reference them here. Suggested names: `powerbi-channel-performance.png`, `powerbi-funnel.png`, `powerbi-product-revenue.png`.
+
+---
+
 ## Stack
 
 | Layer | Technology |
 |-------|-----------|
+| Authoring IDE | dbt Cloud (browser-based IDE) |
 | Transformation | dbt 1.x |
-| CI / Local adapter | DuckDB (persistent file) |
-| Production adapter | BigQuery |
+| Production warehouse | BigQuery |
+| BI / Dashboards | Power BI |
+| CI / Local adapter | DuckDB (persistent file, no BigQuery needed) |
 | Packages | dbt-labs/dbt_utils 1.x |
-| BI (production) | Power BI |
-| CI | GitHub Actions |
+| Version control + CI | GitHub Actions |
 
 ---
 
@@ -200,6 +228,7 @@ dbt compile --profiles-dir .github/dbt-profiles --select analyses/
 | [`docs/hiring-summary.md`](docs/hiring-summary.md) | Recruiter-facing one-page summary with talking points |
 | [`models/marts/marts.yml`](models/marts/marts.yml) | Full column-level docs for all 4 mart tables |
 | [`analyses/`](analyses/) | Three business SQL analysis queries |
+| `docs/assets/powerbi-*.png` | Power BI dashboard screenshots (add yours here) |
 | CI badge | Passing: seed + run + test (57 tests) on every push |
 
 ---
