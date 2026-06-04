@@ -13,6 +13,23 @@ The repo also runs fully on **DuckDB** (CI and local) using Jinja adapter dispat
 
 ---
 
+## Power BI Dashboard
+
+Channel acquisition efficiency, revenue quality, and executive scorecard — built on `fct_marketing_web_performance` and `fct_order_marketing` marts.
+
+![Power BI — Channel Performance Dashboard](docs/assets/powerbi-channel-performance.png)
+
+| Metric | Value |
+|--------|-------|
+| New customers | 27 K |
+| Revenue per customer | $97.67 |
+| Conversion rate | 26.5% |
+| Sessions per customer (CAC proxy) | 24.75 |
+
+**Key insight from the scorecard:** Organic channel leads in revenue quality ($758.73 revenue/customer) but is low-volume (3,010 new customers). Owned channel (email) leads in sessions/customer (308.55) — a strong retention signal. Paid channel is the scale engine (2,050 new customers) but has the highest CAC proxy.
+
+---
+
 ## Business Questions Answered
 
 | Question | Model |
@@ -228,7 +245,7 @@ dbt compile --profiles-dir .github/dbt-profiles --select analyses/
 | [`docs/hiring-summary.md`](docs/hiring-summary.md) | Recruiter-facing one-page summary with talking points |
 | [`models/marts/marts.yml`](models/marts/marts.yml) | Full column-level docs for all 4 mart tables |
 | [`analyses/`](analyses/) | Three business SQL analysis queries |
-| `docs/assets/powerbi-*.png` | Power BI dashboard screenshots (add yours here) |
+| [`docs/assets/powerbi-channel-performance.png`](docs/assets/powerbi-channel-performance.png) | Power BI dashboard — channel acquisition efficiency + executive scorecard |
 | CI badge | Passing: seed + run + test (57 tests) on every push |
 
 ---
