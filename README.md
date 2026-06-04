@@ -123,7 +123,7 @@ Raw Sources (BigQuery) / Seeds (DuckDB CI)
 
 | Model | Grain | Key columns |
 |-------|-------|-------------|
-| `fct_order_marketing` | Order item | `revenue`, `returned_revenue`, `channel_group`, `is_completed_order`, `order_date` |
+| `fct_order_marketing` | Order item | `revenue`, `returned_revenue`, `channel_group`, `is_completed_order`, `order_date` — **incremental** (unique key: `order_item_sk`) |
 | `fct_marketing_web_performance` | Session | `session_duration_seconds`, `is_converted`, `channel_group`, `page_view_events`, `session_date` |
 | `dim_user` | User | `age_segment`, `signup_channel_group`, `country` (normalized) |
 | `dim_products` | Product | `unit_margin`, `unit_margin_pct`, `product_name` (with fallback logic) |
@@ -284,6 +284,8 @@ dbt compile --profiles-dir .github/dbt-profiles --select analyses/
 | [`models/marts/marts.yml`](models/marts/marts.yml) | Full column-level docs for all 4 mart tables |
 | [`analyses/`](analyses/) | Three business SQL analysis queries |
 | [`notebooks/olist-ecommerce-analysis.ipynb`](notebooks/olist-ecommerce-analysis.ipynb) | Python EDA + T-test + ANOVA + Chi-square on 99K order dataset |
+| [`notebooks/olist-sql-analysis.ipynb`](notebooks/olist-sql-analysis.ipynb) | DuckDB SQL: monthly trend, category ranking, RFM, cohort retention, delivery bands |
+| [`docs/dax-measures.md`](docs/dax-measures.md) | Power BI DAX measures — KPIs, PE4 efficiency score, YoY, channel ratios |
 | [`docs/assets/powerbi-channel-performance.png`](docs/assets/powerbi-channel-performance.png) | Power BI — Page 1: channel acquisition efficiency + executive scorecard |
 | [`docs/assets/powerbi-traffic-trend.png`](docs/assets/powerbi-traffic-trend.png) | Power BI — Page 2: traffic trend 2019–2026 + basket value by channel |
 | [`docs/assets/powerbi-demographics.png`](docs/assets/powerbi-demographics.png) | Power BI — Page 3: age, gender, country, and customer type segmentation |

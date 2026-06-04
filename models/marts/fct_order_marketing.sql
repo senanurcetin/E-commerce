@@ -1,8 +1,18 @@
-{{ config(materialized='table') }}
+{{
+    config(
+        materialized = 'incremental',
+        unique_key   = 'order_item_sk',
+        on_schema_change = 'sync_all_columns'
+    )
+}}
 
 with orders as (
     select * from {{ ref('int_orders_enriched') }}
     where user_id is not null
+    {% if is_incremental() %}
+      -- on incremental runs, only process new or updated order items
+      and order_item_created_at > (select max(order_item_created_at) from {{ this }})
+    {% endif %}
 ),
 final as (
     select
