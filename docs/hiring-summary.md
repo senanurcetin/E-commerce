@@ -16,6 +16,8 @@ Models were authored in the dbt Cloud browser IDE, run against a BigQuery datase
 
 | Skill | Evidence |
 |-------|----------|
+| **Python EDA** | Olist dataset: 99K orders, full EDA with plotly + pandas |
+| **Hypothesis testing** | T-test, ANOVA, Chi-square on real e-commerce data (scipy.stats) |
 | **dbt Cloud** | Models authored and run in dbt Cloud IDE against BigQuery |
 | **BigQuery** | Production warehouse with partitioned + clustered mart tables |
 | **Power BI** | Dashboard layer consuming mart outputs |

@@ -138,6 +138,30 @@ Raw Sources (BigQuery) / Seeds (DuckDB CI)
 
 ---
 
+## Python Analysis Notebook — Olist E-Commerce
+
+[`notebooks/olist-ecommerce-analysis.ipynb`](notebooks/olist-ecommerce-analysis.ipynb)
+
+Standalone Python analysis on the [Olist Brazilian E-Commerce dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) (99K orders, 2016–2018). Covers the full analytical workflow from EDA through statistical hypothesis testing.
+
+| Section | Tools | Key finding |
+|---------|-------|-------------|
+| EDA + Descriptive Stats | pandas, plotly | Avg order: 120 BRL, avg delivery: 12 days, avg review: 4.09/5 |
+| Correlation analysis | scipy, plotly | Delivery time negatively correlated with satisfaction |
+| **T-test** — Delivery speed → satisfaction | `scipy.stats.ttest_ind` | p ≈ 0: fast delivery significantly higher review scores |
+| **ANOVA** — Product category → order value | `scipy.stats.f_oneway` | Significant price differences across top 10 categories |
+| **Chi-square** — Payment method → completion rate | `scipy.stats.chi2_contingency` | Payment type significantly affects completion rate |
+
+**Hypotheses tested:**
+
+```
+H0: Teslimat hızı müşteri memnuniyetini etkilemez  →  REDDEDİLDİ (p ≈ 0)
+H0: Ürün kategorisinin sipariş değerine etkisi yok →  REDDEDİLDİ
+H0: Ödeme yöntemi tamamlama oranını etkilemez     →  REDDEDİLDİ
+```
+
+---
+
 ## SQL Analysis Queries
 
 Three business analysis queries in `/analyses` — compile with `dbt compile --select analyses/`:
@@ -259,6 +283,7 @@ dbt compile --profiles-dir .github/dbt-profiles --select analyses/
 | [`docs/hiring-summary.md`](docs/hiring-summary.md) | Recruiter-facing one-page summary with talking points |
 | [`models/marts/marts.yml`](models/marts/marts.yml) | Full column-level docs for all 4 mart tables |
 | [`analyses/`](analyses/) | Three business SQL analysis queries |
+| [`notebooks/olist-ecommerce-analysis.ipynb`](notebooks/olist-ecommerce-analysis.ipynb) | Python EDA + T-test + ANOVA + Chi-square on 99K order dataset |
 | [`docs/assets/powerbi-channel-performance.png`](docs/assets/powerbi-channel-performance.png) | Power BI — Page 1: channel acquisition efficiency + executive scorecard |
 | [`docs/assets/powerbi-traffic-trend.png`](docs/assets/powerbi-traffic-trend.png) | Power BI — Page 2: traffic trend 2019–2026 + basket value by channel |
 | [`docs/assets/powerbi-demographics.png`](docs/assets/powerbi-demographics.png) | Power BI — Page 3: age, gender, country, and customer type segmentation |
