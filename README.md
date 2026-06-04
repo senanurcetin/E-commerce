@@ -15,18 +15,32 @@ The repo also runs fully on **DuckDB** (CI and local) using Jinja adapter dispat
 
 ## Power BI Dashboard
 
-Channel acquisition efficiency, revenue quality, and executive scorecard — built on `fct_marketing_web_performance` and `fct_order_marketing` marts.
+Three-page dashboard built on `fct_marketing_web_performance`, `fct_order_marketing`, `dim_user`, and `dim_products` marts. Covers channel acquisition efficiency, time-series trends, and demographic segmentation.
 
-![Power BI — Channel Performance Dashboard](docs/assets/powerbi-channel-performance.png)
+### Page 1 — Channel Acquisition Efficiency & Executive Scorecard
 
-| Metric | Value |
-|--------|-------|
+![Power BI — Channel Performance](docs/assets/powerbi-channel-performance.png)
+
+| KPI | Value |
+|-----|-------|
 | New customers | 27 K |
 | Revenue per customer | $97.67 |
 | Conversion rate | 26.5% |
 | Sessions per customer (CAC proxy) | 24.75 |
 
-**Key insight from the scorecard:** Organic channel leads in revenue quality ($758.73 revenue/customer) but is low-volume (3,010 new customers). Owned channel (email) leads in sessions/customer (308.55) — a strong retention signal. Paid channel is the scale engine (2,050 new customers) but has the highest CAC proxy.
+**Insight:** Organic leads in revenue quality ($758.73/customer, score 100 — "scale it"). Owned (email) dominates retention (308 sessions/customer). Paid is the volume engine but highest CAC proxy.
+
+### Page 2 — Traffic Trend (2019–2026) & Basket Value by Channel
+
+![Power BI — Traffic Trend & Basket Analysis](docs/assets/powerbi-traffic-trend.png)
+
+**Insight:** Total users stable at ~13 B per year (2019–2025) — loyal base. Search engine is the dominant channel (~9.3 B users/year), Organic is the strong #2 (~2 B/year). Average basket value is consistent across channels ($20–22) — all channels attract similar-quality spenders. Search engine maintains $22/basket at 70 B user scale, anchoring total revenue dominance.
+
+### Page 3 — Demographics: Age, Gender, Country & Customer Type
+
+![Power BI — Demographics Breakdown](docs/assets/powerbi-demographics.png)
+
+**Insight:** Search engine's ~70% revenue share is uniform across all age groups and genders — channel mix is not demographic-dependent, it's volume-driven. Social media (FB) shows a 10-point gender gap (55% male) — female targeting opportunity. Japan, Brazil, and South Korea lead in average basket value despite lower total revenue — "high-value" markets for margin-focused expansion.
 
 ---
 
@@ -245,7 +259,9 @@ dbt compile --profiles-dir .github/dbt-profiles --select analyses/
 | [`docs/hiring-summary.md`](docs/hiring-summary.md) | Recruiter-facing one-page summary with talking points |
 | [`models/marts/marts.yml`](models/marts/marts.yml) | Full column-level docs for all 4 mart tables |
 | [`analyses/`](analyses/) | Three business SQL analysis queries |
-| [`docs/assets/powerbi-channel-performance.png`](docs/assets/powerbi-channel-performance.png) | Power BI dashboard — channel acquisition efficiency + executive scorecard |
+| [`docs/assets/powerbi-channel-performance.png`](docs/assets/powerbi-channel-performance.png) | Power BI — Page 1: channel acquisition efficiency + executive scorecard |
+| [`docs/assets/powerbi-traffic-trend.png`](docs/assets/powerbi-traffic-trend.png) | Power BI — Page 2: traffic trend 2019–2026 + basket value by channel |
+| [`docs/assets/powerbi-demographics.png`](docs/assets/powerbi-demographics.png) | Power BI — Page 3: age, gender, country, and customer type segmentation |
 | CI badge | Passing: seed + run + test (57 tests) on every push |
 
 ---
