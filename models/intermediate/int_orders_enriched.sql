@@ -31,7 +31,14 @@ order_attribution as (
                     abs(datediff('second', pe.event_created_at, oi.order_item_created_at)),
                     {% endif %}
                     pe.event_created_at desc,
-                    pe.sequence_number desc
+                    pe.sequence_number desc,
+                    -- Final tiebreaker. Without it, candidate events that match on
+                    -- every key above but carry different sources leave row_number()
+                    -- free to pick either, so the model returns a different answer
+                    -- from run to run. There is no basis for preferring one tied
+                    -- event over another, so order alphabetically: arbitrary, but
+                    -- reproducible.
+                    pe.traffic_source
             ) as rn
         from order_items oi
         left join purchase_events pe
