@@ -25,8 +25,12 @@ sessions as (
         countif(lower(event_type) = 'page_view') as page_view_events,
         countif(lower(event_type) = 'purchase') as purchase_events,
         countif(lower(event_type) = 'cancel') as cancel_events,
-        array_agg(traffic_source ignore nulls order by sequence_number, event_created_at limit 1)[safe_offset(0)] as traffic_source,
-        array_agg(browser ignore nulls order by sequence_number, event_created_at limit 1)[safe_offset(0)] as browser,
+        -- Staging coalesces these to the string 'unknown', so they are never null
+        -- and `ignore nulls` skipped nothing: a session whose first event had no
+        -- source resolved to 'unknown' even when later events carried a real one.
+        -- Nulling the placeholder makes first-touch pick the first real value.
+        array_agg(nullif(traffic_source, 'unknown') ignore nulls order by sequence_number, event_created_at limit 1)[safe_offset(0)] as traffic_source,
+        array_agg(nullif(browser, 'unknown') ignore nulls order by sequence_number, event_created_at limit 1)[safe_offset(0)] as browser,
         {% else %}
         min(event_created_at) as session_start_at_local,
         max(event_created_at) as session_end_at_local,
@@ -37,8 +41,10 @@ sessions as (
         count(case when lower(event_type) = 'page_view' then 1 end) as page_view_events,
         count(case when lower(event_type) = 'purchase' then 1 end) as purchase_events,
         count(case when lower(event_type) = 'cancel' then 1 end) as cancel_events,
-        first(traffic_source order by sequence_number, event_created_at) filter (where traffic_source is not null) as traffic_source,
-        first(browser order by sequence_number, event_created_at) filter (where browser is not null) as browser,
+        -- Same placeholder problem as the BigQuery branch: filtering on `is not
+        -- null` never excluded anything, so filter on the placeholder instead.
+        first(traffic_source order by sequence_number, event_created_at) filter (where traffic_source <> 'unknown') as traffic_source,
+        first(browser order by sequence_number, event_created_at) filter (where browser <> 'unknown') as browser,
         {% endif %}
         count(*) as total_events,
         max(case when lower(event_type) = 'page_view' then 1 else 0 end) as has_page_view,

@@ -8,7 +8,10 @@ users as (
     select * from {{ ref('stg_users') }}
 ),
 purchase_events as (
-    select user_id, sequence_number, event_created_at, traffic_source
+    -- 'unknown' is a staging placeholder, not a real source. Left as a string it
+    -- satisfies the coalesce below, so the signup-source fallback never fired.
+    select user_id, sequence_number, event_created_at,
+           nullif(traffic_source, 'unknown') as traffic_source
     from {{ ref('stg_events') }}
     where user_id is not null and event_type = 'purchase'
 ),

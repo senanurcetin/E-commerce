@@ -1,4 +1,4 @@
-default:
+e_commerce:
   target: ci
   outputs:
     ci:

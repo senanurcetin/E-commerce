@@ -2,7 +2,7 @@ name: 'e_commerce'
 version: '1.0.0'
 config-version: 2
 
-profile: 'default'
+profile: 'e_commerce'
 
 model-paths: ["models"]
 analysis-paths: ["analyses"]

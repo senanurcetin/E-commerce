@@ -10,12 +10,12 @@ models:
         tests:
           - not_null
           - unique
-      - name: first_name
-        description: User first name from the source system.
-      - name: last_name
-        description: User last name from the source system.
-      - name: email
-        description: User email address.
+      - name: user_email_hash
+        description: >
+          SHA-256 of the lowercased email, hex encoded. Allows matching a user
+          against an external list without this mart storing the address.
+      - name: email_domain
+        description: Domain part of the email, or 'unknown'. Supports consumer versus business segmentation without being identifying on its own.
       - name: age
         description: User age in years at the time of signup.
       - name: gender
@@ -32,12 +32,10 @@ models:
         description: User country, normalized to English (e.g. España -> Spain, Brasil -> Brazil).
       - name: postal_code
         description: User postal or ZIP code.
-      - name: street_address
-        description: User street address.
-      - name: latitude
-        description: Geographic latitude of the user location.
-      - name: longitude
-        description: Geographic longitude of the user location.
+      - name: latitude_approx
+        description: User latitude rounded to one decimal, roughly 11 km, so the point no longer identifies a household.
+      - name: longitude_approx
+        description: User longitude rounded to one decimal. See latitude_approx.
       - name: signup_traffic_source
         description: Acquisition channel recorded at the time of user signup (e.g. facebook, email, organic).
       - name: user_created_at
@@ -141,7 +139,10 @@ models:
       - name: is_converted
         description: 1 if the session resulted in a purchase (alias for has_purchase), else 0.
       - name: traffic_source
-        description: First non-null traffic source recorded in the session.
+        description: >
+          First-touch source of the session: the earliest event carrying a real
+          source. Events left as the staging placeholder 'unknown' are skipped,
+          so a session resolves to 'unknown' only when none of its events had one.
       - name: channel_group
         description: Marketing channel group derived from traffic_source. paid / owned / organic / other.
         tests:
