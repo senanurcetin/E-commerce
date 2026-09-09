@@ -13,35 +13,32 @@ The repo also runs fully on **DuckDB** (CI and local) using Jinja adapter dispat
 
 ### What is in this repo
 
-Three separate datasets live here. The dbt pipeline is the main body of work;
-the other two are standalone analyses kept alongside it. Figures from one do not
-transfer to another, so each is labelled at the point it is used.
+Two separate datasets live here. The dbt pipeline is the main body of work; the
+Olist notebooks are a standalone analysis kept alongside it.
 
 | Dataset | Scale | Used by | Tooling |
 |---------|-------|---------|---------|
-| **E-commerce clickstream and orders** — the main project | 2.4 M events, 180 K order lines, 100 K users | dbt models, `analyses/`, Power BI page 1 | dbt, BigQuery, DuckDB, Power BI |
-| **Top 50 global websites** (Alexa / SimilarWeb 2018–19) | 53 rows | Power BI pages 2–3 | Power BI, DAX |
+| **E-commerce clickstream and orders** — the main project | 2.4 M events, 180 K order lines, 100 K users | dbt models, `analyses/`, all three Power BI pages | dbt, BigQuery, DuckDB, Power BI |
 | **Olist Brazilian e-commerce** (public Kaggle set) | 99 K orders | `notebooks/` | Python, DuckDB |
 
 ---
 
-## Power BI Dashboards
+## Power BI Dashboard
 
-This repo holds work on **more than one dataset**, and the Power BI file covers
-two of them. They are kept apart deliberately: figures from one say nothing
-about the other.
+Three-page dashboard built on `fct_marketing_web_performance`,
+`fct_order_marketing`, `dim_user` and `dim_products`.
 
-| Page | Dataset | Where the numbers come from |
-|------|---------|-----------------------------|
-| Page 1 | E-commerce clickstream and orders | The dbt marts in this repo |
-| Pages 2–3 | Top 50 global websites, Alexa / SimilarWeb 2018–19 | A separate 53-row spreadsheet, not the dbt pipeline |
+**A note on units.** The report is authored in Turkish, where thousands are
+abbreviated **B** (*bin*). So "13,36 B" on page 2 is 13,360 — not 13 billion.
+Every figure below is given in full to avoid that reading.
 
----
+**A note on two source columns.** The project carries two different traffic
+vocabularies and they are not interchangeable:
 
-### E-commerce dashboard — built on this repo's marts
-
-Page 1 reads `fct_marketing_web_performance`, `fct_order_marketing`, `dim_user`
-and `dim_products`.
+| Column | Values | Meaning |
+|--------|--------|---------|
+| `dim_user.signup_traffic_source` | search, organic, facebook, email, display | How the *user* was acquired at signup. Pages 2–3 group by this |
+| `fct_marketing_web_performance.traffic_source` | email, adwords, youtube, facebook, organic | Source of the *session*. Page 1 and the funnel analyses use this |
 
 #### Page 1 — Channel Acquisition Efficiency & Executive Scorecard
 
@@ -54,44 +51,47 @@ and `dim_products`.
 | Conversion rate | 26.5% |
 | Sessions per customer (CAC proxy) | 24.75 |
 
-**Insight:** The channels separate on **volume**, not on measured performance.
-Email carries 45% of sessions and organic 5%, but session conversion sits
-between 26.4% and 26.9% for all five sources, and a chi-square test does not
-reject the hypothesis that they are equal (χ² = 6.73, df = 4, p = 0.15, across
-680,450 sessions). At that sample size a real difference of well under a
-percentage point would be detectable, so this is an informative negative result:
-the page describes channel **mix**, and no budget recommendation follows from
-it. Reproduce with
+**Insight:** A PE4 scorecard ranks the three channel groups on acquisition
+efficiency. Organic scores 100 — "priority: scale" — on revenue quality at
+$758.73 per customer against only 11.39 sessions per customer. Owned leads on
+engagement at 308.55 sessions per customer but $144.01 revenue per customer.
+Paid is the scale leader in between. The page states its own main caveat: with
+no spend data these are efficiency *proxies*, not cost figures.
+
+**Where that ranking does not come from.** Conversion is flat across the groups
+— 26.6%, 26.4%, 26.6% against a 26.5% overall rate — and that is not rounding.
+Tested across the five session-level sources, a chi-square test does not reject
+the hypothesis that they convert equally (χ² = 6.73, df = 4, p = 0.15, over
+680,450 sessions), and at that sample size a real difference of well under a
+percentage point would be detectable. So the scorecard's ranking rests on
+revenue per customer and sessions per customer; conversion carries no signal
+here. Reproduce with
 [`analyses/channel_conversion_significance.sql`](analyses/channel_conversion_significance.sql).
 
----
-
-### Website-ranking dashboard — a separate dataset
-
-Pages 2 and 3 are **not** built on the dbt pipeline. They analyse a 53-row table
-of the top 50 global websites (Alexa and SimilarWeb rankings, 2018–19), where
-"search engine", "social network" and "online shopping" are *site categories*,
-not marketing channels, and the audience figures are global web traffic rather
-than this project's 100,000 e-commerce users. They are kept here as Power BI and
-DAX work; none of their numbers carry over to the e-commerce analysis.
-
-#### Page 2 — Traffic Trend & Basket Value by Site Category
+#### Page 2 — Signups by Year & Basket Value by Acquisition Channel
 
 ![Power BI — Traffic Trend & Basket Analysis](docs/assets/powerbi-traffic-trend.png)
 
-**Insight:** Audience volume is stable year over year. Search engines are the
-dominant site category, with general-interest sites a distant second. Average
-basket value is consistent across categories, so the categories differ in reach
-rather than in spend per visit.
+**Insight:** Signups are flat at roughly **13,300 users per year** from 2019 to
+2025; 2026 sits at 6,554 because the year is incomplete, not because acquisition
+fell. Search is the dominant acquisition channel at **69,926 users (69.9%)**,
+organic second at **15,077 (15.1%)**, then facebook 5,919, email 5,102 and
+display 3,976 — 100,000 users in total. Average basket value lands between
+**$20.40 and $22.30** across all five channels, so the channels differ in reach,
+not in what their users spend per order.
 
 #### Page 3 — Demographics: Age, Gender, Country & Customer Type
 
 ![Power BI — Demographics Breakdown](docs/assets/powerbi-demographics.png)
 
-**Insight:** The search-engine share is uniform across age groups and genders,
-so category mix is driven by reach rather than demographics. Social networks
-show a roughly 10-point gender skew toward male audiences. Japan, Brazil and
-South Korea index high on basket value despite lower total volume.
+**Insight:** Search takes **68.1% to 70.1%** of revenue in every age bracket
+from 18-24 to 45+, so channel mix is driven by acquisition volume rather than by
+demographics. Gender splits are near even for most channels (50.6% to 52.7%
+male), with social media the outlier at **54.8% male** — a gap worth probing
+before it is read as a targeting opportunity. China and the United States lead
+total revenue, while Japan, Brazil and South Korea index highest on average
+basket value at lower volume. Existing customers account for **59.4%** of
+revenue against **40.6%** from new.
 
 ---
 
@@ -339,9 +339,9 @@ dbt compile --profiles-dir .github/dbt-profiles --select analyses/
 | [`notebooks/olist-ecommerce-analysis.ipynb`](notebooks/olist-ecommerce-analysis.ipynb) | Python EDA + T-test + ANOVA + Chi-square on 99K order dataset |
 | [`notebooks/olist-sql-analysis.ipynb`](notebooks/olist-sql-analysis.ipynb) | DuckDB SQL: monthly trend, category ranking, RFM, cohort retention, delivery bands |
 | [`docs/dax-measures.md`](docs/dax-measures.md) | Power BI DAX measures — KPIs, PE4 efficiency score, YoY, channel ratios |
-| [`docs/assets/powerbi-channel-performance.png`](docs/assets/powerbi-channel-performance.png) | Power BI — Page 1: channel acquisition efficiency + executive scorecard. **E-commerce marts** |
-| [`docs/assets/powerbi-traffic-trend.png`](docs/assets/powerbi-traffic-trend.png) | Power BI — Page 2: traffic trend + basket value by site category. **Website-ranking dataset** |
-| [`docs/assets/powerbi-demographics.png`](docs/assets/powerbi-demographics.png) | Power BI — Page 3: age, gender, country, and category segmentation. **Website-ranking dataset** |
+| [`docs/assets/powerbi-channel-performance.png`](docs/assets/powerbi-channel-performance.png) | Power BI — Page 1: channel acquisition efficiency + PE4 executive scorecard |
+| [`docs/assets/powerbi-traffic-trend.png`](docs/assets/powerbi-traffic-trend.png) | Power BI — Page 2: signups by year + basket value by acquisition channel |
+| [`docs/assets/powerbi-demographics.png`](docs/assets/powerbi-demographics.png) | Power BI — Page 3: age, gender, country, and customer-type segmentation |
 | CI badge | Passing: seed + run + test (57 tests) on every push |
 
 ---
@@ -352,12 +352,11 @@ dbt compile --profiles-dir .github/dbt-profiles --select analyses/
 - Timezone conversion falls back to UTC in DuckDB (no ICU extension required)
 - Seed data is 57 sample rows — representative structure, not statistically significant
 - Production BigQuery credentials are not part of this public repo
-- **The e-commerce source data behaves like generated sample data.** Traffic
-  source shows no relationship to conversion (p = 0.15 over 680,450 sessions),
-  which is what randomly assigned labels look like. The modelling, testing and
-  reporting logic is the deliverable; channel performance conclusions are not.
-- No cost or spend data, so ROI and CAC cannot be computed — the "CAC proxy" on
-  page 1 is a sessions-per-customer ratio, not a cost figure
+- Session conversion shows no measurable relationship to traffic source
+  (χ² = 6.73, df = 4, p = 0.15 over 680,450 sessions). Rankings by conversion are
+  not meaningful on this data; revenue and volume metrics still are
+- No cost or spend data, so ROI and true CAC cannot be computed — the "CAC proxy"
+  on page 1 is a sessions-per-customer ratio, as the dashboard itself states
 
 ---
 
