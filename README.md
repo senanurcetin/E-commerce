@@ -234,8 +234,8 @@ Four analysis queries in `/analyses` — compile with `dbt compile --select anal
 
 | Layer | Tests | Scope |
 |-------|-------|-------|
-| Source | 19 | not_null, unique, freshness (BigQuery only) |
-| Staging | 24 | not_null, unique, accepted_values, relationships |
+| Source | 16 | not_null, unique, freshness (BigQuery only) |
+| Staging | 23 | not_null, unique, accepted_values, relationships |
 | Intermediate | 6 | not_null, unique |
 | Marts | 24 | not_null, unique, accepted_values, relationships |
 | Custom SQL | 4 | Country alias removal, non-negative duration, page view presence, non-negative revenue |
@@ -366,6 +366,10 @@ did not hold and have been corrected here rather than left standing:
   Power BI. It is configured on three of the four raw tables, needs BigQuery
   credentials so it cannot run in CI, and currently reports stale because the
   source has not been reloaded since April. All three facts are now stated.
+- **The test breakdown did not add up.** The table above listed 19 source and 24
+  staging tests against a stated total of 73, but the column summed to 77. The
+  real counts are 16 and 23, which reconcile both with the total and with the 57
+  that run in CI.
 
 One defect was in the code rather than the docs: `int_events_enriched` joined
 user attributes onto every event row. Nothing downstream read them, and the join
@@ -378,7 +382,7 @@ reads, so this is a gap rather than a defect.
 
 ## Limitations
 
-- Source tests (19) require BigQuery access — excluded from CI
+- Source tests (16) require BigQuery access — excluded from CI
 - Timezone conversion falls back to UTC in DuckDB (no ICU extension required)
 - Seed data is 57 sample rows — representative structure, not statistically significant
 - Production BigQuery credentials are not part of this public repo
