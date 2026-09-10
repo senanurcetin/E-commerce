@@ -1,3 +1,8 @@
+-- User attributes are joined in the marts layer against dim_user rather than
+-- here. Joining them at event grain widened the largest table in the project
+-- with columns nothing downstream read, and pulled names, email, and other
+-- direct identifiers into a view that anyone with dataset access could query.
+
 with events as (
 
     select *
@@ -5,43 +10,25 @@ with events as (
 
 ),
 
-users as (
-
-    select *
-    from {{ ref('stg_users') }}
-
-),
-
 final as (
 
     select
-        e.event_id,
-        e.user_id,
-        e.session_id,
-        e.sequence_number,
-        e.event_created_at,
-        e.ip_address,
-        e.city,
-        e.state,
-        e.postal_code,
-        e.browser,
-        e.traffic_source,
-        e.page_uri,
-        e.event_type_raw,
-        e.event_type,
+        event_id,
+        user_id,
+        session_id,
+        sequence_number,
+        event_created_at,
+        ip_address,
+        city,
+        state,
+        postal_code,
+        browser,
+        traffic_source,
+        page_uri,
+        event_type_raw,
+        event_type
 
-        u.first_name,
-        u.last_name,
-        u.email,
-        u.age,
-        u.gender,
-        u.country,
-        u.signup_traffic_source,
-        u.user_created_at
-
-    from events e
-    left join users u
-        on e.user_id = u.user_id
+    from events
 
 )
 

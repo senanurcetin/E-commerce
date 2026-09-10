@@ -72,7 +72,11 @@ models:
         description: Order-level traffic source attributed from the nearest purchase event for the same user, falling back to signup source when needed.
 
   - name: int_events_enriched
-    description: Combined dataset of events and users for traffic and behavior analysis.
+    description: >
+      Event stream prepared for session analysis, at event grain. User attributes
+      are joined in the marts layer against dim_user rather than here, so this
+      model neither widens the largest table in the project nor carries direct
+      identifiers into a queryable view.
     columns:
       - name: event_id
         description: Unique identifier for each event.
@@ -81,34 +85,40 @@ models:
           - unique
 
       - name: user_id
-        description: User who triggered the event.
+        description: User who triggered the event. Null for anonymous traffic.
 
       - name: session_id
-        description: Session identifier.
+        description: Session identifier grouping consecutive events by one user.
+
+      - name: sequence_number
+        description: Position of the event within the user's event stream, used to order first-touch attribution.
 
       - name: event_created_at
-        description: Timestamp of the event.
+        description: Timestamp of the event, in UTC.
 
-      - name: event_type_raw
-        description: Raw event label from the source system.
+      - name: ip_address
+        description: Client IP address from the source event. Personal data, not carried into the marts layer.
 
-      - name: event_type
-        description: Normalized event type for funnel analysis.
+      - name: city
+        description: City resolved from the event, or 'unknown'.
 
-      - name: page_uri
-        description: Page visited by the user.
+      - name: state
+        description: State or region resolved from the event, or 'unknown'.
+
+      - name: postal_code
+        description: Postal code resolved from the event, or 'unknown'.
+
+      - name: browser
+        description: Browser used during the event, lowercased, or 'unknown'.
 
       - name: traffic_source
-        description: Traffic source of the event.
+        description: Acquisition source recorded on the event, or 'unknown'. Session-level source, distinct from the signup source on dim_user.
 
-      - name: country
-        description: User country.
+      - name: page_uri
+        description: Page path visited during the event.
 
-      - name: gender
-        description: User gender.
+      - name: event_type_raw
+        description: Raw event label from the source system, before normalization.
 
-      - name: age
-        description: User age.
-
-      - name: signup_traffic_source
-        description: Original acquisition source of the user.
+      - name: event_type
+        description: Normalized event type used for funnel analysis.

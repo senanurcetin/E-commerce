@@ -1,6 +1,6 @@
 # Power BI DAX Measures
 
-50 measures across mart tables and disconnected parameter tables.
+31 measures documented here, across mart tables and disconnected parameter tables.
 Model: `dim_user` → `fct_order_marketing` ← `dim_products` | `fct_marketing_web_performance`
 
 ---

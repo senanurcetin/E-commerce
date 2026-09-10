@@ -19,10 +19,10 @@ Models were authored in the dbt Cloud browser IDE, run against a BigQuery datase
 | **Python EDA** | Olist dataset: 99K orders, full EDA with plotly + pandas |
 | **Hypothesis testing** | T-test, ANOVA, Chi-square on real e-commerce data (scipy.stats) |
 | **dbt Cloud** | Models authored and run in dbt Cloud IDE against BigQuery |
-| **BigQuery** | Production warehouse with partitioned + clustered mart tables |
+| **BigQuery** | Production warehouse; mart tables materialised in BigQuery, with the order fact incremental |
 | **Power BI** | Dashboard layer consuming mart outputs |
 | **dbt modeling** | 3-layer architecture: staging (4 models) → intermediate (2) → marts (4) |
-| **SQL analytics** | 3 analysis queries: channel performance, conversion funnel, product revenue |
+| **SQL analytics** | 4 analysis queries: channel performance, conversion funnel, product revenue, conversion significance |
 | **Data quality** | 73 dbt tests across all layers: not_null, unique, accepted_values, relationships |
 | **Cross-adapter SQL** | Same models run on DuckDB (CI) and BigQuery (prod) via Jinja adapter dispatch |
 | **Business framing** | Channel grouping macro, funnel analysis, return rate tracking, revenue attribution |
@@ -56,4 +56,4 @@ Models were authored in the dbt Cloud browser IDE, run against a BigQuery datase
 3. Traffic attribution in `int_orders_enriched` uses a window function to match the nearest purchase event per order, with fallback to signup source — demonstrates awareness of attribution complexity in e-commerce.
 4. The `marketing_channel_group` macro centralizes channel classification so any model can group traffic sources without duplicating CASE logic — same pattern Power BI measures would reference.
 5. Cross-adapter Jinja blocks let the project run in CI with DuckDB seeds without BigQuery credentials — demonstrates multi-environment SQL thinking.
-6. 73 data quality tests enforce contracts at every layer; source freshness tests were wired up in BigQuery to catch stale data before it reached Power BI.
+6. 73 data quality tests enforce contracts at every layer. Source freshness is configured on three of the four raw tables, but it needs BigQuery credentials, so it runs manually rather than in CI — and on this dataset it currently reports stale, because the source has not been reloaded since April.

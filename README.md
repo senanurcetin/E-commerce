@@ -128,7 +128,7 @@ Raw Sources (BigQuery) / Seeds (DuckDB CI)
     |  int_orders_enriched                    |
     |    order + product + user + attribution |
     |  int_events_enriched                    |
-    |    event + user enrichment              |
+    |    event stream at event grain          |
     +-----------------------------------------+
               |
               v
@@ -138,7 +138,7 @@ Raw Sources (BigQuery) / Seeds (DuckDB CI)
     |  fct_marketing_web_performance          |
     |  dim_user    dim_products               |
     |  - BI-ready, fully documented           |
-    |  - partitioned + clustered (BigQuery)   |
+    |  - incremental order fact               |
     +-----------------------------------------+
               |
               v
@@ -147,6 +147,7 @@ Raw Sources (BigQuery) / Seeds (DuckDB CI)
     |  channel_performance.sql                |
     |  conversion_funnel.sql                  |
     |  top_products.sql                       |
+    |  channel_conversion_significance.sql    |
     +-----------------------------------------+
 ```
 
@@ -168,7 +169,7 @@ Raw Sources (BigQuery) / Seeds (DuckDB CI)
 | Model | Joins | Key logic |
 |-------|-------|-----------|
 | `int_orders_enriched` | order_items + products + users + events | Traffic attribution: nearest purchase event per order item via window function, fallback to signup source |
-| `int_events_enriched` | events + users | User demographic enrichment on clickstream |
+| `int_events_enriched` | events | Cleaned clickstream at event grain. User attributes are joined in the marts layer against `dim_user`, not here |
 
 ### Marts (4 tables)
 
@@ -275,8 +276,9 @@ dbt Cloud (IDE)
   → jobs scheduled and run against BigQuery warehouse
       ↓
 BigQuery (Warehouse)
-  → mart tables materialised as partitioned + clustered tables
-  → source freshness monitored via dbt source tests
+  → mart tables materialised as tables, with the order fact incremental
+  → source freshness configured on the raw tables (run manually; CI has no
+    warehouse credentials)
       ↓
 Power BI (Dashboard)
   → mart tables connected as DirectQuery or import datasets
@@ -345,6 +347,34 @@ dbt compile --profiles-dir .github/dbt-profiles --select analyses/
 | CI badge | Passing: seed + run + test (57 tests) on every push |
 
 ---
+
+## Documentation Review — September 2026
+
+The documentation was audited against the code and the warehouse. Four claims
+did not hold and have been corrected here rather than left standing:
+
+- **"Partitioned + clustered mart tables"** appeared in three places. No model
+  carried a `partition_by` or `cluster_by` config and none of the four mart
+  tables in BigQuery were partitioned or clustered — the configs were dropped
+  when the models were made cross-adapter. The claim is removed rather than the
+  partitioning restored: at 680K and 180K rows the benefit is marginal, and the
+  documentation should not drive the architecture.
+- **The analysis count** still read three after a fourth query was added.
+- **The DAX document** opened by claiming 50 measures; it contains 31
+  definitions. It now states what it documents.
+- **Source freshness** was described as catching stale data before it reached
+  Power BI. It is configured on three of the four raw tables, needs BigQuery
+  credentials so it cannot run in CI, and currently reports stale because the
+  source has not been reloaded since April. All three facts are now stated.
+
+One defect was in the code rather than the docs: `int_events_enriched` joined
+user attributes onto every event row. Nothing downstream read them, and the join
+pulled names and email addresses into a view queryable by anyone with dataset
+access. The join is removed and the model is now fully documented at 14 columns.
+
+Left open deliberately: 16 columns across the staging and intermediate layers
+have no description. Every mart column does, and the marts are what the BI layer
+reads, so this is a gap rather than a defect.
 
 ## Limitations
 
