@@ -362,7 +362,7 @@ did not hold and have been corrected here rather than left standing:
   partitioning restored: at 680K and 180K rows the benefit is marginal, and the
   documentation should not drive the architecture.
 - **The analysis count** still read three after a fourth query was added.
-- **The DAX document** opened by claiming 50 measures; it contains 31
+- **The DAX document** opened by claiming 50 measures; it contains 30
   definitions. It now states what it documents.
 - **Source freshness** was described as catching stale data before it reached
   Power BI. It is configured on three of the four raw tables, needs BigQuery
