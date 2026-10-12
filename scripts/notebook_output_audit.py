@@ -29,6 +29,10 @@ def main() -> None:
         "--dest", type=Path,
         help="Required with --clean. Do not point at the original notebook.",
     )
+    parser.add_argument(
+        "--acknowledge-output-loss", action="store_true",
+        help="Required before generating a copy without embedded Plotly charts.",
+    )
     args = parser.parse_args()
     if args.clean != (args.dest is not None):
         parser.error("--clean requires --dest, and --dest requires --clean")
@@ -40,7 +44,7 @@ def main() -> None:
     if not isinstance(original.get("cells"), list):
         parser.error("The input is not a notebook with a cell list")
 
-    n_code = n_outputs = n_images = 0
+    n_code = n_outputs = n_images = n_plotly_html = 0
     output_bytes = 0
     for cell in original["cells"]:
         if cell.get("cell_type") != "code":
@@ -50,14 +54,29 @@ def main() -> None:
             n_outputs += 1
             if "image/png" in item.get("data", {}):
                 n_images += 1
+            if "text/html" in item.get("data", {}):
+                html = item["data"]["text/html"]
+                html = "".join(html) if isinstance(html, list) else str(html)
+                if "Plotly" in html or "plotly" in html:
+                    n_plotly_html += 1
             output_bytes += len(json.dumps(item, ensure_ascii=False).encode("utf-8"))
 
     print(f"Original file: {len(raw):,} bytes")
     print(f"Code cells: {n_code}; outputs: {n_outputs}; embedded PNG outputs: {n_images}")
     print(f"Serialized output payload estimate: {output_bytes:,} bytes")
+    print(f"Plotly HTML output(s) retained: {n_plotly_html}")
     if not args.clean:
         print("No file changed. Review plots before deciding which evidence to retain.")
         return
+
+    if n_plotly_html and not args.acknowledge_output_loss:
+        parser.error(
+            f"Refusing to remove {n_plotly_html} interactive Plotly outputs. "
+            "The charts are project evidence, not just caches. Use "
+            "--acknowledge-output-loss only for an explicitly reviewed "
+            "temporary copy; never commit it as a replacement without "
+            "an equivalent chart-preserving export."
+        )
 
     before = cells_signature(original)
     for cell in original["cells"]:
