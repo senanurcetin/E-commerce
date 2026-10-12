@@ -170,6 +170,8 @@ models:
     description: >
       Order-item-level fact table for revenue, return, and marketing performance analysis.
       Each row is one order item. Joined with traffic attribution from the nearest purchase event.
+      This mart is rebuilt on each run: order status may change long after its creation,
+      so filtering increments by creation timestamp would silently miss later returns.
     columns:
       - name: order_item_sk
         description: Surrogate key — concat of order_item_id and order_id.
