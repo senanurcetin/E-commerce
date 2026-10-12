@@ -3,6 +3,7 @@ name: Commerce dbt Integrity
 description: Audit e-commerce dbt models, attribution joins, order revenue and returns with deterministic offline evidence before proposing minimal fixes.
 user-invocable: true
 disable-model-invocation: true
+include-custom-instructions: true
 tools: ["read", "search", "edit", "execute"]
 ---
 
