@@ -143,6 +143,7 @@ models:
           First-touch source of the session: the earliest event carrying a real
           source. Events left as the staging placeholder 'unknown' are skipped,
           so a session resolves to 'unknown' only when none of its events had one.
+          Event ID resolves ties when sequence numbers and timestamps match.
       - name: channel_group
         description: Marketing channel group derived from traffic_source. paid / owned / organic / other.
         tests:
