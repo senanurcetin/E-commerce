@@ -15,6 +15,8 @@
 
 The repo also runs fully on **DuckDB** (CI and local) using Jinja adapter dispatch, so every model and test can be reproduced without BigQuery access.
 
+**Release readiness:** [Evidence-scoped candidate notes](docs/RELEASE_NOTES_CANDIDATE.md). No new GitHub Release is claimed by this note.
+
 ### What is in this repo
 
 Two separate datasets live here. The dbt pipeline is the main body of work; the
