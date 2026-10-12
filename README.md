@@ -200,7 +200,7 @@ Raw Sources (BigQuery) / Seeds (DuckDB CI)
 
 [`notebooks/olist-ecommerce-analysis.ipynb`](notebooks/olist-ecommerce-analysis.ipynb)
 
-**Notebook size hygiene:** This notebook contains large embedded outputs. Inspect output size without modifying the original using `python scripts/notebook_output_audit.py`; create an opt-in clean *copy* using `python scripts/notebook_output_audit.py --clean --dest notebooks/olist-ecommerce-analysis.cleaned.ipynb`. Compare the notebook visuals and experiment evidence before replacing the original. The script preserves every code/Markdown cell source.
+**Notebook size hygiene:** The original Olist notebook contains about 18.47 MB of real Plotly HTML chart outputs. Read the [measured storage audit](docs/NOTEBOOK_STORAGE_AUDIT.md), or run `python scripts/notebook_output_audit.py` without changing a file. Removing outputs would also remove analytical visuals, so the helper refuses a stripped *copy* unless `--acknowledge-output-loss` is explicitly set. **Do not replace the published notebook with an output-free file:** preserve its charts and analytical evidence until a visually verified, size-reduced equivalent exists.
 
 Standalone Python analysis on the [Olist Brazilian E-Commerce dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) (99K orders, 2016–2018). Covers the full analytical workflow from EDA through statistical hypothesis testing.
 
