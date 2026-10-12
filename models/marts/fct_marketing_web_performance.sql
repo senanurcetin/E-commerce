@@ -29,8 +29,9 @@ sessions as (
         -- and `ignore nulls` skipped nothing: a session whose first event had no
         -- source resolved to 'unknown' even when later events carried a real one.
         -- Nulling the placeholder makes first-touch pick the first real value.
-        array_agg(nullif(traffic_source, 'unknown') ignore nulls order by sequence_number, event_created_at limit 1)[safe_offset(0)] as traffic_source,
-        array_agg(nullif(browser, 'unknown') ignore nulls order by sequence_number, event_created_at limit 1)[safe_offset(0)] as browser,
+        -- event_id breaks ties when sequence and timestamps coincide.
+        array_agg(nullif(traffic_source, 'unknown') ignore nulls order by sequence_number, event_created_at, event_id limit 1)[safe_offset(0)] as traffic_source,
+        array_agg(nullif(browser, 'unknown') ignore nulls order by sequence_number, event_created_at, event_id limit 1)[safe_offset(0)] as browser,
         {% else %}
         min(event_created_at) as session_start_at_local,
         max(event_created_at) as session_end_at_local,
@@ -43,8 +44,8 @@ sessions as (
         count(case when lower(event_type) = 'cancel' then 1 end) as cancel_events,
         -- Same placeholder problem as the BigQuery branch: filtering on `is not
         -- null` never excluded anything, so filter on the placeholder instead.
-        first(traffic_source order by sequence_number, event_created_at) filter (where traffic_source <> 'unknown') as traffic_source,
-        first(browser order by sequence_number, event_created_at) filter (where browser <> 'unknown') as browser,
+        first(traffic_source order by sequence_number, event_created_at, event_id) filter (where traffic_source <> 'unknown') as traffic_source,
+        first(browser order by sequence_number, event_created_at, event_id) filter (where browser <> 'unknown') as browser,
         {% endif %}
         count(*) as total_events,
         max(case when lower(event_type) = 'page_view' then 1 else 0 end) as has_page_view,
