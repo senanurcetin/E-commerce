@@ -3,6 +3,7 @@ name: Commerce Power BI Evidence
 description: Audit Power BI metric lineage, DAX documentation, theme claims and historical screenshot evidence without inventing an editable report or a successful refresh.
 user-invocable: true
 disable-model-invocation: true
+include-custom-instructions: true
 tools: ["read", "search", "edit", "execute"]
 ---
 
