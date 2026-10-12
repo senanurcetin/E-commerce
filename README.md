@@ -1,5 +1,9 @@
 # E-commerce Analytics Engineering
 
+![E-commerce Analytics Engineering — illustrated project cover](docs/assets/ecommerce-analytics-cover.svg)
+
+> Editorial illustration of the data workflow; not a Power BI dashboard screenshot. See the [authentic report screenshots](#power-bi-dashboard) below.
+
 [![CI](https://github.com/senanurcetin/E-commerce/actions/workflows/ci.yml/badge.svg)](https://github.com/senanurcetin/E-commerce/actions/workflows/ci.yml)
 ![dbt Cloud](https://img.shields.io/badge/dbt%20Cloud-IDE-orange)
 ![BigQuery](https://img.shields.io/badge/BigQuery-Warehouse-blue)
