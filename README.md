@@ -200,7 +200,7 @@ Raw Sources (BigQuery) / Seeds (DuckDB CI)
 
 [`notebooks/olist-ecommerce-analysis.ipynb`](notebooks/olist-ecommerce-analysis.ipynb)
 
-**Notebook size hygiene:** This notebook contains large embedded outputs. Inspect output size without modifying the original using `python scripts/notebook_output_audit.py`; create an opt-in clean *copy* using `python scripts/notebook_output_audit.py --clean --dest /tmp/olist-clean.ipynb`. Compare the notebook visuals and experiment evidence before replacing the original. The script preserves every code/Markdown cell source.
+**Notebook size hygiene:** This notebook contains large embedded outputs. Inspect output size without modifying the original using `python scripts/notebook_output_audit.py`; create an opt-in clean *copy* using `python scripts/notebook_output_audit.py --clean --dest notebooks/olist-ecommerce-analysis.cleaned.ipynb`. Compare the notebook visuals and experiment evidence before replacing the original. The script preserves every code/Markdown cell source.
 
 Standalone Python analysis on the [Olist Brazilian E-Commerce dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) (99K orders, 2016–2018). Covers the full analytical workflow from EDA through statistical hypothesis testing.
 
