@@ -1,48 +1,48 @@
 {
-  "name": "NEXUS Commerce Analytics",
+  "name": "NEXUS Commerce Analytics — Navy and Blue",
   "dataColors": [
-    "#A99AFF",
-    "#36C6CB",
-    "#F0A88F",
-    "#7597F0",
-    "#BBD983",
-    "#E9C17D",
-    "#AFC3D6",
-    "#B28AD6"
+    "#0572A8",
+    "#8F9BFF",
+    "#C88335",
+    "#CB5D78",
+    "#3566B5",
+    "#9E76C8",
+    "#5A7A90",
+    "#D59A64"
   ],
-  "foreground": "#1F2542",
-  "foregroundNeutralSecondary": "#4E5574",
-  "foregroundNeutralTertiary": "#8291AC",
+  "foreground": "#091625",
+  "foregroundNeutralSecondary": "#415672",
+  "foregroundNeutralTertiary": "#667E96",
   "background": "#FFFFFF",
-  "backgroundLight": "#F7F7FC",
-  "backgroundNeutral": "#DCE2F0",
-  "tableAccent": "#786AF3",
-  "good": "#19847A",
-  "neutral": "#BA822E",
-  "bad": "#C44167",
-  "maximum": "#6965E4",
-  "center": "#35BDB5",
-  "minimum": "#D9D8F9",
+  "backgroundLight": "#F7F8FA",
+  "backgroundNeutral": "#DAE5F0",
+  "tableAccent": "#0572A8",
+  "good": "#487FD8",
+  "neutral": "#B47725",
+  "bad": "#C24363",
+  "maximum": "#0572A8",
+  "center": "#7E91CA",
+  "minimum": "#E5EFF9",
   "textClasses": {
     "callout": {
       "fontFace": "Segoe UI Semibold",
       "fontSize": 26,
-      "color": "#202444"
+      "color": "#091625"
     },
     "title": {
       "fontFace": "Segoe UI Semibold",
       "fontSize": 12,
-      "color": "#222742"
+      "color": "#122942"
     },
     "header": {
       "fontFace": "Segoe UI Semibold",
       "fontSize": 12,
-      "color": "#222742"
+      "color": "#122942"
     },
     "label": {
       "fontFace": "Segoe UI",
       "fontSize": 10,
-      "color": "#54637A"
+      "color": "#415672"
     }
   },
   "visualStyles": {
@@ -66,7 +66,7 @@
             "radius": 10,
             "color": {
               "solid": {
-                "color": "#E1E5F2"
+                "color": "#D9E1E9"
               }
             }
           }
@@ -77,7 +77,7 @@
             "fontSize": 12,
             "fontColor": {
               "solid": {
-                "color": "#212744"
+                "color": "#122942"
               }
             }
           }
@@ -86,12 +86,12 @@
           {
             "backgroundColor": {
               "solid": {
-                "color": "#15182C"
+                "color": "#061524"
               }
             },
             "foregroundColor": {
               "solid": {
-                "color": "#F7FAFF"
+                "color": "#F7F8FA"
               }
             }
           }
@@ -101,7 +101,7 @@
             "$id": "Applied",
             "backgroundColor": {
               "solid": {
-                "color": "#F0EEFF"
+                "color": "#E7F2FA"
               }
             }
           },
@@ -123,7 +123,7 @@
             "textSize": 11,
             "fontColor": {
               "solid": {
-                "color": "#29314E"
+                "color": "#122942"
               }
             }
           }

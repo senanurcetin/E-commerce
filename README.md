@@ -2,7 +2,7 @@
 
 ![E-commerce Analytics Engineering — illustrated project cover](docs/assets/ecommerce-analytics-cover.svg)
 
-> Editorial illustration of the data workflow; not a Power BI dashboard screenshot. See the [authentic report screenshots](#power-bi-dashboard) below.
+> **Editorial illustration, not a dashboard screenshot.** The three [Power BI captures](#power-bi-dashboard) below are historical snapshots, not verified renders of the new NEXUS theme. See the [Power BI visual QA gate](docs/POWER_BI_VISUAL_QA.md) before interpreting them as current.
 
 [![CI](https://github.com/senanurcetin/E-commerce/actions/workflows/ci.yml/badge.svg)](https://github.com/senanurcetin/E-commerce/actions/workflows/ci.yml)
 ![dbt Cloud](https://img.shields.io/badge/dbt%20Cloud-IDE-orange)
@@ -14,6 +14,8 @@
 **Analytics engineering case study** — end-to-end pipeline built in **dbt Cloud**, warehoused in **BigQuery**, and visualized in **Power BI**. Transforms raw e-commerce clickstream events and order transactions into BI-ready mart tables through a 3-layer dbt architecture (staging → intermediate → marts).
 
 The repo also runs fully on **DuckDB** (CI and local) using Jinja adapter dispatch, so every model and test can be reproduced without BigQuery access.
+
+**Technical review:** [Project case study](https://senanur-cetin.vercel.app/projects/e-commerce-marketing-web-performance) · [Power BI screenshots and QA status](docs/POWER_BI_VISUAL_QA.md) · [NEXUS navy-blue theme source](powerbi/themes/nexus-commerce.json) · [DAX measure documentation](docs/dax-measures.md).
 
 **Release readiness:** [Evidence-scoped candidate notes](docs/RELEASE_NOTES_CANDIDATE.md). No new GitHub Release is claimed by this note.
 
@@ -30,6 +32,8 @@ Olist notebooks are a standalone analysis kept alongside it.
 ---
 
 ## Power BI Dashboard
+
+> **Historical evidence / Desktop review pending (12 October 2026):** The repository includes three original PNG captures and an importable NEXUS navy-blue [Power BI theme](powerbi/README.md), but **no editable `.pbix` or `.pbip` report**. The updated theme has **not** been applied to the captured report or independently rendered. Current screenshot labels and historical figures require a real Desktop refresh and reconciliation before publication as new evidence. [Full visual and semantic QA checklist](docs/POWER_BI_VISUAL_QA.md).
 
 Three-page dashboard built on `fct_marketing_web_performance`,
 `fct_order_marketing`, `dim_user` and `dim_products`.
