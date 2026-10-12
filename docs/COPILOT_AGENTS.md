@@ -30,6 +30,19 @@ python -m unittest discover -s tests -p 'test_session_first_touch_order.py'
 
 Do **not** interpret a successful YAML/frontmatter check or these Python checks as evidence that a Copilot session, BigQuery dbt run, or Power BI Desktop review has completed. CI providers are out of scope.
 
+## Offline profile policy regression
+
+The repository includes a **stdlib-only** policy checker and synthetic unit tests:
+
+```bash
+python scripts/check_copilot_agents.py
+python -m unittest discover -s tests -p 'test_copilot_agent_profiles.py'
+```
+
+The checker requires a repository instruction file, a unique agent name, nonempty prompts, explicit `read/search` tool permissions, no unrestricted or unknown tools, opt-in to repository instruction inheritance for CLI subagents, manual selection, and no automatic cloud-agent invocation. Run it against another checked-out repository with `python scripts/check_copilot_agents.py --root ../OTHER_REPO`. This script intentionally parses only the **flat frontmatter** pattern used by our custom agents; do not treat it as a general YAML validator or as proof of a working GitHub Copilot session. If other YAML features are introduced, extend the parser and tests first.
+
+The existing agents also use `edit` and `execute` for narrow, offline source and test changes. Those aliases are not a hard sandbox, so users should review the tools and permissions available in their Copilot client and approve any proposed changes. The agent prompts explicitly disallow remote CI or other paid service invocation.
+
 ## Review and acceptance record
 
 - [x] Two agent definitions committed under standard repository paths.
