@@ -148,7 +148,7 @@ Raw Sources (BigQuery) / Seeds (DuckDB CI)
     |  fct_marketing_web_performance          |
     |  dim_user    dim_products               |
     |  - BI-ready, fully documented           |
-    |  - incremental order fact               |
+    |  - current-status order fact            |
     +-----------------------------------------+
               |
               v
@@ -185,7 +185,7 @@ Raw Sources (BigQuery) / Seeds (DuckDB CI)
 
 | Model | Grain | Key columns |
 |-------|-------|-------------|
-| `fct_order_marketing` | Order item | `revenue`, `returned_revenue`, `channel_group`, `is_completed_order`, `order_date` — **incremental** (unique key: `order_item_sk`) |
+| `fct_order_marketing` | Order item | `revenue`, `returned_revenue`, `channel_group`, `is_completed_order`, `order_date` — **rebuilt table** so updated return statuses are reflected |
 | `fct_marketing_web_performance` | Session | `session_duration_seconds`, `is_converted`, `channel_group`, `page_view_events`, `session_date` |
 | `dim_user` | User | `age_segment`, `signup_channel_group`, `country` (normalized) |
 | `dim_products` | Product | `unit_margin`, `unit_margin_pct`, `product_name` (with fallback logic) |
