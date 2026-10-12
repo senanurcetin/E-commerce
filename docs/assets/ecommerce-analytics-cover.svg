@@ -4,7 +4,7 @@
 <rect width="1200" height="630" fill="url(#bg)"/><rect width="1200" height="630" fill="url(#grid)"/><circle cx="1080" cy="70" r="290" fill="#786AE9" opacity=".08"/>
 <rect x="62" y="58" width="234" height="32" rx="16" fill="#35305D" stroke="#6F69C9"/><text x="179" y="79" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" letter-spacing="1.8" font-weight="700" fill="#D2C9FF">DATA · COMMERCE · BI</text>
 <text x="62" y="181" font-family="Arial,sans-serif" font-size="63" font-weight="700" fill="#FFFFFF">E-commerce</text>
-<text x="62" y="251" font-family="Arial,sans-serif" font-size="63" font-weight="700" fill="#CFC4FF">Analytics Engineering</text>
+<text x="62" y="251" font-family="Arial,sans-serif" font-size="50" font-weight="700" fill="#CFC4FF">Analytics Engineering</text>
 <rect x="62" y="282" width="106" height="4" rx="2" fill="#BB9EFF"/>
 <text x="62" y="335" font-family="Arial,sans-serif" font-size="22" fill="#CDD2E3">Connecting user journeys, order data and</text>
 <text x="62" y="365" font-family="Arial,sans-serif" font-size="22" fill="#CDD2E3">business-ready reporting through dbt.</text>
