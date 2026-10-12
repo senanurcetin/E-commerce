@@ -1,0 +1,43 @@
+# CircleCI is the primary offline CI provider while GitHub Actions minutes
+# are exhausted. All data is the repository's local synthetic seed dataset;
+# no BigQuery credentials or customer data are used.
+version: 2.1
+
+jobs:
+  dbt-duckdb-quality:
+    docker:
+      - image: cimg/python:3.11
+    resource_class: small
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - commerce-dbt-pip-v1-{{ checksum ".github/workflows/ci.yml" }}
+            - commerce-dbt-pip-v1-
+      - run:
+          name: Install dbt DuckDB adapter
+          command: python -m pip install --disable-pip-version-check dbt-duckdb
+      - save_cache:
+          key: commerce-dbt-pip-v1-{{ checksum ".github/workflows/ci.yml" }}
+          paths:
+            - ~/.cache/pip
+      - run:
+          name: Resolve project dependencies
+          command: dbt deps --profiles-dir .github/dbt-profiles
+      - run:
+          name: Parse project SQL and YAML
+          command: dbt parse --profiles-dir .github/dbt-profiles
+      - run:
+          name: Load deterministic local seed data
+          command: dbt seed --profiles-dir .github/dbt-profiles
+      - run:
+          name: Run dbt staging, intermediate and marts
+          command: dbt run --profiles-dir .github/dbt-profiles
+      - run:
+          name: Execute local data-quality tests
+          command: dbt test --profiles-dir .github/dbt-profiles --exclude "source:*"
+
+workflows:
+  verify:
+    jobs:
+      - dbt-duckdb-quality
