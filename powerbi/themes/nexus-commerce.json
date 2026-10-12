@@ -1,0 +1,134 @@
+{
+  "name": "NEXUS Commerce Analytics",
+  "dataColors": [
+    "#A99AFF",
+    "#36C6CB",
+    "#F0A88F",
+    "#7597F0",
+    "#BBD983",
+    "#E9C17D",
+    "#AFC3D6",
+    "#B28AD6"
+  ],
+  "foreground": "#1F2542",
+  "foregroundNeutralSecondary": "#4E5574",
+  "foregroundNeutralTertiary": "#8291AC",
+  "background": "#FFFFFF",
+  "backgroundLight": "#F7F7FC",
+  "backgroundNeutral": "#DCE2F0",
+  "tableAccent": "#786AF3",
+  "good": "#19847A",
+  "neutral": "#BA822E",
+  "bad": "#C44167",
+  "maximum": "#6965E4",
+  "center": "#35BDB5",
+  "minimum": "#D9D8F9",
+  "textClasses": {
+    "callout": {
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 26,
+      "color": "#202444"
+    },
+    "title": {
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 12,
+      "color": "#222742"
+    },
+    "header": {
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 12,
+      "color": "#222742"
+    },
+    "label": {
+      "fontFace": "Segoe UI",
+      "fontSize": 10,
+      "color": "#54637A"
+    }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [
+          {
+            "show": true,
+            "transparency": 0,
+            "color": {
+              "solid": {
+                "color": "#FFFFFF"
+              }
+            }
+          }
+        ],
+        "border": [
+          {
+            "show": true,
+            "width": 1,
+            "radius": 10,
+            "color": {
+              "solid": {
+                "color": "#E1E5F2"
+              }
+            }
+          }
+        ],
+        "title": [
+          {
+            "fontFamily": "Segoe UI Semibold",
+            "fontSize": 12,
+            "fontColor": {
+              "solid": {
+                "color": "#212744"
+              }
+            }
+          }
+        ],
+        "outspacePane": [
+          {
+            "backgroundColor": {
+              "solid": {
+                "color": "#15182C"
+              }
+            },
+            "foregroundColor": {
+              "solid": {
+                "color": "#F7FAFF"
+              }
+            }
+          }
+        ],
+        "filterCard": [
+          {
+            "$id": "Applied",
+            "backgroundColor": {
+              "solid": {
+                "color": "#F0EEFF"
+              }
+            }
+          },
+          {
+            "$id": "Available",
+            "backgroundColor": {
+              "solid": {
+                "color": "#FFFFFF"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "slicer": {
+      "*": {
+        "items": [
+          {
+            "textSize": 11,
+            "fontColor": {
+              "solid": {
+                "color": "#29314E"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
