@@ -4,7 +4,7 @@ description: Read-only acceptance test for Commerce dbt Integrity custom agent
 
 # Commerce dbt Integrity — manual acceptance
 
-Before running this prompt, manually select the Commerce dbt Integrity custom agent in a GitHub Copilot-supported IDE. If selection is unavailable, record NOT RUN, not a successful agent test.
+Agent invocation: use a supported IDE agent selector **or** GitHub Copilot CLI with `--agent=commerce-dbt-integrity`. CLI agent selection is valid; do not mark this test NOT RUN merely because no IDE selector was used. The wrapper must record the requested agent ID and CLI exit status independently. If the actual loaded profile cannot be independently confirmed, report agent identity UNVERIFIED separately from the source-review checks. Do not infer successful runtime tests from a read-only answer.
 
 Inspect repository instructions and these source files:
 - models/marts/fct_order_marketing.sql
