@@ -215,11 +215,13 @@ def save_snapshot(result: dict, output_dir: Path) -> Path:
     collected = datetime.now(timezone.utc)
     result["fetched_at_utc"] = collected.isoformat()
     source = result["source"].replace("_api", "")
+    identity = str(result.get("property_id") or result.get("site_property") or result.get("url") or "")
+    identity_hash = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:12]
+    stamp = f"{collected:%Y%m%dT%H%M%S%fZ}"
     if "date_start" in result:
-        suffix = f"{result['date_start']}_{result['date_end']}"
+        suffix = f"{identity_hash}_{result['date_start']}_{result['date_end']}_{stamp}"
     else:
-        url_hash = hashlib.sha256(result.get("url", "").encode("utf-8")).hexdigest()[:12]
-        suffix = f"{result.get('strategy', 'snapshot')}_{url_hash}_{collected:%Y%m%dT%H%M%SZ}"
+        suffix = f"{result.get('strategy', 'snapshot')}_{identity_hash}_{stamp}"
     output = output_dir / f"{source}_{suffix}.json"
     output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return output

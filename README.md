@@ -109,7 +109,9 @@ revenue against **40.6%** from new.
 
 The analytics project now includes a **read-only Google measurement starter** covering GA4 Data API reporting, Google Search Console search performance, and PageSpeed Insights Lighthouse lab audits. See [Google measurement integration and source contracts](docs/GOOGLE_MEASUREMENT_INTEGRATION.md) and the [local collector](scripts/google_measurement.py).
 
-**Not connected by default:** no owned Google property, Search Console account or storefront has been authenticated by the repository. The connector does not alter BigQuery/dbt marts, inject GTM purchase tags into a portfolio website, or blend unrelated Olist/Greenweez data with Google reports. Google Ads spend, CrUX field Web Vitals, GTM instrumentation, and Looker Studio remain gated follow-up work. The new offline tests validate API result normalization without any Google credentials.
+**Not connected by default:** no owned Google property, Search Console account or storefront has been authenticated by the repository. The connector does not alter BigQuery/dbt marts, inject GTM purchase tags into a portfolio website, or blend unrelated Olist/Greenweez data with Google reports.
+
+**Source-isolated BI exports:** Run [`scripts/google_measurement_marts.py`](scripts/google_measurement_marts.py) on authenticated collector snapshots to produce GA4 daily channel, GSC daily device and PageSpeed lab CSV marts, with [documented contracts and reconciliation safeguards](docs/GOOGLE_MARTS_AND_BI.md). No real snapshot means no business-metric export; the workflow never substitutes demo figures. Google Ads spend, CrUX field Web Vitals, GTM instrumentation, and Looker Studio remain gated follow-up work. The new offline tests validate API result normalization without any Google credentials.
 
 ---
 
