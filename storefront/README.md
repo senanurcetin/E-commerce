@@ -32,7 +32,11 @@ Open **http://localhost:8788** for the production static bundle. The app is deli
 4. Keep the optional environment variable `NEXUS_GA4_MEASUREMENT_ID` blank until your own GA4 web data stream exists. Never enter an API key, Google service-account JSON or private token in this variable: it appears in the public page.
 5. Deploy and visually review the issued Vercel HTTPS URL before sharing. Configure a verified domain only if you own it.
 
-**Deployment status (16 October 2026):** A Vercel project named `nexus-commerce-lab` was created in the authorized user workspace and a Git deployment built successfully (READY) from `main` as `https://nexus-commerce-lab.vercel.app/`. **Vercel deployment protection is enabled**, so public, unauthenticated reachability has not been established. The build explicitly had **no GA4 Measurement ID**. No live browser, PageSpeed, GA4 property ownership or GSC result is verified yet. Public access and privacy review remain an operator release decision.
+**Deployment status (16 October 2026):** A Vercel project named `nexus-commerce-lab` was created in the authorized user workspace and a Git deployment built successfully (READY) from `main` as `https://nexus-commerce-lab.vercel.app/`. **Production Vercel Authentication protection was changed to preview-only with user approval on 16 October 2026**; preview deployments remain protected. Authorized Vercel fetch received HTTP 200 for the homepage and public configuration. Anonymous browser functional QA remains outstanding. The build explicitly had **no GA4 Measurement ID**. No live browser, PageSpeed, GA4 property ownership or GSC result is verified yet. Public access and privacy review remain an operator release decision.
+
+## Initial external site assessment
+
+A FlawPilot quick scan completed its own 36 checks and reported performance 100, infrastructure 84.88, security 73.85 and SEO 58, overall GROWTH_READY: https://flawpilot.com/report/X88JSW . **These are not Google Lighthouse or PageSpeed scores** and should never be imported into the PageSpeed source mart. The production domain currently has intentional `noindex, nofollow`, so Search Console organic Search data is not expected. The Google PageSpeed API still needs a separately documented live mobile and desktop run.
 
 ## Consent-first analytics
 
