@@ -105,6 +105,14 @@ revenue against **40.6%** from new.
 
 ---
 
+## Google measurement extension (opt-in, read-only)
+
+The analytics project now includes a **read-only Google measurement starter** covering GA4 Data API reporting, Google Search Console search performance, and PageSpeed Insights Lighthouse lab audits. See [Google measurement integration and source contracts](docs/GOOGLE_MEASUREMENT_INTEGRATION.md) and the [local collector](scripts/google_measurement.py).
+
+**Not connected by default:** no owned Google property, Search Console account or storefront has been authenticated by the repository. The connector does not alter BigQuery/dbt marts, inject GTM purchase tags into a portfolio website, or blend unrelated Olist/Greenweez data with Google reports. Google Ads spend, CrUX field Web Vitals, GTM instrumentation, and Looker Studio remain gated follow-up work. The new offline tests validate API result normalization without any Google credentials.
+
+---
+
 ## Business Questions Answered
 
 | Question | Model |
