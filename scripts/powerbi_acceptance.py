@@ -1,0 +1,105 @@
+"""Evidence-based NEXUS Power BI acceptance preflight.
+
+Checks static design/model artifacts and distinguishes those from an actual
+Power BI Desktop render/refresh. NEVER upgrades a missing .pbix/.pbip into a
+passed release, even when dbt CI and theme syntax pass.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+import re
+
+ROOT = Path(__file__).resolve().parents[1]
+REQUIRED_DAX = (
+    "Total Orders", "Ortalama Sepet Bedeli", "Toplam Oturum",
+    "Dönüşüm Oranı", "Return Rate", "Müşteri Başına Oturum (CAC Proxy)",
+)
+POWERBI_SUFFIXES = {".pbix", ".pbip", ".pbit", ".pbir"}
+EXPECTED_THEME = {
+    "background": "#080F20",
+    "foreground": "#EDF5FF",
+    "tableAccent": "#47DFF2",
+}
+
+
+def audit(root: Path, report_file: Path | None = None) -> dict:
+    theme_path = root / "powerbi" / "themes" / "nexus-commerce.json"
+    dax_path = root / "docs" / "dax-measures.md"
+    checks = {}
+    try:
+        theme = json.loads(theme_path.read_text(encoding="utf-8"))
+        checks["theme_json"] = (
+            all(theme.get(k) == v for k, v in EXPECTED_THEME.items())
+            and len(theme.get("dataColors", [])) >= 6
+            and isinstance(theme.get("visualStyles"), dict)
+        )
+    except (FileNotFoundError, ValueError):
+        checks["theme_json"] = False
+
+    try:
+        dax_text = dax_path.read_text(encoding="utf-8")
+        checks["dax_documentation"] = all(
+            re.search(r"(?m)^" + re.escape(name) + r"\s*=", dax_text)
+            for name in REQUIRED_DAX
+        )
+        checks["dax_semantics"] = (
+            "signup_traffic_source" in dax_text
+            and "session" in dax_text.lower()
+            and "CAC Proxy" in dax_text
+        )
+    except FileNotFoundError:
+        checks["dax_documentation"] = checks["dax_semantics"] = False
+
+    found = []
+    if report_file is not None:
+        path = Path(report_file)
+        if path.exists() and (path.suffix.lower() in POWERBI_SUFFIXES or path.is_dir()):
+            found.append(str(path))
+    else:
+        for base in (root / "powerbi", root / "reports"):
+            if base.is_dir():
+                found.extend(str(p) for p in base.rglob("*")
+                             if p.suffix.lower() in POWERBI_SUFFIXES)
+    checks["editable_report_present"] = bool(found)
+    # The presence of a report does not establish Desktop refresh or fidelity.
+    checks["actual_desktop_render"] = False
+    checks["actual_data_refresh"] = False
+    checks["page_visual_acceptance"] = False
+    checks["financial_reconciliation"] = False
+    checks["desktop_and_mobile_qa"] = False
+    return {
+        "schema_version": 1,
+        "release_decision": "HOLD",
+        "readiness_note": (
+            "Source-level Power BI design/measure preflight only; report must "
+            "be opened/refreshed and its visuals verified independently in Desktop."
+        ),
+        "checks": checks,
+        "report_candidates": found[:20],
+        "open_gates": [k for k, v in checks.items() if not v],
+        "source_independence": (
+            "Greenweez, historical E-Commerce and Commerce Lab test GA4 "
+            "are never combined into a single merchant turnover measure."
+        ),
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=ROOT)
+    parser.add_argument("--report", type=Path)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    result = audit(args.root, args.report)
+    formatted = json.dumps(result, ensure_ascii=False, indent=2)
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(formatted + "\n", encoding="utf-8")
+    print(formatted)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
