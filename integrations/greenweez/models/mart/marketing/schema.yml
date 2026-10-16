@@ -1,0 +1,92 @@
+version: 2
+
+models:
+  - name: marketing_performance_month
+    description: >
+      Blended monthly marketing efficiency (all paid sources together).
+      ROAS is blended because revenue is not attributed to a source or campaign.
+      Ratios are ratios of monthly sums; a zero denominator yields NULL.
+    columns:
+      - name: datemonth
+        description: "First day of the month."
+        tests:
+          - not_null
+          - unique
+      - name: revenue
+        description: "Total revenue of the month."
+      - name: operational_margin
+        description: "Operational margin of the month, before ad spend."
+      - name: ads_cost
+        description: "Total ad spend of the month."
+      - name: ads_impression
+        description: "Total ad impressions of the month."
+      - name: ads_clicks
+        description: "Total ad clicks of the month."
+      - name: transactions
+        description: "Number of orders of the month."
+      - name: roas
+        description: "Blended return on ad spend: revenue / ads_cost (a multiplier, e.g. 11.8 = 11.8 revenue per 1 spent)."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+      - name: margin_roas
+        description: "Operational margin per 1 of ad spend: operational_margin / ads_cost. Above 1 means ads paid for themselves out of margin."
+      - name: cpc
+        description: "Cost per click: ads_cost / ads_clicks (currency per click)."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+      - name: ctr
+        description: "Click-through rate: ads_clicks / ads_impression, as a ratio between 0 and 1 (0.03 = 3%)."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "between 0 and 1"
+
+  - name: marketing_source_month
+    description: >
+      Monthly ad efficiency per paid source (CPC, CTR, spend share).
+      There is intentionally no ROAS here: revenue is not attributed to a source.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [datemonth, paid_source]
+    columns:
+      - name: datemonth
+        description: "First day of the month."
+        tests:
+          - not_null
+      - name: paid_source
+        description: "Advertising source (adwords, bing, criteo, facebook)."
+        tests:
+          - not_null
+      - name: ads_cost
+        description: "Ad spend of the source in the month."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+      - name: impressions
+        description: "Ad impressions of the source in the month."
+      - name: clicks
+        description: "Ad clicks of the source in the month."
+      - name: cpc
+        description: "Cost per click: ads_cost / clicks (currency per click); NULL when there are no clicks."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+      - name: ctr
+        description: "Click-through rate: clicks / impressions, as a ratio between 0 and 1; NULL when there are no impressions."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "between 0 and 1"
+      - name: spend_share
+        description: "Share of the month's total ad spend that went to this source (0 to 1)."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "between 0 and 1"

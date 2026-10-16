@@ -1,0 +1,11 @@
+# Finance campaign reporting design. The local DuckDB demo uses synthetic seed data.
+[theme]
+base = "dark"
+primaryColor = "#78D6AD"
+backgroundColor = "#0B2424"
+secondaryBackgroundColor = "#153A34"
+textColor = "#E9F8EE"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false

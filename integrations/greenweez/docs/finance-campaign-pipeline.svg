@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+<title id="title">Greenweez — finance and campaign analytics architecture</title><desc id="desc">Conceptual analytical data lineage for transaction and paid-campaign modeling, not a chart of company financial results.</desc>
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#09201F"/><stop offset="1" stop-color="#174740"/></linearGradient><pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.1" fill="#C0EDCF" opacity=".15"/></pattern></defs>
+<rect width="1200" height="630" fill="url(#bg)"/><rect width="1200" height="630" fill="url(#dots)"/>
+<rect x="54" y="53" width="199" height="32" rx="16" fill="#285A4F" stroke="#5A9D86"/><text x="153" y="75" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="1.3" fill="#CEFFDE">ANALYTICS ENGINEERING</text>
+<text x="54" y="171" font-family="Arial,sans-serif" font-size="59" font-weight="700" fill="#FFFFFF">Finance meets</text>
+<text x="54" y="236" font-family="Arial,sans-serif" font-size="59" font-weight="700" fill="#B8F5CD">campaign analytics.</text>
+<text x="56" y="299" font-family="Arial,sans-serif" font-size="21" fill="#C2DCD2">Unify transactional finance and paid-channel</text>
+<text x="56" y="329" font-family="Arial,sans-serif" font-size="21" fill="#C2DCD2">activity into reproducible reporting marts.</text>
+<g font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#E0F6E8">
+<rect x="55" y="392" width="119" height="49" rx="14" fill="#245449" stroke="#528B77"/><text x="115" y="423" text-anchor="middle">dbt Core</text>
+<rect x="190" y="392" width="126" height="49" rx="14" fill="#245449" stroke="#528B77"/><text x="253" y="423" text-anchor="middle">BigQuery</text>
+<rect x="332" y="392" width="123" height="49" rx="14" fill="#245449" stroke="#528B77"/><text x="393" y="423" text-anchor="middle">DuckDB</text></g>
+<text x="55" y="556" font-family="Arial,sans-serif" font-size="13" letter-spacing="1.5" fill="#9BBAA9">ARCHITECTURE ILLUSTRATION  /  NO ACTUAL REVENUE VALUES SHOWN</text>
+<g transform="translate(678 83)">
+<rect width="462" height="444" rx="26" fill="#0D2928" stroke="#3C7567" stroke-width="2"/>
+<text x="31" y="50" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#E5FFF1">DATA MODEL → DECISION LAYER</text>
+<g font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#D6FFF0">
+<rect x="34" y="82" width="178" height="80" rx="13" fill="#214E46" stroke="#448A75"/><text x="123" y="115" text-anchor="middle">Orders &amp; costs</text><text x="123" y="140" text-anchor="middle" font-size="12" fill="#A5D3C2">Transaction source</text>
+<rect x="250" y="82" width="178" height="80" rx="13" fill="#214E46" stroke="#448A75"/><text x="339" y="115" text-anchor="middle">Paid campaigns</text><text x="339" y="140" text-anchor="middle" font-size="12" fill="#A5D3C2">Marketing source</text></g>
+<path d="M123 164V191H231V219 M339 164V191H231" fill="none" stroke="#91D8B2" stroke-width="3" stroke-linejoin="round"/>
+<rect x="86" y="219" width="290" height="88" rx="15" fill="#327E63" stroke="#8BD3A6"/><text x="231" y="254" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="700" fill="#FFFFFF">Staging → marts</text><text x="231" y="283" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#DBF7E9">Tested dbt transformations</text>
+<path d="M231 310V337" fill="none" stroke="#91D8B2" stroke-width="3"/>
+<rect x="33" y="340" width="396" height="69" rx="15" fill="#184139" stroke="#589981"/><text x="231" y="368" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#E6FFF2">Margin · logistics · ad spend</text><text x="231" y="394" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#B3DACA">Reporting metrics, not simulated results</text>
+</g>
+</svg>

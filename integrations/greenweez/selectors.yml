@@ -1,0 +1,15 @@
+selectors:
+  # Models and tests that exist in `source_system: fvt_gsheet` mode. Run with:
+  #   dbt build --target gsheet --vars '{source_system: fvt_gsheet}' --selector fvt_gsheet --exclude resource_type:seed
+  # marketing_source_month needs per-source clicks/impressions, which the sheet export does not have.
+  - name: fvt_gsheet
+    description: "fvt_gsheet staging plus everything downstream, without the per-source marketing model."
+    definition:
+      union:
+        - method: tag
+          value: fvt_gsheet
+          children: true
+        - exclude:
+            - method: fqn
+              value: marketing_source_month
+              children: true

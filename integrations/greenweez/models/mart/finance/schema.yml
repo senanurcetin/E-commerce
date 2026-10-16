@@ -1,0 +1,152 @@
+version: 2
+
+models:
+  - name: finance_days
+    description: "Daily financial metrics for business reporting, aggregated at date level."
+    columns:
+      - name: date_date
+        description: "Date of transactions."
+        tests:
+          - not_null
+          - unique
+      - name: total_transactions
+        description: "Total number of orders per day."
+      - name: total_revenue
+        description: "Total revenue generated per day."
+      - name: avg_basket
+        description: "Average basket value per day (total revenue divided by number of orders)."
+      - name: operational_margin
+        description: "Total operational margin per day."
+      - name: total_purchase_cost
+        description: "Total purchase cost per day."
+      - name: total_margin
+        description: "Product margin per day (revenue - purchase cost), before shipping, logistics and ads."
+      - name: total_shipping_fee
+        description: "Total shipping fees paid by customers per day."
+      - name: total_log_cost
+        description: "Total logistics costs per day."
+      - name: total_quantity
+        description: "Total quantity of products sold per day."
+      - name: total_ship_cost
+        description: "Total shipping cost per day."
+
+  - name: finance_campaigns_day
+    description: >
+      Daily finance mart enriched with paid campaign performance and advertising margin.
+      Full outer join of finance and ad data, so days with ad spend but no orders are kept.
+      Materialized as a view (cheap derived layer; the table-materialized `finance_days` holds the heavy aggregation).
+    columns:
+      - name: date
+        description: "Reporting date."
+        tests:
+          - not_null
+          - unique
+      - name: ads_margin
+        description: "Advertising-adjusted margin calculated as operational_margin minus ads_cost."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "= round(operational_margin - ads_cost, 2)"
+      - name: average_basket
+        description: "Average basket value per day (revenue / transactions; NULL on days without orders)."
+      - name: operational_margin
+        description: "Operational margin before advertising cost."
+      - name: ads_cost
+        description: "Advertising cost per day."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+      - name: ads_impression
+        description: "Advertising impressions per day."
+      - name: ads_clicks
+        description: "Advertising clicks per day."
+      - name: transactions
+        description: "Number of orders per day."
+      - name: quantity
+        description: "Quantity sold per day."
+      - name: revenue
+        description: "Revenue per day."
+      - name: purchase_cost
+        description: "Purchase cost per day."
+      - name: margin
+        description: "Product margin per day (revenue - purchase cost) before operational costs."
+      - name: shipping_fee
+        description: "Shipping fee per day."
+      - name: log_cost
+        description: "Logistics cost per day."
+      - name: ship_cost
+        description: "Shipping cost per day."
+
+  - name: finance_campaigns_month
+    description: "Monthly finance mart enriched with paid campaign performance and advertising margin."
+    columns:
+      - name: datemonth
+        description: "Month of reporting."
+        tests:
+          - not_null
+          - unique
+      - name: ads_margin
+        description: "Advertising-adjusted margin aggregated by month."
+      - name: average_basket
+        description: "Weighted average basket for the month (total revenue / total transactions)."
+      - name: operational_margin
+        description: "Operational margin aggregated by month."
+      - name: ads_cost
+        description: "Advertising cost aggregated by month."
+      - name: ads_impression
+        description: "Advertising impressions aggregated by month."
+      - name: ads_clicks
+        description: "Advertising clicks aggregated by month."
+      - name: transactions
+        description: "Number of orders aggregated by month."
+      - name: quantity
+        description: "Quantity sold aggregated by month."
+      - name: revenue
+        description: "Revenue aggregated by month."
+      - name: purchase_cost
+        description: "Purchase cost aggregated by month."
+      - name: margin
+        description: "Margin aggregated by month."
+      - name: shipping_fee
+        description: "Shipping fee aggregated by month."
+      - name: log_cost
+        description: "Logistics cost aggregated by month."
+      - name: ship_cost
+        description: "Shipping cost aggregated by month."
+
+  - name: finance_refunds_month
+    description: >
+      fvt_gsheet mode only (disabled otherwise). Monthly view of the Google Sheets `refund` column,
+      reported separately from revenue and margins. The column is on every order, uniformly between 50 and
+      500 and independent of order size, and as stored it is 3.8 times the revenue, so it is not treated as
+      refunded money until its unit is confirmed. Set `refund_amount_scale` (e.g. 0.01 for cents) and
+      `refund_unit_verified: true` to get net_revenue_after_refunds.
+    columns:
+      - name: datemonth
+        description: "First day of the month."
+        tests:
+          - not_null
+          - unique
+      - name: orders
+        description: "Number of orders in the month."
+      - name: revenue
+        description: "Revenue of the month."
+      - name: refund_amount_raw
+        description: "Sum of the sheet's refund column exactly as stored."
+      - name: refund_amount
+        description: "refund_amount_raw multiplied by the refund_amount_scale variable (1.0 by default)."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+      - name: orders_with_refund
+        description: "Orders whose refund value is greater than 0."
+      - name: orders_refund_above_revenue
+        description: "Orders whose (scaled) refund is higher than the order revenue, which a real refund cannot be."
+      - name: refund_to_revenue
+        description: "Scaled refund divided by revenue, as a ratio."
+      - name: refund_unit_verified
+        description: "Value of the refund_unit_verified variable (false until the unit is confirmed)."
+      - name: net_revenue_after_refunds
+        description: "revenue - refund_amount when refund_unit_verified is true, otherwise NULL."

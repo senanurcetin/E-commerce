@@ -1,0 +1,48 @@
+name: 'dbt_workintech'
+version: '1.0.0'
+config-version: 2
+
+profile: 'default'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+vars:
+  # Raw system feeding the intermediate layer: `gwz_raw` (default, raw_gz_* tables)
+  # or `fvt_gsheet` (Fivetran Google Sheets export, order-level). See README.
+  source_system: gwz_raw
+  # fvt_gsheet only: how to read the sheet's `refund` column (see README, "Refunds").
+  # refund_amount_scale multiplies the stored value (e.g. 0.01 if it is in cents);
+  # refund_unit_verified true makes finance_refunds_month compute net_revenue_after_refunds.
+  refund_amount_scale: 1.0
+  refund_unit_verified: false
+
+models:
+  dbt_workintech:
+    staging:
+      +materialized: view
+      gsheet:
+        +tags: [fvt_gsheet]
+    intermediate:
+      +materialized: view
+    mart:
+      +materialized: table
+      finance:
+        +schema: finance
+      marketing:
+        +schema: marketing
+
+# Seeds are synthetic demo data for the DuckDB targets (ci, demo).
+# On BigQuery the sources point at the real raw dataset, so seeds are disabled.
+seeds:
+  dbt_workintech:
+    +enabled: "{{ target.type != 'bigquery' }}"

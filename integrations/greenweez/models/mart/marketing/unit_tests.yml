@@ -1,0 +1,31 @@
+version: 2
+
+unit_tests:
+  - name: source_month_ratios_are_ratios_of_sums
+    description: >
+      CPC and CTR are computed from summed cost/clicks/impressions (not averaged per day),
+      zero clicks give a NULL CPC, and spend share is relative to the month's total.
+    model: marketing_source_month
+    given:
+      - input: ref('int_campaigns')
+        rows:
+          - {date_date: "2023-01-05", paid_source: adwords, campaign_key: a1, campaign_name: A, ads_cost: 10, impression: 100, click: 10}
+          - {date_date: "2023-01-20", paid_source: adwords, campaign_key: a1, campaign_name: A, ads_cost: 30, impression: 900, click: 10}
+          - {date_date: "2023-01-07", paid_source: bing, campaign_key: b1, campaign_name: B, ads_cost: 5, impression: 50, click: 0}
+    expect:
+      rows:
+        - {datemonth: "2023-01-01", paid_source: adwords, ads_cost: 40, impressions: 1000, clicks: 20, cpc: 2, ctr: 0.02, spend_share: 0.8889}
+        - {datemonth: "2023-01-01", paid_source: bing, ads_cost: 5, impressions: 50, clicks: 0, cpc: null, ctr: 0, spend_share: 0.1111}
+
+  - name: blended_roas_cpc_ctr_definitions
+    description: "Blended ROAS, margin ROAS, CPC and CTR for a month; zero spend gives NULL ratios."
+    model: marketing_performance_month
+    given:
+      - input: ref('finance_campaigns_month')
+        rows:
+          - {datemonth: "2023-01-01", revenue: 1000, operational_margin: 300, ads_cost: 100, ads_impression: 5000, ads_clicks: 250, transactions: 10}
+          - {datemonth: "2023-02-01", revenue: 500, operational_margin: 100, ads_cost: 0, ads_impression: 0, ads_clicks: 0, transactions: 5}
+    expect:
+      rows:
+        - {datemonth: "2023-01-01", roas: 10, margin_roas: 3, cpc: 0.4, ctr: 0.05}
+        - {datemonth: "2023-02-01", roas: null, margin_roas: null, cpc: null, ctr: null}

@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  dbt-build:
+    runs-on: ubuntu-latest
+    env:
+      DBT_PROFILES_DIR: .github/dbt-profiles
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Test read-only Google Sheets campaign coverage audit
+        run: python -m unittest discover -s tests -p 'test_audit_sheet_campaign_links.py' -v
+
+      - name: Lint YAML
+        run: yamllint .
+
+      - name: Install dbt packages
+        run: dbt deps
+
+      - name: Lint SQL
+        run: sqlfluff lint models tests
+
+      - name: Load synthetic seed data (DuckDB)
+        run: dbt seed
+
+      # Seeds are loaded above because sources do not create DAG edges to them.
+      - name: Build and test models
+        run: dbt build --exclude resource_type:seed
+
+      - name: Build and test the fvt_gsheet mode
+        run: |
+          dbt seed --target gsheet
+          dbt build --target gsheet --vars '{source_system: fvt_gsheet}' --selector fvt_gsheet --indirect-selection cautious --exclude resource_type:seed
+
+      - name: Smoke-test the dashboard in both source modes
+        run: |
+          pip install -r demo/requirements.txt
+          python demo/smoke_test.py target/ci.duckdb sources
+          python demo/smoke_test.py target/gsheet.duckdb no-sources
+
+      - name: Generate docs
+        run: dbt docs generate
+
+      - name: Upload dbt docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-docs
+          path: |
+            target/index.html
+            target/manifest.json
+            target/catalog.json

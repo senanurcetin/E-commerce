@@ -1,0 +1,161 @@
+version: 2
+
+sources:
+  - name: gsheet
+    description: >
+      Order-level finance export from Google Sheets (Fivetran), BigQuery dataset `fvt_gsheet`.
+      Covers 2021-10-01 to 2021-10-15 (13,362 orders). It is a static snapshot, so no freshness
+      check is configured. On the DuckDB targets the same table names are served by synthetic seeds.
+      Fivetran bookkeeping columns (`_line`, `_row`, `_fivetran_synced`) are not used.
+    database: "{{ 'workintech-working' if target.type == 'bigquery' else target.database }}"
+    schema: "{{ 'fvt_gsheet' if target.type == 'bigquery' else target.schema }}"
+    tables:
+      - name: orders
+        identifier: gwz_finance_orders_orders
+        description: "One row per order with turnover, purchase cost and the shipping fee paid by the customer."
+        columns:
+          - name: orders_id
+            description: "Order identifier."
+          - name: datetime
+            description: "Order timestamp as text, e.g. '2021-10-01 00:00:00UTC'."
+          - name: turnover
+            description: "Order revenue (13 orders have 0)."
+          - name: purchase_cost
+            description: "Purchase cost of the order's goods (561 orders have 0)."
+          - name: ship_fee
+            description: "Shipping fee charged to the customer."
+      - name: shipping
+        identifier: gwz_finance_shipping_shipping
+        description: "One row per order with logistics and shipping costs."
+        columns:
+          - name: orders_id
+            description: "Order identifier."
+          - name: date_date
+            description: "Shipping date."
+          - name: log_cost
+            description: "Logistics cost."
+          - name: ship_cost
+            description: "Shipping cost (stored as INTEGER)."
+      - name: refund
+        identifier: gwz_finance_refund_sheet_1
+        description: "One row per order with a `refund` figure of unverified meaning (see stg_gsheet__refund)."
+        columns:
+          - name: orders_id
+            description: "Order identifier."
+          - name: datetime
+            description: "Refund timestamp as text."
+          - name: refund
+            description: "Whole number between 50 and 500 on every order."
+      - name: campaign
+        identifier: gwz_finance_campaign
+        description: "One row per day with the total ad cost. No source, campaign, impressions or clicks."
+        columns:
+          - name: datetime
+            description: "Timestamp of the daily entry as text (arbitrary hour)."
+          - name: cost
+            description: "Total ad cost of the day."
+
+models:
+  - name: stg_gsheet__orders
+    description: >
+      Order-level revenue, purchase cost and customer-paid shipping fee. Standardized names:
+      turnover becomes revenue, ship_fee becomes shipping_fee. Zero-revenue orders (13) and
+      negative-margin orders (43) are kept on purpose.
+    columns:
+      - name: orders_id
+        description: "Order identifier."
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_gsheet__shipping')
+                field: orders_id
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('stg_gsheet__refund')
+                field: orders_id
+              config:
+                severity: warn
+      - name: date_date
+        description: "Order date (first 10 characters of the source timestamp)."
+        tests:
+          - not_null
+      - name: revenue
+        description: "Order revenue."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+      - name: purchase_cost
+        description: "Purchase cost of the order."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+      - name: shipping_fee
+        description: "Shipping fee paid by the customer."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+  - name: stg_gsheet__shipping
+    description: "Logistics and shipping cost per order."
+    columns:
+      - name: orders_id
+        description: "Order identifier."
+        tests:
+          - unique
+          - not_null
+      - name: date_date
+        description: "Shipping date."
+      - name: log_cost
+        description: "Logistics cost."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+      - name: ship_cost
+        description: "Shipping cost."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+  - name: stg_gsheet__refund
+    description: >
+      Staged only. `refund_amount` is NOT used in any margin: it is uncorrelated with the order
+      (correlation with revenue about 0.01, higher than revenue on 12,426 of 13,362 orders), so it
+      does not behave like a refunded amount. Confirm its meaning before using it.
+    columns:
+      - name: orders_id
+        description: "Order identifier."
+        tests:
+          - unique
+          - not_null
+      - name: date_date
+        description: "Refund date."
+      - name: refund_amount
+        description: "Refund figure as stored in the sheet (unit and meaning unverified)."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+  - name: stg_gsheet__campaign
+    description: "Total ad cost per day (one row per day). Source, impressions and clicks are not available."
+    columns:
+      - name: date_date
+        description: "Date of the daily ad cost entry."
+        tests:
+          - unique
+          - not_null
+      - name: ads_cost
+        description: "Total ad cost of the day."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
