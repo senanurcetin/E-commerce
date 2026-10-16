@@ -344,12 +344,13 @@ with st.expander(
         "Google receives the submitted URL; API quotas or availability may apply."
     )
     st.markdown(
-        "**Choose a public demo storefront or enter your own site.** "
-        "These stores belong to third parties. Their live traffic, purchases "
-        "and transactions do not match the independent TheLook warehouse."
+        "**Default: our controlled NEXUS Commerce Lab storefront.** "
+        "Tricentis and nopCommerce are independent third-party benchmarks. "
+        "PageSpeed reports measure the selected public page only; none of "
+        "these websites produces the historical TheLook warehouse orders."
     )
     test_choice = st.selectbox(
-        "E-commerce demo site",
+        "Measurement target",
         options=list(TEST_SITES),
         index=list(TEST_SITES).index(DEFAULT_TEST_SITE),
         help="Selecting a demo URL never starts an audit or retrieves analytics data.",
