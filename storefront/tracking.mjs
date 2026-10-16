@@ -1,6 +1,6 @@
 import { validateMeasurementId, validateLabEvent } from "./core.mjs";
 
-const CONSENT_KEY = "nexus_commerce_lab_analytics_consent_v1";
+const CONSENT_KEY_PREFIX = "nexus_commerce_lab_analytics_consent_v2_";
 
 /**
  * Consent-first tracking. NO Google resource, cookie or request is created
@@ -8,10 +8,12 @@ const CONSENT_KEY = "nexus_commerce_lab_analytics_consent_v1";
  */
 export function createTracker({ measurementId = "", host, doc, storage }) {
   const valid = validateMeasurementId(measurementId);
+  // Never carry a previous property\'s consent to a different GA4 stream.
+  const consentKey = valid ? CONSENT_KEY_PREFIX + measurementId : null;
   let consent = "unset";
   let injected = false;
   try {
-    const saved = storage?.getItem(CONSENT_KEY);
+    const saved = consentKey ? storage?.getItem(consentKey) : null;
     if (saved === "allow" || saved === "deny") consent = saved;
   } catch {
     // Browser storage may be unavailable. Default is no tracking.
@@ -26,8 +28,7 @@ export function createTracker({ measurementId = "", host, doc, storage }) {
     host.gtag = host.gtag || function gtag() {
       host.dataLayer.push(arguments);
     };
-    // Explicit consent update. No automatic GA4 pageview is emitted.
-    host.gtag("js", new Date());
+    // Analytics is disabled until explicit opt-in; even then, never send an\n    // automatic GA4 page_view or purchase event.\n    host.gtag("consent", "default", { analytics_storage: "denied", ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied" });\n    host.gtag("consent", "update", { analytics_storage: "granted" });\n    host.gtag("js", new Date());
     host.gtag("config", measurementId, { send_page_view: false });
     const script = doc.createElement("script");
     script.async = true;
@@ -49,12 +50,14 @@ export function createTracker({ measurementId = "", host, doc, storage }) {
     if (value !== "allow" && value !== "deny") throw new RangeError("Consent must be allow or deny");
     consent = value;
     try {
-      storage?.setItem(CONSENT_KEY, value);
+      if (consentKey) storage?.setItem(consentKey, value);
     } catch {
       // Consent only persists when storage is available.
     }
     if (value === "allow" && valid) {
       loadGoogleOnce();
+      // Re-approval after a past denial must re-enable Consent Mode too.
+      host.gtag?.("consent", "update", { analytics_storage: "granted" });
       track("lab_page_view");
     } else if (valid && injected) {
       host["ga-disable-" + measurementId] = true;
