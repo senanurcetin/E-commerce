@@ -12,6 +12,8 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from dashboard.nexus_theme import style_chart, COLORS
+
 from scripts.ecommerce_marts_bridge import load_snapshot
 
 
@@ -67,10 +69,10 @@ def historical_ecommerce_tab(path: Path) -> None:
     c3.metric("Returned orders · distinct order IDs", f"{orders['returned_orders'].sum():,}")
     fig = px.line(
         orders, x="date", y="completed_revenue", markers=True,
-        color_discrete_sequence=["#29D6EC"],
+        color_discrete_sequence=[COLORS["cyan"]],
         title="Historical completed-order revenue by calendar date",
     )
-    fig.update_layout(paper_bgcolor="#080F25", plot_bgcolor="#101D3D", font_color="#E7F2FF")
+    style_chart(fig, str(fig.layout.title.text or ""))
     st.plotly_chart(fig, width="stretch")
 
     st.markdown("#### Historical session events · separate web-analytics mart")
@@ -79,10 +81,10 @@ def historical_ecommerce_tab(path: Path) -> None:
     cols[1].metric("Converted sessions · has purchase event", f"{sessions['converted_sessions'].sum():,}")
     cols[2].metric("Page-view events · dbt historical", f"{sessions['page_view_events'].sum():,}")
     fig = px.bar(
-        sessions, x="date", y="sessions", color_discrete_sequence=["#9569F7"],
+        sessions, x="date", y="sessions", color_discrete_sequence=[COLORS["purple"]],
         title="Historical sessions · session date",
     )
-    fig.update_layout(paper_bgcolor="#080F25", plot_bgcolor="#101D3D", font_color="#E7F2FF")
+    style_chart(fig, str(fig.layout.title.text or ""))
     st.plotly_chart(fig, width="stretch")
     st.caption(
         "Orders are deduplicated by order ID only within each calendar date "
