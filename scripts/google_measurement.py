@@ -200,11 +200,12 @@ def collect_pagespeed(url: str, strategy: str) -> dict:
         address = None
     if address is not None and not address.is_global:
         raise ValueError("--url requires a public HTTPS address")
-    query = {"url": url, "strategy": strategy}
+    query = {"url": url, "strategy": strategy,
+             "category": ["performance", "accessibility", "best-practices", "seo"]}
     key = os.environ.get("GOOGLE_PAGESPEED_API_KEY")
     if key:
         query["key"] = key
-    endpoint = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?" + urlencode(query)
+    endpoint = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?" + urlencode(query, doseq=True)
     data = normalize_pagespeed(fetch_json(endpoint))
     return {"source": "pagespeed_insights_api", "url": url, "strategy": strategy, **data}
 
