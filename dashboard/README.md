@@ -1,6 +1,21 @@
-# NEXUS Google Measurement Dashboard
+# NEXUS Commerce Intelligence Dashboard
 
 Status: **implemented as a local web application** with a source-verification gate and an **explicit user-triggered PageSpeed Insights API call**. It is **not deployed** and does not automatically poll Google, and does not represent historical E-Commerce/Olist/Greenweez sales as Google-measured events. No demo or synthetic business metrics are substituted for absent accounts.
+
+## One NEXUS workspace — E-Commerce and Greenweez
+
+The original Google Measurement dashboard entrypoint is now the **unified** local NEXUS Commerce Intelligence interface. All original GA4, GSC, Lighthouse and owned Commerce Lab tabs remain independent, and new **Overview · Sources** / **Greenweez · Finance** tabs live in this same app. The finance bridge intentionally NEVER equates Greenweez customers, refunds or business revenue with TheLook or NEXUS test checkout events.
+
+To import known Greenweez finance marts into E-Commerce on Windows, first build the Greenweez upstream project's own DuckDB dbt outputs. Then run:
+
+~~~cmd
+cd /d C:\Users\MONSTER\E-commerce
+python -m scripts.greenweez_bridge --db "C:\Users\MONSTER\greenweez-finance-campaign-analytics\target\demo.duckdb" --provenance synthetic_demo
+~~~
+
+Use the optional flag `--provenance external_unverified` only for external snapshots, e.g., source-authored Greenweez BigQuery exports, which remain **unverified until an independent reconciliation**. No option can self-certify a file as actual business finance. Refresh the Streamlit page after importing. Source snapshot defaults to the gitignored `target/greenweez_bridge/snapshot.json`.
+
+Full technical / presentation release conditions: [unified source plan](../docs/NEXUS_UNIFIED_COMMERCE_PLAN.md).
 
 ## Windows CMD · first real site audit (Python 3.11+)
 
