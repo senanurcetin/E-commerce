@@ -67,8 +67,8 @@ class GoogleMeasurementAppSmokeTests(unittest.TestCase):
             app = AppTest.from_file(str(APP), default_timeout=30).run()
             app.text_input[0].set_value(folder).run()
             self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
-            warnings = [w.message for w in app.warning]
-            self.assertTrue(any("No complete verified" in msg for msg in warnings), warnings)
+            self.assertGreaterEqual(len(app.warning), 1)
+            self.assertEqual(len(app.metric), 0, "Unavailable sources must not display KPI figures")
 
     def test_verified_csv_contract_drives_all_three_views(self):
         with tempfile.TemporaryDirectory() as folder:
