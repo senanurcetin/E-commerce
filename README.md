@@ -111,6 +111,22 @@ revenue against **40.6%** from new.
 
 The E-Commerce master repository also includes an independent [historical E-Commerce dbt-mart adapter](docs/NEXUS_HISTORICAL_MART_BRIDGE.md) and **E-Commerce · Historical** dashboard tab. It shows completed distinct orders, completed-line revenue, returned orders, sessions and view events from the existing root dbt marts. No raw user/order IDs are exported; no Greenweez or NEXUS Lab data are attributed to this historical source. Root CI seed data remain explicitly synthetic.
 
+## NEXUS — consolidated source audit
+
+Both independent E-Commerce and Greenweez dbt projects are integrated in this
+repo and share one Streamlit application. The new **Overview · Sources**
+evidence registry audits seven local source groups and makes absent,
+synthetic, unaudited and API-sourced data explicit. From the E-Commerce root:
+
+~~~cmd
+python -m scripts.nexus_workspace status
+~~~
+
+Use `python -m scripts.nexus_workspace import` to import both already-built
+DuckDB mart sources into the same application with mandatory source
+provenance and fail-before-publication validation. See
+[unified source control and safe imports](docs/NEXUS_WORKSPACE_SOURCE_AUDIT.md).
+
 ## Unified NEXUS Commerce Intelligence workspace
 
 **E-Commerce is the master application repository.** The existing local [NEXUS Streamlit application](dashboard/README.md) now also contains **Greenweez · Finance** and **Overview · Sources** tabs. The Greenweez visual module, aggregate mart adapter and **complete upstream dbt source** now live in this repository: models and independent test project are under [integrations/greenweez](integrations/README.md). The original repository remains a separate historical upstream source; no cross-business transactional merge is performed.
