@@ -5,8 +5,8 @@ Run from repo root:
     python scripts/google_measurement_marts.py
     streamlit run dashboard/google_marketing_app.py
 
-This viewer does not create traffic/purchase tags, send requests to Google,
-intermix E-Commerce/Greenweez historical facts, or claim real-time telemetry.
+The local user may explicitly trigger Google's public PageSpeed Insights API.
+No background API calls, synthetic metrics, commerce-data joins or live-streaming claims.
 """
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from datetime import date
 from pathlib import Path
 import sys
 import json
+from urllib.error import HTTPError, URLError
 
 import pandas as pd
 import plotly.express as px
@@ -24,6 +25,7 @@ sys.path.insert(0, str(ROOT))
 from scripts.google_dashboard_data import (
     filter_dates, kpis_ga4, kpis_gsc, latest_pagespeed, load_bundle,
 )
+from scripts.google_dashboard_refresh import audit_public_site
 
 PALETTE = {
     "background": "#080F25",
@@ -58,6 +60,13 @@ div[data-testid="stAlert"] {border-radius: 12px;}
     font-size:0.78rem; font-weight:800;}
 .nexus-subtitle {font-size:1rem;color:#A9BBD5;max-width:880px;margin-bottom:16px;}
 .nexus-note {color:#A5B4CA;font-size:0.83rem;}
+.nexus-source {background:linear-gradient(145deg, #142246, #101B38);
+    border:1px solid #2B416B;border-radius:15px;padding:17px 18px;min-height:100px;}
+.nexus-source-name {color:#DCEBFC;font-size:0.78rem;letter-spacing:0.09em;font-weight:750;}
+.nexus-source-state {font-size:1.05rem;color:#29D6EC;font-weight:800;margin-top:8px;}
+.nexus-source-empty {color:#A5B4CA;}
+.nexus-source-detail {color:#96A9C8;font-size:0.77rem;margin-top:5px;}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -230,45 +239,164 @@ def pagespeed_tab(rows: list[dict]) -> None:
             ("SEO", "seo_score"),
         )):
             cols[i].metric(name, "N/A" if r[col] in ("", None) else f"{float(r[col]):.0f}/100")
+    # Side-by-side device comparison from the latest *actual* lab audit.
+    chart_rows = []
+    for r in selected:
+        for name, column in (
+            ("Performance", "performance_score"),
+            ("Accessibility", "accessibility_score"),
+            ("Best practices", "best_practices_score"),
+            ("SEO", "seo_score"),
+        ):
+            if r[column] not in ("", None):
+                chart_rows.append({
+                    "Device": r["strategy"].title(), "Category": name,
+                    "Lighthouse score": float(r[column]),
+                })
+    if chart_rows:
+        fig = px.bar(
+            pd.DataFrame(chart_rows), x="Category", y="Lighthouse score",
+            color="Device", barmode="group", range_y=[0, 100],
+            color_discrete_sequence=[PALETTE["cyan"], PALETTE["purple"]],
+        )
+        fig.update_layout(**plot_config("Latest lab score comparison · 0–100"))
+        st.plotly_chart(fig, width="stretch")
+
+    # Preserve audit history; never substitute sampled Core Web Vitals.
+    history = pd.DataFrame([r for r in rows if r["url"] == url])
+    history["lab_lcp_ms"] = pd.to_numeric(history["lab_lcp_ms"], errors="coerce")
+    history = history.dropna(subset=["lab_lcp_ms"])
+    if len(history) > 1:
+        history = history.sort_values("extracted_at_utc")
+        trend = px.line(
+            history, x="extracted_at_utc", y="lab_lcp_ms",
+            color="strategy", markers=True,
+            color_discrete_sequence=[PALETTE["cyan"], PALETTE["purple"]],
+        )
+        trend.update_layout(**plot_config("Lab LCP across recorded audits · milliseconds"))
+        st.plotly_chart(trend, width="stretch")
+
     display = pd.DataFrame(selected)
     st.dataframe(display, width="stretch", hide_index=True)
     download_frame(display, "Export these Lighthouse audits", "nexus_pagespeed_latest.csv")
     st.info("Field Core Web Vitals (p75 LCP, INP and CLS) require separately connected CrUX API data.")
 
 
-header()
-location = Path(__file__).resolve().parents[1] / "target" / "google_measurement" / "marts"
-with st.sidebar:
-    st.markdown("### SOURCE CONTROLS")
-    st.caption("Read-only local exports. No automatic cloud credentials or production monitoring.")
-    folder = st.text_input("Validated export folder", value=str(location))
-    st.markdown("**Data provenance**")
-    st.caption("GA4 · GSC · PageSpeed Insights")
-    st.caption("Legacy E-Commerce, Olist and Greenweez data are independent domains.")
 
+header()
+location = ROOT / "target" / "google_measurement" / "marts"
+with st.sidebar:
+    st.markdown("### NEXUS / SOURCE CONTROLS")
+    st.caption("Private local workspace · source-verified reports")
+    folder = st.text_input("Validated export folder", value=str(location))
+    st.caption("Google authentication is needed for GA4/GSC only.")
+    st.caption("PageSpeed can run on a public HTTPS page without a GA4 property.")
+    st.divider()
+    st.caption("E-Commerce, Greenweez and Olist remain distinct datasets.")
+
+# An entirely empty installation is a NORMAL onboarding state, not a fatal
+# dashboard failure. A corrupt/incomplete manifest is still never accepted.
+error_message = None
 try:
     tables, manifest = load_bundle(Path(folder))
 except (OSError, ValueError, json.JSONDecodeError) as exc:
-    st.warning("No complete verified Google measurement export is available.")
-    st.code(str(exc), language="text")
-    st.info(
-        "1. Authenticate to an authorized GA4/GSC property or request a public PageSpeed audit.\n"
-        "2. Run the collector to target/google_measurement/.\n"
-        "3. Run python scripts/google_measurement_marts.py.\n"
-        "4. Reload this dashboard. The dashboard never substitutes demo or simulated traffic."
-    )
-    st.stop()
+    error_message = str(exc)
+    tables = {"ga4": [], "gsc": [], "pagespeed": []}
+    manifest = {"source_summary": {}, "warnings": [], "input_snapshot_count": 0}
 
-st.caption("Validated API snapshots only · Not real-time · No advertising cost/ROAS attribution")
-status = manifest.get("source_summary", {})
-for source_key, table_key in (("ga4_data_api", "ga4"), ("gsc_search_analytics_api", "gsc"), ("pagespeed_insights_api", "pagespeed")):
-    st.sidebar.caption(f"{source_key}: {len(tables[table_key])} rows")
-with st.sidebar.expander("Extraction metadata"):
-    st.json({"snapshots": manifest.get("input_snapshot_count"),
-             "partial_snapshots": manifest.get("partial_snapshot_count"),
-             "source_summary": status})
+st.markdown("### Measurement sources")
+source_meta = [
+    ("GA4 / ACQUISITION", "ga4", "GA4 property access required"),
+    ("GSC / ORGANIC SEARCH", "gsc", "Verified Search Console property required"),
+    ("PAGESPEED / LIGHTHOUSE", "pagespeed", "Run a public website audit below"),
+]
+cols = st.columns(3)
+for col, (title, key, explanation) in zip(cols, source_meta):
+    count = len(tables[key])
+    state = f"{count:,} verified rows" if count else "Not connected"
+    text_style = "" if count else " nexus-source-empty"
+    # HTML content below is fixed/number-derived; no user input is interpolated.
+    col.markdown(
+        '<div class="nexus-source">'
+        f'<div class="nexus-source-name">{title}</div>'
+        f'<div class="nexus-source-state{text_style}">{state}</div>'
+        f'<div class="nexus-source-detail">{explanation}</div>'
+        '</div>', unsafe_allow_html=True,
+    )
+
+if error_message:
+    st.caption("Source status: No complete validated export found. " + error_message)
+else:
+    st.caption(
+        "Source status: Validated local API snapshots · Not a live feed · "
+        "No Google Ads spend or verified campaign ROAS"
+    )
+
+with st.expander(
+    "GET STARTED · Run your first real PageSpeed audit",
+    expanded=not bool(tables["pagespeed"]),
+):
+    st.markdown(
+        "**No GA4, GSC or BigQuery account is needed for this step.** "
+        "Enter any public HTTPS page and explicitly request one real "
+        "Google PageSpeed Insights Lighthouse audit. "
+        "Google receives the submitted URL; API quotas or availability may apply."
+    )
+    with st.form("real_pagespeed_audit"):
+        audit_url = st.text_input(
+            "Website URL", value="", placeholder="https://your-site.example/",
+            help="Use a reachable public HTTPS page, not localhost or a private IP.",
+        )
+        audit_device = st.radio(
+            "Test device", options=("mobile", "desktop"),
+            horizontal=True, index=0,
+        )
+        audit_submit = st.form_submit_button(
+            "Run real PageSpeed audit", type="primary",
+        )
+    if audit_submit:
+        with st.spinner("Requesting an actual Lighthouse audit from Google…"):
+            try:
+                completed = audit_public_site(
+                    audit_url, audit_device, marts_dir=Path(folder),
+                )
+            except HTTPError as exc:
+                st.error(
+                    f"PageSpeed API returned HTTP {exc.code}. "
+                    "Check quota, the target page, or optional API key. "
+                    "No performance metrics were invented."
+                )
+            except URLError:
+                st.error("Could not reach Google's PageSpeed API. Check your connection.")
+            except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+                st.error(f"Audit not imported: {exc}")
+            else:
+                st.success(
+                    f"Google reported a {completed['device']} Lighthouse audit. "
+                    "Loading the verified result…"
+                )
+                st.rerun()
+    st.markdown(
+        "**For GA4 and Search Console:** these require verified property access. "
+        "Run the authenticated collector for the corresponding source, "
+        "then rebuild the marts and refresh this page. "
+        "See docs/GOOGLE_MEASUREMENT_INTEGRATION.md."
+    )
+
+for source_key, table_key in (
+    ("GA4", "ga4"), ("Search Console", "gsc"), ("PageSpeed", "pagespeed"),
+):
+    st.sidebar.caption(f"{source_key}: {len(tables[table_key])} validated rows")
+if not error_message:
+    with st.sidebar.expander("Extraction metadata"):
+        st.json({
+            "snapshots": manifest.get("input_snapshot_count"),
+            "partial_snapshots": manifest.get("partial_snapshot_count", 0),
+            "sources": manifest.get("source_summary", {}),
+        })
+
 tab1, tab2, tab3, tab4 = st.tabs(
-    ["GA4 · Acquisition", "GSC · Search", "PSI · Lighthouse", "Measurement Contracts"]
+    ["GA4 · Acquisition", "GSC · Organic Search", "PSI · Lighthouse", "Data Contracts"]
 )
 with tab1:
     ga4_tab(tables["ga4"])
@@ -277,13 +405,23 @@ with tab2:
 with tab3:
     pagespeed_tab(tables["pagespeed"])
 with tab4:
-    st.subheader("Data Quality & Interpretation")
+    st.subheader("Measurement Integrity & Next Steps")
     st.markdown(
-        "**GA4:** property-specific acquisition and purchase aggregates; non-additive users excluded from rollups.\n\n"
-        "**GSC:** organic Search click/impression aggregates; CTR and position use denominator-aware aggregation.\n\n"
-        "**PSI:** Lighthouse lab audits; field data need CrUX and separately verified access.\n\n"
-        "**Google Ads:** ad spend and campaign conversion attribution not connected, so CAC and ROAS are unavailable.\n\n"
-        "**Greenweez / Olist:** no cross-domain join or shared revenue is implied."
+        "**GA4:** one property at a time. Active users cannot be summed across channel/date rows.\n\n"
+        "**GSC:** one property at a time. CTR = clicks / impressions and "
+        "position uses an impressions-weighted calculation.\n\n"
+        "**PageSpeed:** public on-demand Lighthouse *lab* audits; "
+        "CrUX real-user field measurements are not connected.\n\n"
+        "**Google Ads:** campaign cost and validated attribution are absent, "
+        "so CAC and ROAS are unavailable.\n\n"
+        "**Historical commerce:** E-Commerce, Olist and Greenweez are "
+        "not part of the Google source identity."
     )
+    if error_message:
+        st.info(
+            "Start with the PageSpeed form above. For GA4/GSC, grant "
+            "read-only access to the appropriate owned property; no "
+            "test numbers are offered as live data."
+        )
     for warning in manifest.get("warnings", []):
         st.caption("• " + str(warning))
