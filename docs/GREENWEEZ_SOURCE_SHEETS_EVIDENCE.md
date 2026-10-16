@@ -43,7 +43,11 @@ Customer personal data are not requested at all. The E-Commerce repository
 contains only code, a schema validator, UI and TEST-ONLY fixtures. The source
 snapshot remains on the authorized machine under ignored target/.
 
-**Completeness warning:** If any order rows have missing order IDs, those rows remain in worksheet row/turnover totals, but cannot contribute to distinct IDs. The unique-ID figure is therefore a lower bound, never a certified paid-order count.\n\n**Completeness:** Any row with blank turnover remains in worksheet row totals and contributes to missing_turnover_rows; no missing monetary value is silently interpreted as zero. Likewise blank campaign numeric cells are counted separately. Charts display only sums of observed numeric values.\n\n**Financial semantics are not certified:** The turnover and cost columns are
+**Completeness warning:** If any order rows have missing order IDs, those rows remain in worksheet row/turnover totals, but cannot contribute to distinct IDs. The unique-ID figure is therefore a lower bound, never a certified paid-order count.
+
+**Completeness:** Any row with blank turnover remains in worksheet row totals and contributes to missing_turnover_rows; no missing monetary value is silently interpreted as zero. Likewise blank campaign numeric cells are counted separately. Charts display only sums of observed numeric values.
+
+**Financial semantics are not certified:** The turnover and cost columns are
 shown as stored, without an asserted currency or FX conversion, and the
 order row count is not certified net paid/fulfilled orders. This module
 never computes campaign-attributed revenue, ROAS, profitability or official
