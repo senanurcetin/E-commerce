@@ -85,6 +85,17 @@ and no source can declare itself business-verified by passing tests alone.
 browser, credentials or Google API call. Real finance and GA4 property
 authorization remain separate release gates.
 
+### Original Google Sheets source observations
+
+A separate eighth data group has been added for the original
+owner-authorized Greenweez orders/campaigns Google Sheets workbooks.
+The source snapshot and visual page contain only date-grained aggregates;
+no raw order IDs, campaign names or customer details are exported. The original
+turnover/cost units and financial semantics remain **unverified**, and the
+historical source date windows must not be silently combined with Greenweez
+dbt or TheLook revenue. See
+[Greenweez Sheets evidence](GREENWEEZ_SOURCE_SHEETS_EVIDENCE.md).
+
 ## Release plan
 
 | Stage | Deliverable | Status |
