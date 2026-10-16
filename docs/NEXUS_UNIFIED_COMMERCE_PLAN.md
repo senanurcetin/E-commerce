@@ -73,6 +73,18 @@ python -m scripts.ecommerce_marts_bridge --db targetci.duckdb --provenance synth
 
 See [historical data release conditions](NEXUS_HISTORICAL_MART_BRIDGE.md).
 
+### Operational source readiness and safer ingestion
+
+The unified NEXUS application now uses
+[the seven-source evidence registry](NEXUS_WORKSPACE_SOURCE_AUDIT.md)
+and a combined staged importer for existing independent E-Commerce and
+Greenweez DuckDB marts. File/schema errors are reported before publication
+and no source can declare itself business-verified by passing tests alone.
+
+`python -m scripts.nexus_workspace status` offers the same view without a
+browser, credentials or Google API call. Real finance and GA4 property
+authorization remain separate release gates.
+
 ## Release plan
 
 | Stage | Deliverable | Status |
