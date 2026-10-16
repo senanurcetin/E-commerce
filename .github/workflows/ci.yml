@@ -63,6 +63,9 @@ jobs:
       - name: Compile dashboard source
         run: python -m py_compile dashboard/google_marketing_app.py scripts/google_dashboard_data.py
 
+      - name: Validate local Chrome Lighthouse JSON parser
+        run: python -m unittest discover -s tests -p 'test_local_lighthouse.py' -v
+
       - name: Run Streamlit empty-state and verified-test-source smoke checks
         run: python -m unittest discover -s tests -p 'smoke_google_marketing_app.py' -v
 

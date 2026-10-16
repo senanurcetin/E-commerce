@@ -27,6 +27,7 @@ from scripts.google_dashboard_data import (
 )
 from scripts.google_dashboard_refresh import audit_public_site
 from scripts.google_test_sites import TEST_SITES, DEFAULT_TEST_SITE, test_site_url
+from scripts.local_lighthouse import load_lighthouse_reports, parse_lighthouse_report
 
 PALETTE = {
     "background": "#080F25",
@@ -284,6 +285,91 @@ def pagespeed_tab(rows: list[dict]) -> None:
 
 
 
+def local_lighthouse_tab() -> None:
+    """Source-specific browser Lighthouse JSON. Never presented as PSI/CrUX."""
+    st.divider()
+    st.subheader("Local Chrome Lighthouse · separate lab source")
+    st.caption(
+        "Real browser Lighthouse reports from Chrome DevTools / Lighthouse CLI. "
+        "This is NOT the PageSpeed Insights API, CrUX, GA4 or a sales dataset."
+    )
+    st.markdown(
+        "**Without npm or API keys:** open the public Commerce Lab in Chrome, "
+        "press F12 → Lighthouse, choose Mobile or Desktop, click Analyze page load, "
+        "then export the full **JSON** report. You may upload it below or place "
+        "the report in target/google_measurement/local_lighthouse/."
+    )
+    target = ROOT / "target" / "google_measurement" / "local_lighthouse"
+    try:
+        reports = load_lighthouse_reports(target)
+    except ValueError as exc:
+        st.warning(f"Invalid local Lighthouse report: {exc}")
+        reports = []
+
+    uploaded = st.file_uploader(
+        "Import real Lighthouse JSON (processed in memory)",
+        type=["json"], accept_multiple_files=True, key="local_lh_json",
+    )
+    if uploaded:
+        for file in uploaded:
+            try:
+                reports.append(parse_lighthouse_report(json.load(file)))
+            except (ValueError, TypeError, json.JSONDecodeError) as exc:
+                st.error(f"{file.name}: rejected invalid Lighthouse report: {exc}")
+
+    if not reports:
+        st.info("No valid local Chrome Lighthouse report has been imported yet.")
+        return
+
+    site_urls = sorted({r["url"] for r in reports})
+    selected_url = st.selectbox("Local Lighthouse page", site_urls, key="lh_local_page")
+    chosen = [r for r in reports if r["url"] == selected_url]
+    latest_by_device = {}
+    for item in chosen:
+        prev = latest_by_device.get(item["device"])
+        if prev is None or item["measured_at_utc"] > prev["measured_at_utc"]:
+            latest_by_device[item["device"]] = item
+    rows = []
+    for device, record in sorted(latest_by_device.items()):
+        for category, score in record["scores"].items():
+            rows.append({
+                "Device": device.title(),
+                "Category": category.replace("-", " ").title(),
+                "Score": score,
+                "Source": "Local Lighthouse CLI / DevTools",
+                "Measured": record["measured_at_utc"],
+            })
+    if rows:
+        frame = pd.DataFrame(rows)
+        fig = px.bar(
+            frame, x="Category", y="Score", color="Device",
+            barmode="group", range_y=[0, 100],
+            color_discrete_sequence=[PALETTE["cyan"], PALETTE["purple"]],
+        )
+        fig.update_layout(**plot_config("Local browser Lighthouse scores · 0–100"))
+        st.plotly_chart(fig, width="stretch")
+        st.dataframe(frame, width="stretch", hide_index=True)
+        st.download_button(
+            "Export local Lighthouse score summary",
+            data=frame.to_csv(index=False).encode("utf-8"),
+            file_name="nexus_local_lighthouse_summary.csv",
+            mime="text/csv", key="local_lh_export",
+        )
+    for device, record in sorted(latest_by_device.items()):
+        with st.expander(f"{device.title()} · local lab metrics · {record['measured_at_utc']}"):
+            st.json({
+                "source_system": record["source_system"],
+                "lighthouse_version": record["lighthouse_version"],
+                "lab_only": True,
+                "requested_url": record["requested_url"],
+                "lab_metrics": record["lab_metrics"],
+            })
+    st.caption(
+        "Do not treat locally measured Lighthouse lab scores as Google PSI API "
+        "server results or representative 75th-percentile real-user Core Web Vitals."
+    )
+
+
 header()
 location = ROOT / "target" / "google_measurement" / "marts"
 with st.sidebar:
@@ -421,6 +507,7 @@ with tab2:
     gsc_tab(tables["gsc"])
 with tab3:
     pagespeed_tab(tables["pagespeed"])
+    local_lighthouse_tab()
 with tab4:
     st.subheader("Measurement Integrity & Next Steps")
     st.markdown(

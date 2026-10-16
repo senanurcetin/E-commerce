@@ -34,6 +34,19 @@ python -m streamlit run dashboard\google_marketing_app.py
 
 Do not run the mart builder **before** collecting a real snapshot; it rightly rejects empty inputs.
 
+### Alternative: real Chrome Lighthouse without the PageSpeed API
+
+If Google's public PageSpeed Insights endpoint responds with HTTP 429 (rate limit), **do not invent performance numbers or use third-party quick-scan scores as Lighthouse**. Google Chrome's built-in Lighthouse panel offers an independent local laboratory measurement:
+
+1. Open https://nexus-commerce-lab.vercel.app/ in Chrome.
+2. Press **F12** → **Lighthouse** tab (via the DevTools menu if hidden).
+3. Select **Mobile** and the desired audit categories; click **Analyze page load**.
+4. Use **Export → JSON** to save the full Chrome Lighthouse report.
+5. In the local NEXUS dashboard open **PSI · Lighthouse → Local Chrome Lighthouse**, then upload that JSON. It is parsed **in memory** and clearly labeled `local_lighthouse_cli`, not `pagespeed_insights_api`.
+6. Repeat with **Desktop** for comparison. To persist files under the ignored local source directory, copy them to `target/google_measurement/local_lighthouse/` and refresh the page.
+
+The loader checks Lighthouse version, device, URL, timestamp and full category scores, rejecting partial/mock reports. Metrics are Lighthouse **lab** values only. These local reports are distinct from both PageSpeed Insights API output and real-user CrUX field Core Web Vitals. They do not generate GA4 sessions or order revenue. Full JSON reports may contain page URLs and diagnostics; **never commit these raw reports to Git**.
+
 ### GA4 and Search Console later
 
 The GA4 Data API needs a numeric GA4 Property ID and read-only account authorization; GSC needs the exact verified site property and authorized read-only API access. Follow `docs/GOOGLE_MEASUREMENT_INTEGRATION.md`. They are *separate optional connectors*; the PageSpeed workflow works independently.
