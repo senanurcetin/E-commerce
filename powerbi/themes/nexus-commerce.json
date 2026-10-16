@@ -1,48 +1,48 @@
 {
-  "name": "NEXUS Commerce Analytics — Navy and Blue",
+  "name": "NEXUS Commerce Intelligence | Midnight Cyan 2026",
   "dataColors": [
-    "#0572A8",
-    "#8F9BFF",
-    "#C88335",
-    "#CB5D78",
-    "#3566B5",
-    "#9E76C8",
-    "#5A7A90",
-    "#D59A64"
+    "#47DFF2",
+    "#A892F4",
+    "#79D9BC",
+    "#EFC98D",
+    "#629BE8",
+    "#D39CE5",
+    "#91B3E3",
+    "#EFAFBA"
   ],
-  "foreground": "#091625",
-  "foregroundNeutralSecondary": "#415672",
-  "foregroundNeutralTertiary": "#667E96",
-  "background": "#FFFFFF",
-  "backgroundLight": "#F7F8FA",
-  "backgroundNeutral": "#DAE5F0",
-  "tableAccent": "#0572A8",
-  "good": "#487FD8",
-  "neutral": "#B47725",
-  "bad": "#C24363",
-  "maximum": "#0572A8",
-  "center": "#7E91CA",
-  "minimum": "#E5EFF9",
+  "foreground": "#EDF5FF",
+  "foregroundNeutralSecondary": "#B8C8DF",
+  "foregroundNeutralTertiary": "#91A9C4",
+  "background": "#080F20",
+  "backgroundLight": "#111E38",
+  "backgroundNeutral": "#192946",
+  "tableAccent": "#47DFF2",
+  "good": "#7ADDB8",
+  "neutral": "#EFC98D",
+  "bad": "#F2A5B2",
+  "maximum": "#47DFF2",
+  "center": "#A892F4",
+  "minimum": "#192946",
   "textClasses": {
     "callout": {
       "fontFace": "Segoe UI Semibold",
       "fontSize": 26,
-      "color": "#091625"
+      "color": "#EDF5FF"
     },
     "title": {
       "fontFace": "Segoe UI Semibold",
       "fontSize": 12,
-      "color": "#122942"
+      "color": "#EDF5FF"
     },
     "header": {
       "fontFace": "Segoe UI Semibold",
       "fontSize": 12,
-      "color": "#122942"
+      "color": "#EDF5FF"
     },
     "label": {
       "fontFace": "Segoe UI",
       "fontSize": 10,
-      "color": "#415672"
+      "color": "#B8C8DF"
     }
   },
   "visualStyles": {
@@ -54,7 +54,7 @@
             "transparency": 0,
             "color": {
               "solid": {
-                "color": "#FFFFFF"
+                "color": "#111E38"
               }
             }
           }
@@ -66,7 +66,7 @@
             "radius": 10,
             "color": {
               "solid": {
-                "color": "#D9E1E9"
+                "color": "#314565"
               }
             }
           }
@@ -77,7 +77,7 @@
             "fontSize": 12,
             "fontColor": {
               "solid": {
-                "color": "#122942"
+                "color": "#EDF5FF"
               }
             }
           }
@@ -86,12 +86,12 @@
           {
             "backgroundColor": {
               "solid": {
-                "color": "#061524"
+                "color": "#080F20"
               }
             },
             "foregroundColor": {
               "solid": {
-                "color": "#F7F8FA"
+                "color": "#EDF5FF"
               }
             }
           }
@@ -101,7 +101,7 @@
             "$id": "Applied",
             "backgroundColor": {
               "solid": {
-                "color": "#E7F2FA"
+                "color": "#192946"
               }
             }
           },
@@ -109,7 +109,7 @@
             "$id": "Available",
             "backgroundColor": {
               "solid": {
-                "color": "#FFFFFF"
+                "color": "#111E38"
               }
             }
           }
@@ -123,7 +123,7 @@
             "textSize": 11,
             "fontColor": {
               "solid": {
-                "color": "#122942"
+                "color": "#EDF5FF"
               }
             }
           }
