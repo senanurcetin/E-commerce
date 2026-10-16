@@ -9,7 +9,7 @@ E-Commerce is the MASTER GitHub product repository and now hosts one NEXUS Strea
 - NEXUS Commerce Lab: owned sandbox website, optional opted-in GA4 custom lab events; never a source of historical TheLook orders.
 - Olist notebooks: separate sample business domain.
 
-The addition is an **integrated app / data-product view**, not a row-wise merger of companies or proof that they share customers, transactions, currency, advertisers, or a date window. The original Greenweez dbt project remains a distinct upstream dependency at this stage.
+The addition is an **integrated app / data-product view**, not a row-wise merger of companies or proof that they share customers, transactions, currency, advertisers, or a date window. The complete original Greenweez dbt source is now vendored under integrations/greenweez/ as a squashed Git subtree. The original GitHub repository remains a distinct upstream identity and is unchanged.
 
 ### Source statuses and controls
 
@@ -35,13 +35,13 @@ python -m streamlit run dashboard\google_marketing_app.py
 
 ~~~cmd
 cd /d C:\Users\MONSTER\E-commerce
-python -m scripts.greenweez_bridge --db "C:\Users\MONSTER\greenweez-finance-campaign-analytics\target\demo.duckdb" --provenance synthetic_demo
+python -m scripts.greenweez_bridge --db "C:\Users\MONSTER\E-commerce\integrations\greenweez\target\demo.duckdb" --provenance synthetic_demo
 ~~~
 
 **Connect an independently available real-source candidate** (for example, authorized Greenweez fvt_gsheet BigQuery-export dbt marts), explicitly marked UNVERIFIED until reconciled:
 
 ~~~cmd
-python -m scripts.greenweez_bridge --db "C:\Users\MONSTER\greenweez-finance-campaign-analytics\target\gsheet_real.duckdb" --provenance external_unverified
+python -m scripts.greenweez_bridge --db "C:\Users\MONSTER\E-commerce\integrations\greenweez\target\gsheet_real.duckdb" --provenance external_unverified
 ~~~
 
 Both commands output only gitignored E-Commerce target/greenweez_bridge/snapshot.json. The Greenweez tab reads that local snapshot and does not query credentials, raw orders or third-party production services.
@@ -67,7 +67,7 @@ Both commands output only gitignored E-Commerce target/greenweez_bridge/snapshot
 | 6 | Upstream real Greenweez financial totals reconciled vs source; currency/refund semantics accepted | Pending |
 | 7 | Commerce Lab GA4 read-only Property ID authorization, actual event extraction and dashboard validation | Pending |
 | 8 | Original Power BI Desktop report source measures/screens reconciled | Pending |
-| 9 | Optional deeper consolidation: copy/rehome upstream Greenweez dbt project as isolated subproject after license/build review | Future, NOT claimed in this phase |
+| 9 | Squashed Git subtree of original Greenweez dbt source integrated into E-Commerce integrations/greenweez/ | Added; full nested dbt CI acceptance pending |
 | 10 | Final business/evidence and UI acceptance for presentation | Pending |
 
 Source schema tests use synthetic CI fixtures exclusively, never as real production numbers. The unified app is not presentation-ready until business data, original BI artifacts and source ownership are independently checked.
