@@ -107,6 +107,16 @@ revenue against **40.6%** from new.
 
 ---
 
+## NEXUS Commerce Lab — controlled test storefront
+
+The new [NEXUS Commerce Lab](storefront/README.md) is a separate, responsive, owned **test-only storefront** with a functioning sample catalog, in-browser cart, no-payment checkout, explicit consent controls and optional Google Analytics 4 custom `lab_*` events. It is designed as a fully reproducible, independently deployable **static Vercel site**; `storefront/vercel.json` sets build/output paths.
+
+**Important source contract:** The Lab's illustrated products, sample prices and test checkouts are **not** real customer orders, are **not** generated from the historical TheLook order facts and **do not** trigger GA4 `purchase` or revenue events. It does not have a public deployment or connected GA4 ID by default. Existing TheLook/BigQuery analytics, Greenweez, and public Tricentis/nopCommerce benchmarks remain separate sources.
+
+Run locally using `python -m http.server 8787 --directory storefront`, then open `http://localhost:8787`. Test with `node --test storefront/tests/*.test.mjs`; see [implementation and release gates](docs/NEXUS_COMMERCE_LAB_PLAN.md). Present it as **a controlled lab**, not a fully operational e-commerce business.
+
+---
+
 ## Google measurement extension (opt-in, read-only)
 
 The analytics project now includes a **read-only Google measurement starter** covering GA4 Data API reporting, Google Search Console search performance, and PageSpeed Insights Lighthouse lab audits. See [Google measurement integration and source contracts](docs/GOOGLE_MEASUREMENT_INTEGRATION.md) and the [local collector](scripts/google_measurement.py).
