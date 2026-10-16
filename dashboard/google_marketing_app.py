@@ -29,6 +29,8 @@ from scripts.google_dashboard_refresh import audit_public_site
 from scripts.google_test_sites import TEST_SITES, DEFAULT_TEST_SITE, test_site_url
 from scripts.local_lighthouse import load_lighthouse_reports, parse_lighthouse_report
 from scripts.lab_ga4_events import load_lab_snapshot, EVENT_NAMES as LAB_EVENT_NAMES
+from scripts.greenweez_bridge import load_snapshot as load_greenweez_snapshot
+from dashboard.greenweez_finance import greenweez_finance_tab
 
 PALETTE = {
     "background": "#080F25",
@@ -89,11 +91,12 @@ def plot_config(title: str) -> dict:
 
 def header() -> None:
     st.markdown('<p class="nexus-kicker">NEXUS / COMMERCE INTELLIGENCE</p>', unsafe_allow_html=True)
-    st.title("Google Measurement Observatory")
+    st.title("NEXUS Commerce Intelligence Observatory")
     st.markdown(
-        '<p class="nexus-subtitle">GA4 acquisition · Search Console organic reach · '
-        "Lighthouse site experience. Each source is separately verified; "
-        'not a combined transaction or advertising ledger.</p>',
+        '<p class="nexus-subtitle">Independent E-Commerce analytics · '
+        "Greenweez finance and campaigns · owned Commerce Lab GA4 · "
+        "Google web measurement. Source-isolated evidence, not a merged "
+        'company revenue ledger.</p>',
         unsafe_allow_html=True,
     )
 
@@ -442,10 +445,15 @@ with st.sidebar:
     st.markdown("### NEXUS / SOURCE CONTROLS")
     st.caption("Private local workspace · source-verified reports")
     folder = st.text_input("Validated export folder", value=str(location))
+    greenweez_folder = st.text_input(
+        "Greenweez snapshot file",
+        value=str(ROOT / "target" / "greenweez_bridge" / "snapshot.json"),
+        help="Only read-only, source-labelled Greenweez dbt mart imports. Never raw orders.",
+    )
     st.caption("Google authentication is needed for GA4/GSC only.")
     st.caption("PageSpeed can run on a public HTTPS page without a GA4 property.")
     st.divider()
-    st.caption("E-Commerce, Greenweez and Olist remain distinct datasets.")
+    st.caption("One NEXUS workspace; E-Commerce/TheLook, Greenweez, Olist and Commerce Lab remain distinct datasets.")
 
 # An entirely empty installation is a NORMAL onboarding state, not a fatal
 # dashboard failure. A corrupt/incomplete manifest is still never accepted.
@@ -457,16 +465,32 @@ except (OSError, ValueError, json.JSONDecodeError) as exc:
     tables = {"ga4": [], "gsc": [], "pagespeed": []}
     manifest = {"source_summary": {}, "warnings": [], "input_snapshot_count": 0}
 
+greenweez_error = None
+try:
+    greenweez_snapshot = load_greenweez_snapshot(Path(greenweez_folder))
+except (ValueError, OSError) as exc:
+    greenweez_snapshot = None
+    greenweez_error = str(exc)
+
 st.markdown("### Measurement sources")
 source_meta = [
     ("GA4 / ACQUISITION", "ga4", "GA4 property access required"),
     ("GSC / ORGANIC SEARCH", "gsc", "Verified Search Console property required"),
     ("PAGESPEED / LIGHTHOUSE", "pagespeed", "Run a public website audit below"),
+    ("GREENWEEZ / FINANCE", "greenweez", "Independent dbt finance and ad marts"),
 ]
-cols = st.columns(3)
+cols = st.columns(4)
 for col, (title, key, explanation) in zip(cols, source_meta):
-    count = len(tables[key])
-    state = f"{count:,} verified rows" if count else "Not connected"
+    if key == "greenweez":
+        count = len(greenweez_snapshot["tables"]["daily"]) if greenweez_snapshot else 0
+        state = (
+            "Synthetic source" if greenweez_snapshot and greenweez_snapshot["provenance"] == "synthetic_demo"
+            else "External · unverified" if greenweez_snapshot
+            else "Invalid source" if greenweez_error else "Not imported"
+        )
+    else:
+        count = len(tables[key])
+        state = f"{count:,} verified rows" if count else "Not connected"
     text_style = "" if count else " nexus-source-empty"
     # HTML content below is fixed/number-derived; no user input is interpolated.
     col.markdown(
@@ -476,6 +500,9 @@ for col, (title, key, explanation) in zip(cols, source_meta):
         f'<div class="nexus-source-detail">{explanation}</div>'
         '</div>', unsafe_allow_html=True,
     )
+
+if greenweez_error:
+    st.error("Greenweez source integrity gate: " + greenweez_error)
 
 if error_message:
     st.caption("Source status: No complete validated export found. " + error_message)
@@ -564,10 +591,42 @@ if not error_message:
             "sources": manifest.get("source_summary", {}),
         })
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(
-    ["GA4 · Acquisition", "GSC · Organic Search", "PSI · Lighthouse",
+overview_tab, greenweez_tab, tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    ["Overview · Sources", "Greenweez · Finance", "GA4 · Acquisition",
+     "GSC · Organic Search", "PSI · Lighthouse",
      "Commerce Lab · Test Events", "Data Contracts"]
 )
+with overview_tab:
+    st.subheader("Three separate commerce analytics domains · one workspace")
+    st.markdown(
+        "**E-Commerce / TheLook:** independent historical orders, web events "
+        "and dbt marts; not observed transactions on the new Lab.\n\n"
+        "**Greenweez:** separate order-level finance, margin and paid-campaign "
+        "dbt marts imported through an explicit read-only contract.\n\n"
+        "**NEXUS Commerce Lab:** owned, no-payment test storefront whose opted-in "
+        "GA4 `lab_*` events are NOT purchase revenue."
+    )
+    st.info(
+        "No cross-business sum of revenue, margin, orders, customers or ROAS "
+        "is produced. Greenweez campaign source CPC/CTR are measured from ad "
+        "aggregates; campaign-attributed revenue is unavailable."
+    )
+    source_rows = [
+        {"Domain": "E-Commerce historical", "Status": "Upstream dbt models in this repo",
+         "Metric scope": "Separate TheLook-like historical dataset"},
+        {"Domain": "Greenweez finance", "Status":
+         "Not imported" if greenweez_snapshot is None
+         else greenweez_snapshot["provenance"],
+         "Metric scope": "Greenweez source-exclusive finance/campaign marts"},
+        {"Domain": "Commerce Lab GA4", "Status": "Separate read-only export required",
+         "Metric scope": "Opted-in sandbox test events only"},
+        {"Domain": "Google measurement", "Status":
+         "No complete mart bundle" if error_message else "Source-validated snapshot bundle",
+         "Metric scope": "GA4/GSC/PageSpeed each with separate identity"},
+    ]
+    st.dataframe(pd.DataFrame(source_rows), hide_index=True, width="stretch")
+with greenweez_tab:
+    greenweez_finance_tab(Path(greenweez_folder))
 with tab1:
     ga4_tab(tables["ga4"])
 with tab2:
@@ -588,7 +647,10 @@ with tab5:
         "**Google Ads:** campaign cost and validated attribution are absent, "
         "so CAC and ROAS are unavailable.\n\n"
         "**Historical commerce:** E-Commerce, Olist and Greenweez are "
-        "not part of the Google source identity."
+        "not part of the Google source identity.\\n\\n"
+        "**Greenweez:** separate finance and campaign marts; externally "
+        "sourced snapshots remain unverified until independent reconciliation. "
+        "Do not join Greenweez to TheLook/Lab events or claim per-source ROAS."
     )
     if error_message:
         st.info(
