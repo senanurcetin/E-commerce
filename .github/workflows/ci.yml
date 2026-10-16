@@ -65,3 +65,41 @@ jobs:
 
       - name: Run Streamlit empty-state and verified-test-source smoke checks
         run: python -m unittest discover -s tests -p 'smoke_google_marketing_app.py' -v
+
+  commerce-lab:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Check static storefront JavaScript syntax
+        run: |
+          node --check storefront/core.mjs
+          node --check storefront/tracking.mjs
+          node --check storefront/app.mjs
+          node --check storefront/scripts/build.mjs
+
+      - name: Test cart, event contracts and analytics consent
+        run: node --test storefront/tests/*.test.mjs
+
+      - name: Build public static bundle without analytics
+        run: |
+          node storefront/scripts/build.mjs
+          test -f storefront/dist/index.html
+          test -f storefront/dist/app.mjs
+          test -f storefront/dist/config.js
+          grep -Fq 'ga4MeasurementId: ""' storefront/dist/config.js
+          grep -Fq 'NO REAL PAYMENTS' storefront/dist/index.html
+
+      - name: Verify approved public GA4 Measurement ID is build-only
+        env:
+          NEXUS_GA4_MEASUREMENT_ID: G-ABC123456
+        run: |
+          node storefront/scripts/build.mjs
+          grep -Fq 'ga4MeasurementId: "G-ABC123456"' storefront/dist/config.js
