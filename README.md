@@ -107,6 +107,10 @@ revenue against **40.6%** from new.
 
 ---
 
+## Historical E-Commerce reporting in unified NEXUS
+
+The E-Commerce master repository also includes an independent [historical E-Commerce dbt-mart adapter](docs/NEXUS_HISTORICAL_MART_BRIDGE.md) and **E-Commerce · Historical** dashboard tab. It shows completed distinct orders, completed-line revenue, returned orders, sessions and view events from the existing root dbt marts. No raw user/order IDs are exported; no Greenweez or NEXUS Lab data are attributed to this historical source. Root CI seed data remain explicitly synthetic.
+
 ## Unified NEXUS Commerce Intelligence workspace
 
 **E-Commerce is the master application repository.** The existing local [NEXUS Streamlit application](dashboard/README.md) now also contains **Greenweez · Finance** and **Overview · Sources** tabs. The Greenweez visual module, aggregate mart adapter and **complete upstream dbt source** now live in this repository: models and independent test project are under [integrations/greenweez](integrations/README.md). The original repository remains a separate historical upstream source; no cross-business transactional merge is performed.
