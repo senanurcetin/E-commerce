@@ -65,7 +65,7 @@ class GoogleMeasurementAppSmokeTests(unittest.TestCase):
     def test_no_snapshot_never_claims_real_metrics(self):
         with tempfile.TemporaryDirectory() as folder:
             app = AppTest.from_file(str(APP), default_timeout=30).run()
-            app.text_input[0].set_value(folder).run()
+            next(field for field in app.text_input if field.label == "Validated export folder").set_value(folder).run()
             self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
             self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
             self.assertEqual(len(app.metric), 0, "Unavailable sources must not display KPI figures")
@@ -86,7 +86,7 @@ class GoogleMeasurementAppSmokeTests(unittest.TestCase):
                 manifest["source_summary"][spec["source_system"]]["rows"] = 0
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
             app = AppTest.from_file(str(APP), default_timeout=30).run()
-            app.text_input[0].set_value(folder).run()
+            next(field for field in app.text_input if field.label == "Validated export folder").set_value(folder).run()
             self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
             labels = [metric.label for metric in app.metric]
             self.assertNotIn("Sessions", labels)
@@ -96,7 +96,7 @@ class GoogleMeasurementAppSmokeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             export_fixture(Path(folder))
             app = AppTest.from_file(str(APP), default_timeout=30).run()
-            app.text_input[0].set_value(folder).run()
+            next(field for field in app.text_input if field.label == "Validated export folder").set_value(folder).run()
             self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
             labels = [metric.label for metric in app.metric]
             self.assertIn("Sessions", labels)
