@@ -35,74 +35,31 @@ from scripts.ecommerce_marts_bridge import load_snapshot as load_historical_snap
 from dashboard.ecommerce_historical import historical_ecommerce_tab
 from scripts.nexus_workspace import inspect_sources
 from dashboard.greenweez_sheets import greenweez_sheets_tab
+from dashboard.nexus_theme import apply_theme, hero, plot_layout, COLORS
 
 PALETTE = {
-    "background": "#080F25",
-    "navy": "#101D3D",
-    "cyan": "#29D6EC",
-    "purple": "#9569F7",
-    "ice": "#E7F2FF",
-    "muted": "#95A7C5",
+    "background": COLORS["page"],
+    "navy": COLORS["surface"],
+    "cyan": COLORS["cyan"],
+    "purple": COLORS["purple"],
+    "ice": COLORS["white"],
+    "muted": COLORS["muted"],
     "pink": "#EC6DCB",
 }
 
-
 st.set_page_config(
     page_title="NEXUS | Commerce Intelligence",
-    page_icon="📊", layout="wide",
+    page_icon="◈", layout="wide",
 )
-
-st.markdown("""
-<style>
-.stApp {background: radial-gradient(circle at 75% -10%, #1C235A 0, #080F25 43%, #080F25 100%);
-        color: #E7F2FF;}
-[data-testid="stSidebar"] {background: #0D1730;}
-h1, h2, h3, p {letter-spacing: -0.015em;}
-h1 {font-weight: 800; color: #E7F2FF;}
-[data-testid="stMetric"] {background: #121F3F; padding: 18px;
-    border: 1px solid #263A60; border-radius: 15px;}
-[data-testid="stMetricValue"] {color: #29D6EC;}
-[data-testid="stMetricLabel"] {color: #A2B1CA;}
-[data-testid="stTabs"] [role="tab"] {font-weight: 650;}
-div[data-testid="stAlert"] {border-radius: 12px;}
-.nexus-kicker {color:#29D6EC; text-transform:uppercase; letter-spacing:0.18em;
-    font-size:0.78rem; font-weight:800;}
-.nexus-subtitle {font-size:1rem;color:#A9BBD5;max-width:880px;margin-bottom:16px;}
-.nexus-note {color:#A5B4CA;font-size:0.83rem;}
-.nexus-source {background:linear-gradient(145deg, #142246, #101B38);
-    border:1px solid #2B416B;border-radius:15px;padding:17px 18px;min-height:100px;}
-.nexus-source-name {color:#DCEBFC;font-size:0.78rem;letter-spacing:0.09em;font-weight:750;}
-.nexus-source-state {font-size:1.05rem;color:#29D6EC;font-weight:800;margin-top:8px;}
-.nexus-source-empty {color:#A5B4CA;}
-.nexus-source-detail {color:#96A9C8;font-size:0.77rem;margin-top:5px;}
-
-</style>
-""", unsafe_allow_html=True)
+apply_theme()
 
 
 def plot_config(title: str) -> dict:
-    return {
-        "title": title,
-        "paper_bgcolor": PALETTE["background"],
-        "plot_bgcolor": PALETTE["navy"],
-        "font": {"color": PALETTE["ice"], "size": 12},
-        "margin": {"l": 15, "r": 15, "t": 52, "b": 15},
-        "legend": {"orientation": "h", "y": -0.20},
-        "xaxis": {"gridcolor": "#243454"},
-        "yaxis": {"gridcolor": "#243454"},
-    }
+    return plot_layout(title)
 
 
 def header() -> None:
-    st.markdown('<p class="nexus-kicker">NEXUS / COMMERCE INTELLIGENCE</p>', unsafe_allow_html=True)
-    st.title("NEXUS Commerce Intelligence Observatory")
-    st.markdown(
-        '<p class="nexus-subtitle">Independent E-Commerce analytics · '
-        "Greenweez finance and campaigns · owned Commerce Lab GA4 · "
-        "Google web measurement. Source-isolated evidence, not a merged "
-        'company revenue ledger.</p>',
-        unsafe_allow_html=True,
-    )
+    hero()
 
 
 def use_period(records: list[dict], scope: str) -> list[dict]:
@@ -504,7 +461,7 @@ source_registry = inspect_sources(
 )
 source_registry_by_name = {row["source"]: row for row in source_registry}
 
-st.markdown("### Measurement sources")
+st.markdown('<div class="nexus-section-label">CONNECTED DATA DOMAINS</div>', unsafe_allow_html=True)
 source_meta = [
     ("GA4 / ACQUISITION", "ga4", "GA4 property access required"),
     ("GSC / ORGANIC SEARCH", "gsc", "Verified Search Console property required"),
@@ -649,7 +606,7 @@ overview_tab, historical_tab, greenweez_tab, greenweez_sheets_page, tab1, tab2, 
      "Commerce Lab · Test Events", "Data Contracts"]
 )
 with overview_tab:
-    st.subheader("NEXUS · Unified Evidence Registry")
+    st.subheader("Source assurance · Unified Evidence Registry")
     st.caption(
         "One E-Commerce product · independent model and measurement domains. "
         "Snapshot availability never implies live collection, verified revenue, "

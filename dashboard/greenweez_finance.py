@@ -8,10 +8,12 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from dashboard.nexus_theme import style_chart, COLORS
+
 from scripts.greenweez_bridge import load_snapshot
 
-CYAN = "#29D6EC"
-PURPLE = "#9569F7"
+CYAN = COLORS["cyan"]
+PURPLE = COLORS["purple"]
 PINK = "#EC6DCB"
 DBT_UPSTREAM = "https://github.com/senanurcetin/greenweez-finance-campaign-analytics"
 
@@ -114,13 +116,13 @@ def greenweez_finance_tab(path: Path) -> None:
         fig = px.line(frame, x="date", y="revenue", markers=True,
                       color_discrete_sequence=[CYAN],
                       title="Greenweez · Daily reported revenue")
-        fig.update_layout(paper_bgcolor="#080F25", plot_bgcolor="#101D3D", font_color="#E7F2FF")
+        style_chart(fig, str(fig.layout.title.text or ""))
         st.plotly_chart(fig, width="stretch")
     with c2:
         fig = px.bar(frame, x="date", y="ads_cost",
                      color_discrete_sequence=[PURPLE],
                      title="Greenweez · Daily ad cost")
-        fig.update_layout(paper_bgcolor="#080F25", plot_bgcolor="#101D3D", font_color="#E7F2FF")
+        style_chart(fig, str(fig.layout.title.text or ""))
         st.plotly_chart(fig, width="stretch")
 
     by_source = snapshot["tables"]["marketing_source"]
@@ -137,8 +139,8 @@ def greenweez_finance_tab(path: Path) -> None:
         fig = px.bar(spend_df, x="paid_source", y="ads_cost",
                      color="paid_source", color_discrete_sequence=[CYAN, PURPLE, PINK],
                      title=f"Campaign spend by paid platform · {chosen}")
-        fig.update_layout(paper_bgcolor="#080F25", plot_bgcolor="#101D3D", font_color="#E7F2FF",
-                          showlegend=False)
+        style_chart(fig, str(fig.layout.title.text or ""))
+        fig.update_layout(showlegend=False)
         st.plotly_chart(fig, width="stretch")
         with st.expander("Source-level CPC, CTR and ad spend share"):
             st.dataframe(spend_df, width="stretch", hide_index=True)

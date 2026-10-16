@@ -67,7 +67,7 @@ jobs:
         run: pip install -r dashboard/requirements.txt
 
       - name: Compile dashboard source
-        run: python -m py_compile dashboard/google_marketing_app.py dashboard/greenweez_finance.py scripts/google_dashboard_data.py scripts/lab_ga4_events.py scripts/greenweez_bridge.py scripts/ecommerce_marts_bridge.py dashboard/ecommerce_historical.py scripts/nexus_workspace.py scripts/greenweez_sheets_observed.py dashboard/greenweez_sheets.py
+        run: python -m py_compile dashboard/google_marketing_app.py dashboard/greenweez_finance.py scripts/google_dashboard_data.py scripts/lab_ga4_events.py scripts/greenweez_bridge.py scripts/ecommerce_marts_bridge.py dashboard/ecommerce_historical.py scripts/nexus_workspace.py scripts/greenweez_sheets_observed.py dashboard/greenweez_sheets.py dashboard/nexus_theme.py scripts/ga4_property_preflight.py scripts/powerbi_acceptance.py
 
       - name: Validate local Chrome Lighthouse JSON parser
         run: python -m unittest discover -s tests -p 'test_local_lighthouse.py' -v
@@ -83,6 +83,17 @@ jobs:
 
       - name: Validate ID-free Google Sheets source evidence and finance caveats
         run: python -m unittest discover -s tests -p 'test_greenweez_sheets_observed.py' -v
+
+      - name: Validate owned GA4 property resolution without network
+        run: python -m unittest discover -s tests -p 'test_ga4_property_preflight.py' -v
+
+      - name: Validate NEXUS design tokens and Power BI honesty gates
+        run: |
+          python -m unittest discover -s tests -p 'test_nexus_design_powerbi.py' -v
+          python -m scripts.powerbi_acceptance --output target/powerbi_acceptance.json
+
+      - name: Inspect GA4 API preflight without credentials or network
+        run: python -m scripts.ga4_property_preflight
 
       - name: Audit NEXUS source empty-state without credentials
         run: python -m scripts.nexus_workspace status --json

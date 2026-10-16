@@ -43,7 +43,7 @@ def _amount(value: object, field: str) -> float | int:
 def validate_observed(value: object) -> dict:
     if not isinstance(value, dict) or set(value) != {
         "schema_version", "source_system", "data_status",
-        "observed_at_utc", "source_sheets", "row_counts", "daily_orders", "daily_campaigns"
+        "observed_at_utc", "source_sheets", "row_counts", "origin_coverage", "daily_orders", "daily_campaigns"
     }:
         raise ValueError("Unknown Greenweez source observation schema")
     if value["schema_version"] != 1 or value["source_system"] != SOURCE or value["data_status"] != DATA_STATUS:
@@ -108,6 +108,26 @@ def validate_observed(value: object) -> dict:
     }
     if counts != expected:
         raise ValueError("Greenweez worksheets do not reconcile with daily aggregates")
+    # The original Google Sheets source has is_ga=0/1 groups. For the owner's
+    # observed August 2021 rows, missing turnover aligns exactly with is_ga=0.
+    # Encode the cross-tab as independent source evidence, not a statement
+    # about why the non-GA amount is unavailable.
+    coverage = value["origin_coverage"]
+    cover_fields = {"ga_rows", "non_ga_rows", "ga_missing_turnover",
+                    "non_ga_missing_turnover"}
+    if not isinstance(coverage, dict) or set(coverage) != cover_fields:
+        raise ValueError("Missing is_ga / turnover coverage audit")
+    if any(isinstance(v, bool) or not isinstance(v, int) or v < 0
+           for v in coverage.values()):
+        raise ValueError("Coverage values must be nonnegative integers")
+    if coverage["ga_rows"] + coverage["non_ga_rows"] != counts["orders"]:
+        raise ValueError("GA/non-GA source row coverage mismatch")
+    if (coverage["ga_missing_turnover"] > coverage["ga_rows"]
+            or coverage["non_ga_missing_turnover"] > coverage["non_ga_rows"]):
+        raise ValueError("Origin missing turnover exceeds source rows")
+    if (coverage["ga_missing_turnover"] + coverage["non_ga_missing_turnover"]
+            != sum(row["missing_turnover_rows"] for row in normalized_orders)):
+        raise ValueError("Missing turnover not reconciled across GA source classes")
     return {**value,
             "daily_orders": sorted(normalized_orders, key=lambda r: r["date"]),
             "daily_campaigns": sorted(normalized_campaigns, key=lambda r: (r["date"], r["paid_source"]))}
