@@ -142,7 +142,7 @@ def ga4_tab(rows: list[dict]) -> None:
         fig = px.line(daily, x="date", y=["sessions", "engaged_sessions"],
                       color_discrete_sequence=[PALETTE["cyan"], PALETTE["purple"]])
         fig.update_layout(**plot_config("Daily sessions & engaged sessions"))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     with right:
         sources = (data.groupby("ga4_session_channel_group", as_index=False)["sessions"]
                    .sum().sort_values("sessions", ascending=False).head(12))
@@ -150,9 +150,9 @@ def ga4_tab(rows: list[dict]) -> None:
                      orientation="h", color_discrete_sequence=[PALETTE["cyan"]])
         fig.update_layout(**plot_config("Sessions by GA4 channel"))
         fig.update_yaxes(categoryorder="total ascending")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     with st.expander("Verified GA4 source rows"):
-        st.dataframe(data.sort_values(["date", "ga4_session_channel_group"]), use_container_width=True, hide_index=True)
+        st.dataframe(data.sort_values(["date", "ga4_session_channel_group"]), width="stretch", hide_index=True)
         download_frame(data, "Export selected GA4 source rows", "nexus_ga4_filtered.csv")
 
 
@@ -193,13 +193,13 @@ def gsc_tab(rows: list[dict]) -> None:
     with a:
         fig = px.bar(daily, x="date", y="clicks", color_discrete_sequence=[PALETTE["cyan"]])
         fig.update_layout(**plot_config("Organic search clicks"))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     with b:
         fig = px.line(daily, x="date", y="ctr_pct", color_discrete_sequence=[PALETTE["purple"]])
         fig.update_layout(**plot_config("Click-through rate · %"))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     with st.expander("Verified Search Console source rows"):
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width="stretch", hide_index=True)
         download_frame(df, "Export selected GSC source rows", "nexus_gsc_filtered.csv")
 
 
@@ -231,7 +231,7 @@ def pagespeed_tab(rows: list[dict]) -> None:
         )):
             cols[i].metric(name, "N/A" if r[col] in ("", None) else f"{float(r[col]):.0f}/100")
     display = pd.DataFrame(selected)
-    st.dataframe(display, use_container_width=True, hide_index=True)
+    st.dataframe(display, width="stretch", hide_index=True)
     download_frame(display, "Export these Lighthouse audits", "nexus_pagespeed_latest.csv")
     st.info("Field Core Web Vitals (p75 LCP, INP and CLS) require separately connected CrUX API data.")
 
