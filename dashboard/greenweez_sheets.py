@@ -7,6 +7,8 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from dashboard.nexus_theme import style_chart, COLORS
+
 from scripts.greenweez_sheets_observed import load_observed
 
 
@@ -61,20 +63,18 @@ def greenweez_sheets_tab(path: Path) -> None:
     with c1:
         fig = px.line(
             orders, x="date", y="turnover_as_stored", markers=True,
-            color_discrete_sequence=["#29D6EC"],
+            color_discrete_sequence=[COLORS["cyan"]],
             title="Daily worksheet turnover · as stored",
         )
-        fig.update_layout(paper_bgcolor="#080F25", plot_bgcolor="#101D3D",
-                          font_color="#E7F2FF")
+        style_chart(fig, str(fig.layout.title.text or ""))
         st.plotly_chart(fig, width="stretch")
     with c2:
         fig = px.bar(
             campaign, x="date", y="cost_as_stored", color="paid_source",
-            color_discrete_sequence=["#9569F7", "#29D6EC", "#EC6DCB", "#78A7FF"],
+            color_discrete_sequence=[COLORS["purple"], COLORS["cyan"], "#EC6DCB", "#78A7FF"],
             title="Campaign worksheet advertising costs · as stored",
         )
-        fig.update_layout(paper_bgcolor="#080F25", plot_bgcolor="#101D3D",
-                          font_color="#E7F2FF")
+        style_chart(fig, str(fig.layout.title.text or ""))
         st.plotly_chart(fig, width="stretch")
     st.caption(
         "These workbook sources may differ from the Greenweez finance dbt input "
