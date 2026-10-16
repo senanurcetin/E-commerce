@@ -20,7 +20,7 @@ def evidence():
         "row_counts": {"orders": 3, "campaigns": 2},
         "daily_orders": [
             {"date": "2021-08-01", "order_rows": 3, "distinct_order_ids": 2,
-             "turnover_as_stored": 99.2},
+             "missing_order_ids": 1, "turnover_as_stored": 99.2},
         ],
         "daily_campaigns": [
             {"date": "2021-08-01", "paid_source": "facebook", "campaign_rows": 1,
