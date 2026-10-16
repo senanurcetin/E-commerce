@@ -44,9 +44,10 @@ def audit(root: Path, report_file: Path | None = None) -> dict:
             re.search(r"(?m)^" + re.escape(name) + r"\s*=", dax_text)
             for name in REQUIRED_DAX
         )
+        qa = (root / "docs" / "POWER_BI_VISUAL_QA.md").read_text(encoding="utf-8")
         checks["dax_semantics"] = (
-            "signup_traffic_source" in dax_text
-            and "session" in dax_text.lower()
+            "signup_traffic_source" in qa
+            and "fct_marketing_web_performance.traffic_source" in qa
             and "CAC Proxy" in dax_text
         )
     except FileNotFoundError:
