@@ -67,8 +67,30 @@ class GoogleMeasurementAppSmokeTests(unittest.TestCase):
             app = AppTest.from_file(str(APP), default_timeout=30).run()
             app.text_input[0].set_value(folder).run()
             self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
-            self.assertGreaterEqual(len(app.warning), 1)
+            self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
             self.assertEqual(len(app.metric), 0, "Unavailable sources must not display KPI figures")
+            self.assertEqual(len(app.tabs), 4, "Each source tab stays visible without data")
+            self.assertTrue(any("Website URL" == field.label for field in app.text_input))
+
+    def test_pagespeed_only_source_does_not_require_ga4_or_gsc(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            export_fixture(root)
+            manifest_path = root / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            for source in ("ga4", "gsc"):
+                spec = SCHEMA[source]
+                with (root / spec["filename"]).open("w", newline="", encoding="utf-8") as stream:
+                    writer = csv.DictWriter(stream, fieldnames=spec["required"])
+                    writer.writeheader()
+                manifest["source_summary"][spec["source_system"]]["rows"] = 0
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            app = AppTest.from_file(str(APP), default_timeout=30).run()
+            app.text_input[0].set_value(folder).run()
+            self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
+            labels = [metric.label for metric in app.metric]
+            self.assertNotIn("Sessions", labels)
+            self.assertIn("Performance", labels)
 
     def test_verified_csv_contract_drives_all_three_views(self):
         with tempfile.TemporaryDirectory() as folder:
