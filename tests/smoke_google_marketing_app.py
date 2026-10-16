@@ -72,7 +72,7 @@ class GoogleMeasurementAppSmokeTests(unittest.TestCase):
             self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
             self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
             self.assertEqual(len(app.metric), 0, "Unavailable sources must not display KPI figures")
-            self.assertEqual(len(app.tabs), 8, "Unified historical and financial source tabs stay available without data")
+            self.assertEqual(len(app.tabs), 9, "Unified model sources and observed Greenweez Sheets stay accessible")
             self.assertTrue(any("Website URL" == field.label for field in app.text_input))
 
     def test_historical_ecommerce_import_uses_distinct_business_domain(self):
