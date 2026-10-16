@@ -2,6 +2,15 @@
 
 Status: **implemented as a local web application** with a source-verification gate and an **explicit user-triggered PageSpeed Insights API call**. It is **not deployed** and does not automatically poll Google, and does not represent historical E-Commerce/Olist/Greenweez sales as Google-measured events. No demo or synthetic business metrics are substituted for absent accounts.
 
+## E-Commerce historical marts in the same dashboard
+
+The dedicated **E-Commerce · Historical** tab reads the root E-Commerce project's
+source-qualified DuckDB marts via an independent
+[historical mart adapter](../docs/NEXUS_HISTORICAL_MART_BRIDGE.md). When no
+snapshot exists it is blank with setup instructions, not fabricated business
+KPI values. The root CI data are labelled synthetic; verified production
+BigQuery marts and Power BI files still require reconciliation.
+
 ## One NEXUS workspace — E-Commerce and Greenweez
 
 The original Google Measurement dashboard entrypoint is now the **unified** local NEXUS Commerce Intelligence interface. All original GA4, GSC, Lighthouse and owned Commerce Lab tabs remain independent, and new **Overview · Sources** / **Greenweez · Finance** tabs live in this same app. The finance bridge intentionally NEVER equates Greenweez customers, refunds or business revenue with TheLook or NEXUS test checkout events.
