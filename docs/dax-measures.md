@@ -19,11 +19,21 @@ Model: `dim_user` → `fct_order_marketing` ← `dim_products` | `fct_marketing_
 
 ---
 
+## Semantic correctness notes (documentation only; Desktop validation pending)
+
+- `fct_order_marketing` contains **one order item per row**. `Total Orders` uses distinct `order_id`, while the AOV denominator counts orders with at least one completed item. A partially returned multi-item order remains an order with completed revenue.
+- `revenue` already excludes returned item values because only current `complete` statuses count. `returned_revenue` is **value of items currently marked returned**, not verified refund cash. **Do not subtract it a second time** when reporting current recognized revenue.
+- `Return Rate` is an item-count fraction among completed-or-returned items, not financial value or refunded-order incidence. For returned-value share use a separate explicitly named measure.
+- `Total Margin` is completed-item revenue minus available product unit costs; it excludes shipping, logistics, advertising and all non-completed rows. This is not Greenweez operational margin.
+- `ARPU` and `Müşteri Başına Gelir` currently divide by **purchasing users in the order fact**, not all active/registered users, so they should not be presented as acquisition-wide ARPU without a verified eligible-user denominator.
+- This page documents intended DAX changes; the repository still lacks an editable Power BI report. These measures must be entered and visually reconciled in Power BI Desktop before claiming that the screenshots reflect them.
+
 ## Core KPI Measures
 
 ```dax
 Total Orders =
-COUNTROWS(fct_order_marketing)
+-- Order-item fact has multiple lines per order; count distinct orders.
+DISTINCTCOUNT(fct_order_marketing[order_id])
 
 Toplam Gelir (Uyumlu Dönem) =
 -- Time-aligned revenue; respects date slicer boundaries on both fact tables
@@ -46,7 +56,15 @@ DIVIDE(
 )
 
 Ortalama Sepet Bedeli =
-AVERAGE(fct_order_marketing[sale_price])
+-- Average recognized order value (AOV), not average line-item sale price.
+-- Only orders with at least one currently completed item are in the denominator.
+DIVIDE(
+    SUM(fct_order_marketing[revenue]),
+    CALCULATE(
+        DISTINCTCOUNT(fct_order_marketing[order_id]),
+        fct_order_marketing[is_completed_order] = 1
+    )
+)
 
 Dönüşüm Oranı =
 DIVIDE(
@@ -130,19 +148,26 @@ DIVIDE([Aynı Gün Satın Alan Kullanıcılar], [İlk Sipariş Müşteri Sayıs�
 
 ```dax
 Total Margin =
+-- Product gross contribution on completed item rows with a known unit cost;
+-- not operational/ads-adjusted profit. Excludes cancelled/returned items.
 SUMX(
-    fct_order_marketing,
-    fct_order_marketing[revenue] -
-    RELATED(dim_products[cost])
+    FILTER(fct_order_marketing, fct_order_marketing[is_completed_order] = 1),
+    VAR UnitCost = RELATED(dim_products[cost])
+    RETURN IF(ISBLANK(UnitCost), BLANK(), fct_order_marketing[revenue] - UnitCost)
 )
 
 Total Margin % =
 DIVIDE([Total Margin], SUM(fct_order_marketing[revenue]))
 
 Return Rate =
+-- Order-item return share, excluding other statuses from the denominator.
 DIVIDE(
-    SUM(fct_order_marketing[returned_revenue]),
-    SUM(fct_order_marketing[revenue]) + SUM(fct_order_marketing[returned_revenue])
+    CALCULATE(COUNTROWS(fct_order_marketing), fct_order_marketing[is_returned_order] = 1),
+    CALCULATE(
+        COUNTROWS(fct_order_marketing),
+        fct_order_marketing[is_completed_order] = 1 ||
+        fct_order_marketing[is_returned_order] = 1
+    )
 )
 ```
 
