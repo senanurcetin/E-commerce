@@ -33,6 +33,9 @@ jobs:
       - name: Parse project (validates all SQL and YAML)
         run: dbt parse --profiles-dir .github/dbt-profiles
 
+      - name: Compile channel, product and funnel analytical SQL
+        run: dbt compile --profiles-dir .github/dbt-profiles --select analyses/
+
       - name: Load seed data (57 sample rows across 4 tables)
         run: dbt seed --profiles-dir .github/dbt-profiles
 

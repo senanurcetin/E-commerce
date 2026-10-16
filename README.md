@@ -15,6 +15,8 @@
 
 The repo also runs fully on **DuckDB** (CI and local) using Jinja adapter dispatch, so every model and test can be reproduced without BigQuery access.
 
+**KPI corrections:** [Order, AOV, return and margin semantics](docs/COMMERCE_KPI_SEMANTICS.md). SQL/DAX definitions have been revised; actual Desktop measures and historical screenshot labels are pending verification.
+
 **Technical review:** [Project case study](https://senanur-cetin.vercel.app/projects/e-commerce-marketing-web-performance) · [Power BI screenshots and QA status](docs/POWER_BI_VISUAL_QA.md) · [NEXUS navy-blue theme source](powerbi/themes/nexus-commerce.json) · [DAX measure documentation](docs/dax-measures.md).
 
 **Release readiness:** [Evidence-scoped candidate notes](docs/RELEASE_NOTES_CANDIDATE.md). No new GitHub Release is claimed by this note.

@@ -1,13 +1,16 @@
 -- Channel performance: revenue, orders, and conversion rate by marketing channel
+-- Current-status revenue only; returned_item_value is not verified refund cash.
 -- Run against fct_order_marketing + fct_marketing_web_performance
 
 with orders as (
     select
         channel_group,
         traffic_source,
-        sum(revenue)                                          as total_revenue,
-        sum(returned_revenue)                                 as total_returns,
-        sum(revenue) - sum(returned_revenue)                  as net_revenue,
+        -- Revenue already includes only current complete rows. Returned rows
+        -- do not contribute to revenue; subtracting returned_revenue again
+        -- would double-count return losses.
+        sum(revenue)                                          as net_revenue,
+        sum(returned_revenue)                                 as returned_item_value,
         count(distinct order_id)                              as total_orders,
         count(distinct case when is_completed_order = 1 then order_id end) as completed_orders,
         count(distinct case when is_returned_order  = 1 then order_id end) as returned_orders
@@ -19,7 +22,9 @@ sessions as (
     select
         channel_group,
         traffic_source,
-        count(distinct session_id)                            as total_sessions,
+        -- The mart grain is session_sk = (session_id, user_id); a session_id
+        -- alone may be shared by more than one user.
+        count(*)                                              as total_sessions,
         sum(is_converted)                                     as converted_sessions,
         round(avg(session_duration_minutes), 2)               as avg_session_duration_min,
         round(avg(page_view_events), 1)                       as avg_page_views
