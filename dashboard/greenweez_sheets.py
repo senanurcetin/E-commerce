@@ -47,10 +47,16 @@ def greenweez_sheets_tab(path: Path) -> None:
     first, second, third = st.columns(3)
     first.metric("Source order rows · not reconciled transactions", f"{orders['order_rows'].sum():,}")
     second.metric("Known distinct order IDs · incomplete if IDs missing", f"{orders['distinct_order_ids'].sum():,}")
-    third.metric("Source worksheet turnover · stored units", f"{orders['turnover_as_stored'].sum():,.2f}")
+    third.metric("Nonblank turnover values · stored units", f"{orders['turnover_as_stored'].sum():,.2f}")
     missing_ids = int(orders["missing_order_ids"].sum())
     if missing_ids:
         st.warning(f"{missing_ids:,} source order rows have no order ID; the distinct count is only a lower bound.")
+    missing_turnover = int(orders["missing_turnover_rows"].sum())
+    if missing_turnover:
+        st.warning(f"{missing_turnover:,} order rows have blank turnover; the displayed sum covers only observed values.")
+    incomplete_ads = sum(int(campaign[col].sum()) for col in ("missing_cost_rows", "missing_impressions_rows", "missing_clicks_rows"))
+    if incomplete_ads:
+        st.warning("Campaign worksheets have incomplete cost, impressions or clicks. Charts include observed numeric values only.")
     c1, c2 = st.columns(2)
     with c1:
         fig = px.line(
