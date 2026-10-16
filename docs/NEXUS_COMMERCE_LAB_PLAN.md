@@ -34,10 +34,10 @@ External sites Tricentis / nopCommerce: independent Lighthouse benchmark only.
 | --- | --- | --- | --- |
 | P0 — Contract | Report source separation, real-vs-test event naming, GA4 consent rules, budget and publishing safeguards | Existing TheLook transactions never ascribed to the new site | **Done** · PR #26 |
 | P1 — Storefront | Responsive NEXUS dark consumer storefront, illustrated sandbox catalog, product filters, cart, accessible controls, no-payment checkout | Human can browse/cart/complete test flow, no payment or PII collection | **Code + CI done**; physical browser review pending |
-| P2 — First-party instrumentation | Optional owned GA4 Measurement ID via deployment build environment; explicit opt-in; custom `lab_*` event names only | Zero Google tracking without valid ID and consent, no GA4 `purchase` or monetary value | **Code + tests done**; owned GA4 property not connected |
+| P2 — First-party instrumentation | Optional owned GA4 Measurement ID via deployment build environment; explicit opt-in; custom `lab_*` event names only | Zero Google tracking without valid ID and consent, no GA4 `purchase` or monetary value | **Deployed with new owned GA4 web Measurement ID**; live events not yet verified |
 | P3 — CI/launch bundle | Dependency-free Node unit tests, HTML/CSS/JS static build, Vercel root-dir deploy config, source audit | CI green + clean HTML bundle | **Done** · 3 CI jobs green; Vercel first deployment READY |
 | P4 — Owned domain | Deploy controlled host, inspect privacy/consent, ensure HTTPS, run actual PageSpeed mobile/desktop | Public HTTPS reachable by Google and real PageSpeed evidence | **PARTIAL** · Vercel production SSO changed to preview-only (preview protection retained); Vercel HTTP fetch 200 for HTML/config and independent FlawPilot scan completed; Google PSI mobile/desktop still not verified |
-| P5 — Real GA4 | Create owned GA4 web data stream, set Measurement ID, verify real lab events in DebugView or reports | Authorized property + explicit opt-in + report/GA4 Data API reconciliation | BLOCKED pending account authorization |
+| P5 — Real GA4 | Create owned GA4 web data stream, set Measurement ID, verify real lab events in DebugView or reports | Authorized property + explicit opt-in + report/GA4 Data API reconciliation | **PARTIAL** · new web stream/production Measurement ID configured; Analytics Data API property authorization and real-event reconciliation pending |
 | P6 — GSC / Cloud | Verify owned host in Search Console; optional separate GA4 BigQuery export; add source-qualified dbt staging | Distinct dataset, schema and freshness tests, no fabricated orders | BLOCKED pending cloud authorization |
 | P7 — Product & portfolio | Real-source reports in NEXUS dashboard, current Power BI/Desktop metrics check, evidence screenshots, case-study claim review | Operator signs off accuracy and source provenance | Future acceptance |
 
@@ -69,14 +69,14 @@ On-demand independent FlawPilot quick scan of `https://nexus-commerce-lab.vercel
 - Detailed scan: https://flawpilot.com/report/X88JSW
 - **These are FlawPilot proprietary pillar scores, NOT Google PageSpeed Lighthouse scores**. Do not import them into `pagespeed_lab_audits.csv` or claim mobile/desktop Web Vitals.
 - The page deliberately returns `<meta name="robots" content="noindex, nofollow">`; low SEO may reflect this intentional choice but detailed report findings still require review.
-- The deploy remains **GA4-unconfigured**. No opted-in test traffic, conversion events, purchase metrics, Google Ads ROAS or Google Search Console clicks can be claimed.
+- Subsequent to the original independent scan, the owner created the dedicated Commerce Lab GA4 stream. Production was deployed with `G-F0B2EQVC8M` and `/config.js` verified. **Actual GA4 event receipt is still unconfirmed.** No test checkout sales revenue, Google Ads ROAS or Search Console clicks can be claimed.
 - The first-party NEXUS Commerce Lab is now the default public measurement target in the local dashboard (separate PR); Tricentis and nopCommerce remain clearly labeled external benchmarks.
 
 ## GA4 legacy-stream discovery (2026-10-16)
 
 The owner's Google Analytics Data streams screen and subsequent stream details confirmed the existing **ToyStore Website** stream for `https://senanurcetin.github.io/GTM/`. GitHub [senanurcetin/GTM](https://github.com/senanurcetin/GTM) confirms the legacy storefront's GTM container and `dataLayer` prototype. This **does not** authorize using the existing ToyStore web Measurement ID on the new Commerce Lab.
 
-For property-wide source separation, create a dedicated **NEXUS Commerce Lab** GA4 property and its own web Measurement ID. The new Vercel deployment should remain **GA4 disconnected** until that identity is supplied and deployed. The details, exact UI steps, safety restrictions and verification gates are in [GA4 Commerce Lab Activation](GA4_COMMERCE_LAB_ACTIVATION.md).
+For property-wide source separation, create a dedicated **NEXUS Commerce Lab** GA4 property and its own web Measurement ID. The new Vercel production deployment now uses the separately owned Commerce Lab Measurement ID `G-F0B2EQVC8M`. Real opted-in browser event receipt and Property-ID-based read-only API extraction remain pending. The details, exact UI steps, safety restrictions and verification gates are in [GA4 Commerce Lab Activation](GA4_COMMERCE_LAB_ACTIVATION.md).
 
 ## Release acceptance checklist
 
