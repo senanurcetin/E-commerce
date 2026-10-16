@@ -1,41 +1,38 @@
-# NEXUS Commerce — Power BI theme source
+# NEXUS Commerce Intelligence — Power BI Theme and Acceptance
 
-The version-controlled [NEXUS Commerce JSON theme](themes/nexus-commerce.json) now uses the same **navy-and-blue presentation direction** as the NEXUS portfolio. It is an **importable design proposal**, not an applied Power BI Desktop report or an updated screenshot.
+The importable JSON theme at [themes/nexus-commerce.json](themes/nexus-commerce.json) now matches the Streamlit NEXUS **midnight navy / cyan / purple** design system. It does **not** prove the original PBIX file has been opened, recolored or refreshed.
 
-## Current design tokens
-
-| UI role | Color | Usage |
+| Token | Hex | Usage |
 | --- | --- | --- |
-| Header / shell | `#061524` | Navigation and report framing |
-| Text | `#091625`, `#122942` | Titles, KPI text, chart labels |
-| Canvas | `#F7F8FA`, `#FFFFFF` | Page and visual backgrounds |
-| Primary data blue | `#0572A8` | Primary comparison and table accent |
-| Secondary lavender | `#8F9BFF` | Secondary categorical series |
-| Positive emphasis | `#487FD8` | Positive semantic signal (not green) |
-| Warning / risk | `#B47725`, `#C24363` | Thresholds or risk conditions |
-| Border | `#D9E1E9` | Card and visual boundaries |
+| Primary canvas | `#080F20` | Power BI page background |
+| Visual surface | `#111E38` | Cards and charts |
+| Primary text | `#EDF5FF` | Title and card values |
+| Secondary text | `#B8C8DF` | Labels and grid annotations |
+| NEXUS cyan | `#47DFF2` | Key data series / table accent |
+| NEXUS purple | `#A892F4` | Secondary data series |
+| Approved positive | `#7ADDB8` | Positive semantic value |
+| Approved warning | `#EFC98D` | Risk / warning value |
 
-**Eight categorical colors** are defined in `dataColors`; not all pairs have equivalent luminance, so verify legibility on the real charts, particularly small bars, legends and data labels. Color must never be the only way to communicate a KPI change or risk status.
+Import the theme into an **actual editable** Power BI Desktop report with **View → Themes → Browse for themes**. Individual custom visual overrides, white backgrounds, date filters, drill behaviors and slicer formatting must still be examined manually.
 
-The editorial cover in `docs/assets/ecommerce-analytics-cover.svg` still uses its earlier violet/indigo artwork. It is **not** a screenshot or evidence that this newer theme was deployed. Its potential redesign requires a separate image review.
+### QA automation
 
-## Import and review in Power BI Desktop
+From the E-Commerce repo root:
 
-1. Open the **original report file** from its authorized local source. This repository does not contain a `.pbix` or `.pbip`, so the report cannot be edited or rendered by a GitHub-only change.
-2. In **View → Themes → Browse for themes**, choose [`themes/nexus-commerce.json`](themes/nexus-commerce.json).
-3. Inspect every report page: slicer/filter states, KPI titles, relative contrast, axis/legend legibility, tooltips, data labels, drill interactions and any per-visual formatting that overrides the theme.
-4. Independently reconcile conversion, user acquisition, revenue and basket metrics against the governed mart outputs and the [DAX measures documentation](../docs/dax-measures.md). Preserve the distinction between **signup acquisition source** and **session traffic source**.
-5. Once the current report has passed, take fresh *actual Power BI Desktop* screenshots, record the report/version/date and replace the historical assets only after visually comparing them at 100% and checking that no personal/client data appears.
-6. Confirm appearance in both desktop and mobile/published views. Applying a JSON theme does not automatically update every custom visual, report container, or preformatted element.
+~~~cmd
+python -m scripts.powerbi_acceptance --output target\powerbi_acceptance.json
+~~~
 
-## Historical screenshot inventory
+This generates a source/documentation audit of JSON theme tokens, the DAX measure registry, attribution semantics and editability. It intentionally leaves **Desktop render, current warehouse refresh, mobile layout, visual-level acceptance and financial reconciliation as NOT DONE** until independent evidence exists. A PBIX merely being present does not auto-promote the release decision.
 
-| Existing asset | Report view |
-| --- | --- |
-| [Channel performance](../docs/assets/powerbi-channel-performance.png) | Channel Acquisition Efficiency & Executive Scorecard |
-| [Traffic trend](../docs/assets/powerbi-traffic-trend.png) | Signup, traffic attribution and basket analysis |
-| [Demographics](../docs/assets/powerbi-demographics.png) | Age, gender, country and customer type |
+When the real source is available, run `python -m scripts.powerbi_acceptance --report C:\path\report.pbix` and then perform the checklists in [Power BI visual QA](../docs/POWER_BI_VISUAL_QA.md). Actual Desktop access remains mandatory for final acceptance.
 
-These are **historical captures** associated with the [README's three-page gallery](../README.md#power-bi-dashboard). They have **not** been recaptured using the revised navy-blue theme and are **not** evidence of a fresh Desktop refresh. See the [visual acceptance gate](../docs/POWER_BI_VISUAL_QA.md).
+### Known metric distinctions
 
-**Release status (12 October 2026): HOLD for Desktop/theme import and numerical reconciliation.** This edit changes an importable JSON theme and documentation only; it does not modify or publish a Power BI report or regenerate screenshots.
+- Signup source and session traffic source are different dimensions.
+- Financial revenue must be read from its own historical E-Commerce mart, never from Greenweez or NEXUS Commerce Lab sandbox events.
+- The PE4 CAC input is a sessions-per-user **proxy**, not money spent on customer acquisition.
+- The old three PNG illustrations are **historical screenshots**, not renewed evidence after this theme change.
+- Turkish **B** means bin (1,000), not billion.
+
+**Release decision: HOLD.** Original editable report and fresh authorized data/render evidence are not established in this repo.
