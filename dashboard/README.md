@@ -2,6 +2,26 @@
 
 Status: **implemented as a local web application** with a source-verification gate and an **explicit user-triggered PageSpeed Insights API call**. It is **not deployed** and does not automatically poll Google, and does not represent historical E-Commerce/Olist/Greenweez sales as Google-measured events. No demo or synthetic business metrics are substituted for absent accounts.
 
+## Unified evidence overview and source controls
+
+The **Overview · Sources** page shows a source audit of all seven independent
+data groups. It never treats a missing source as zero trading activity,
+combines separate merchant revenue, or elevates a local synthetic/externally
+unverified snapshot to certified financial data. The previously large
+PageSpeed onboarding form starts collapsed so actual source coverage is
+visible without scrolling.
+
+Read-only verification:
+
+~~~cmd
+python -m scripts.nexus_workspace status
+python -m scripts.nexus_workspace status --json
+~~~
+
+The source-safe importer can stage an E-Commerce dbt source and a Greenweez
+dbt source in a single invocation; it validates both before publishing
+either snapshot. See [workspace source audit and import](../docs/NEXUS_WORKSPACE_SOURCE_AUDIT.md).
+
 ## E-Commerce historical marts in the same dashboard
 
 The dedicated **E-Commerce · Historical** tab reads the root E-Commerce project's

@@ -33,6 +33,7 @@ from scripts.greenweez_bridge import load_snapshot as load_greenweez_snapshot
 from dashboard.greenweez_finance import greenweez_finance_tab
 from scripts.ecommerce_marts_bridge import load_snapshot as load_historical_snapshot
 from dashboard.ecommerce_historical import historical_ecommerce_tab
+from scripts.nexus_workspace import inspect_sources
 
 PALETTE = {
     "background": "#080F25",
@@ -486,6 +487,16 @@ except (OSError, ValueError) as exc:
     historical_snapshot = None
     historical_error = str(exc)
 
+source_registry = inspect_sources(
+    ROOT,
+    overrides={
+        "ecommerce": Path(historical_folder),
+        "greenweez": Path(greenweez_folder),
+        "google_marts": Path(folder),
+    },
+)
+source_registry_by_name = {row["source"]: row for row in source_registry}
+
 st.markdown("### Measurement sources")
 source_meta = [
     ("GA4 / ACQUISITION", "ga4", "GA4 property access required"),
@@ -512,7 +523,7 @@ for col, (title, key, explanation) in zip(cols, source_meta):
         )
     else:
         count = len(tables[key])
-        state = f"{count:,} verified rows" if count else "Not connected"
+        state = f"{count:,} API snapshot rows" if count else "Not imported"
     text_style = "" if count else " nexus-source-empty"
     # HTML content below is fixed/number-derived; no user input is interpolated.
     col.markdown(
@@ -538,7 +549,7 @@ else:
 
 with st.expander(
     "GET STARTED · Run your first real PageSpeed audit",
-    expanded=not bool(tables["pagespeed"]),
+    expanded=False,
 ):
     st.markdown(
         "**No GA4, GSC or BigQuery account is needed for this step.** "
@@ -607,6 +618,16 @@ for source_key, table_key in (
     ("GA4", "ga4"), ("Search Console", "gsc"), ("PageSpeed", "pagespeed"),
 ):
     st.sidebar.caption(f"{source_key}: {len(tables[table_key])} validated rows")
+st.sidebar.caption(
+    "Commerce Lab GA4 export: "
+    + source_registry_by_name["commerce_lab_ga4"]["status"].replace("_", " ")
+)
+st.sidebar.caption(
+    "Historical E-Commerce and Greenweez snapshots: "
+    + source_registry_by_name["ecommerce"]["status"].replace("_", " ")
+    + " / "
+    + source_registry_by_name["greenweez"]["status"].replace("_", " ")
+)
 if not error_message:
     with st.sidebar.expander("Extraction metadata"):
         st.json({
@@ -621,7 +642,39 @@ overview_tab, historical_tab, greenweez_tab, tab1, tab2, tab3, tab4, tab5 = st.t
      "Commerce Lab · Test Events", "Data Contracts"]
 )
 with overview_tab:
-    st.subheader("Three separate commerce analytics domains · one workspace")
+    st.subheader("NEXUS · Unified Evidence Registry")
+    st.caption(
+        "One E-Commerce product · independent model and measurement domains. "
+        "Snapshot availability never implies live collection, verified revenue, "
+        "production readiness or a shared merchant identity."
+    )
+    ready_count = sum(
+        row["status"] in ("api_snapshot", "external_unverified", "synthetic")
+        for row in source_registry
+    )
+    invalid_count = sum(row["status"] == "invalid" for row in source_registry)
+    st.caption(
+        f"Imported source groups: {ready_count}/{len(source_registry)} · "
+        f"Invalid source groups: {invalid_count}. "
+        "These are source status counts, not traffic, order or financial KPIs."
+    )
+    registry_frame = pd.DataFrame([
+        {
+            "Source": row["label"],
+            "Status": row["status"].replace("_", " "),
+            "Rows": row["rows"],
+            "Provenance": row["provenance"] or "none",
+            "Interpretation": row["detail"],
+        }
+        for row in source_registry
+    ])
+    st.dataframe(registry_frame, width="stretch", hide_index=True)
+    st.caption(
+        "This catalog is refreshed from local validated files on each rerun. "
+        "Use `python -m scripts.nexus_workspace status` to audit from a terminal."
+    )
+    st.subheader("Separate business systems")
+
     st.markdown(
         "**E-Commerce / TheLook:** independent historical orders, web events "
         "and dbt marts; not observed transactions on the new Lab.\n\n"
@@ -635,22 +688,12 @@ with overview_tab:
         "is produced. Greenweez campaign source CPC/CTR are measured from ad "
         "aggregates; campaign-attributed revenue is unavailable."
     )
-    source_rows = [
-        {"Domain": "E-Commerce historical",
-         "Status": "Not imported" if historical_snapshot is None
-                   else historical_snapshot["provenance"],
-         "Metric scope": "Separate root dbt completed-order and session marts"},
-        {"Domain": "Greenweez finance", "Status":
-         "Not imported" if greenweez_snapshot is None
-         else greenweez_snapshot["provenance"],
-         "Metric scope": "Greenweez source-exclusive finance/campaign marts"},
-        {"Domain": "Commerce Lab GA4", "Status": "Separate read-only export required",
-         "Metric scope": "Opted-in sandbox test events only"},
-        {"Domain": "Google measurement", "Status":
-         "No complete mart bundle" if error_message else "Source-validated snapshot bundle",
-         "Metric scope": "GA4/GSC/PageSpeed each with separate identity"},
-    ]
-    st.dataframe(pd.DataFrame(source_rows), hide_index=True, width="stretch")
+    st.info(
+        "Financial figures from synthetic CI marts or externally imported but "
+        "unaudited data are explicitly labeled in their separate tabs. "
+        "The observed GA4 Realtime screenshot confirms the web tag collected "
+        "test events; it does NOT populate the local API snapshot automatically."
+    )
 with historical_tab:
     historical_ecommerce_tab(Path(historical_folder))
 with greenweez_tab:
@@ -675,7 +718,7 @@ with tab5:
         "**Google Ads:** campaign cost and validated attribution are absent, "
         "so CAC and ROAS are unavailable.\n\n"
         "**Historical commerce:** E-Commerce, Olist and Greenweez are "
-        "not part of the Google source identity.\\n\\n"
+        "not part of the Google source identity.\n\n"
         "**Greenweez:** separate finance and campaign marts; externally "
         "sourced snapshots remain unverified until independent reconciliation. "
         "Do not join Greenweez to TheLook/Lab events or claim per-source ROAS."

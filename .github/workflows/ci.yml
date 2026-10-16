@@ -67,7 +67,7 @@ jobs:
         run: pip install -r dashboard/requirements.txt
 
       - name: Compile dashboard source
-        run: python -m py_compile dashboard/google_marketing_app.py dashboard/greenweez_finance.py scripts/google_dashboard_data.py scripts/lab_ga4_events.py scripts/greenweez_bridge.py scripts/ecommerce_marts_bridge.py dashboard/ecommerce_historical.py
+        run: python -m py_compile dashboard/google_marketing_app.py dashboard/greenweez_finance.py scripts/google_dashboard_data.py scripts/lab_ga4_events.py scripts/greenweez_bridge.py scripts/ecommerce_marts_bridge.py dashboard/ecommerce_historical.py scripts/nexus_workspace.py
 
       - name: Validate local Chrome Lighthouse JSON parser
         run: python -m unittest discover -s tests -p 'test_local_lighthouse.py' -v
@@ -77,6 +77,12 @@ jobs:
 
       - name: Validate historical E-Commerce mart aggregation and source isolation
         run: python -m unittest discover -s tests -p 'test_ecommerce_marts_bridge.py' -v
+
+      - name: Validate seven-source NEXUS audit and staged source publishing
+        run: python -m unittest discover -s tests -p 'test_nexus_workspace.py' -v
+
+      - name: Audit NEXUS source empty-state without credentials
+        run: python -m scripts.nexus_workspace status --json
 
       - name: Run Streamlit empty-state and verified-test-source smoke checks
         run: python -m unittest discover -s tests -p 'smoke_google_marketing_app.py' -v
