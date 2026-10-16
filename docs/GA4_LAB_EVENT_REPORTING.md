@@ -2,7 +2,7 @@
 
 ## Status and source boundary (2026-10-16)
 
-This is a **ready-to-authorize implementation**, not a claim that an owned Commerce Lab GA4 property or Analytics Data API connection is already active.
+The dedicated Commerce Lab web stream has now been created by the owner and its public Measurement ID deployed to Vercel. **Live event receipt and Analytics Data API read permission are not yet verified.**
 
 Source diagram:
 
@@ -21,7 +21,7 @@ Personal portfolio GA4 (DO NOT MIX)
 Historical TheLook SQL sales facts (SEPARATE SOURCE)
 ~~~
 
-The site has **no owned GA4 Measurement ID configured as of this work**. Creating a property requires the user's Google Analytics Admin access; it cannot be inferred from a previously existing stream. Preserve both ToyStore and portfolio GA4 configurations.
+On 2026-10-16, the owner created a separate NEXUS Commerce Lab web stream and supplied the public Measurement ID `G-F0B2EQVC8M`. The Vercel production variable `NEXUS_GA4_MEASUREMENT_ID` was set only on the `nexus-commerce-lab` project, which was redeployed successfully. Verified public `/config.js` serves only the new ID and does not contain the legacy ToyStore ID. Build logs report **GA4 configured; consent required**. This establishes deployment configuration, **not confirmed Google Analytics data delivery**. Preserve both ToyStore and portfolio GA4 configurations.
 
 ## Step 1 — Register a new property and web stream
 
@@ -91,8 +91,8 @@ GA4 sample/fixture data used in offline CI tests are never treated as real produ
 - [x] Consent persisted per `G-...` property; legacy approvals are not inherited
 - [x] GA4 Data API event counts isolated by dedicated property, host and event allowlist
 - [x] Dashboard remains navigable with no connected property and no fake metrics
-- [ ] New owned GA4 property and web stream created, new ID provided
-- [ ] Vercel production configured with new Measurement ID
+- [x] Owner created the new Commerce Lab web stream and provided Measurement ID `G-F0B2EQVC8M` (Property ID not yet provided)
+- [x] Production-only Vercel variable configured; rebuilt READY; `/config.js` verified
 - [ ] Realtime event arrival and consent/revocation checked in browser
 - [ ] GA4 API read-only principal authorized and actual report reconciled
 - [ ] BI screenshots identify source property, period and **test-only** status

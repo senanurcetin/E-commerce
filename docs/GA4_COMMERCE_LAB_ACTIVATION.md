@@ -8,7 +8,7 @@ Date: 2026-10-16. This document distinguishes the legacy ToyStore stream from th
 | --- | --- | --- | --- |
 | Legacy **ToyStore Website** | GitHub Pages at `https://senanurcetin.github.io/GTM/`, source repo [senanurcetin/GTM](https://github.com/senanurcetin/GTM) | User's GA4 Data streams screenshot showed a ToyStore Website web stream; a later account detail confirmed it has an existing `G-...` Measurement ID. GitHub repo includes `GTM-T5RLNJ6H` and GA4-compatible dataLayer events. | Active GA4 event delivery, past visitor volume, ownership of old historical commerce records, or correct published GTM event tags |
 | **NEXUS-Web** | Another web stream in the same Analytics Data streams list | A web stream named NEXUS-Web exists | Its site URL was not shown; **do not assert it is the portfolio** without inspecting the stream details |
-| **NEXUS Commerce Lab** | Our separately deployed `https://nexus-commerce-lab.vercel.app/` | Vercel production HTTPS served HTTP 200; standalone storefront/consent-first `lab_*` event logic and CI verified | **No GA4 Measurement ID configured**, no received GA4 events confirmed, no GSC ownership verification |
+| **NEXUS Commerce Lab** | Our separately deployed `https://nexus-commerce-lab.vercel.app/` | Vercel production HTTPS served HTTP 200; standalone storefront/consent-first `lab_*` event logic and CI verified | **New `G-F0B2EQVC8M` configured on Vercel production and `/config.js` verified**; GA4 event receipt, read-only API access and GSC ownership remain unverified |
 | Historical **E-Commerce / TheLook-style dataset** | Existing `events`, `order_items`, `products`, `users` warehouse | dbt models and CI test contracts | No evidence that either ToyStore or Commerce Lab generated historical warehouse transactions |
 
 **Preserve the old ToyStore stream unchanged.** It is valuable as a separate past instrumentation prototype but is not a compatible first-party Commerce Lab identity. Do not repoint its web URL, place its `G-...` ID into the Commerce Lab Vercel build, or copy the old GTM container as a workaround.
@@ -35,9 +35,9 @@ To keep property-wide acquisition/conversion reports unambiguous, **create a sep
 - [x] Separate ToyStore site and stream identified by user account UI and matching source repo
 - [x] New Lab source served on first-party Vercel production alias with valid HTTPS
 - [x] New Lab code/CI verifies consent gating and `lab_*` event limitations
-- [ ] New **Commerce Lab** GA4 property created and its own `G-...` web Measurement ID provided
-- [ ] Vercel environment configured with **new** ID and deployment ready
-- [ ] New public config verified; no Google tag before opt-in
+- [x] New **Commerce Lab** GA4 web stream created and `G-F0B2EQVC8M` provided by owner
+- [x] Production-only Vercel environment configured with new ID; Git deployment READY
+- [x] Public `/config.js` verified with new ID and old ID absent; no-tag-before-opt-in contract covered by CI (independent browser QA pending)
 - [ ] New GA4 Realtime/DebugView confirms at least one genuine opted-in `lab_*` event
 - [ ] Read-only data extraction authorized and dashboard aggregates reconciled
 - [ ] Separate Search Console property verified (optional); indexability decision explicitly made
