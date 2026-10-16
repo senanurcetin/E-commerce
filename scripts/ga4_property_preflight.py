@@ -11,7 +11,6 @@ import argparse
 import os
 import re
 from urllib.parse import quote
-from google.auth.exceptions import DefaultCredentialsError  # google-auth installed explicitly
 
 from scripts.google_measurement import access_token, fetch_json, GA4_SCOPE
 
@@ -98,10 +97,7 @@ def main() -> int:
     try:
         token = access_token(GA4_SCOPE)
         prop_id = discover_property(token)
-    except DefaultCredentialsError:
-        print("BLOCKED: no authorized Google Application Default Credentials for Analytics.")
-        return 2
-    except (OSError, RuntimeError, ValueError) as exc:
+    except (OSError, RuntimeError, ValueError, ImportError) as exc:
         print(f"BLOCKED: Analytics Admin read-only property identity not confirmed ({type(exc).__name__}).")
         return 2
     print(f"Verified owned Commerce Lab GA4 Property ID: {prop_id}")
