@@ -12,6 +12,8 @@ target/google_measurement/ (gitignored) and are NEVER added to existing marts.
 from __future__ import annotations
 
 import argparse
+import hashlib
+import ipaddress
 from datetime import date, datetime, timezone
 import json
 import os
@@ -119,7 +121,7 @@ def collect_ga4(start: str, end: str) -> dict:
 
 
 def normalize_gsc(response: dict) -> list[dict]:
-    """Query/date/device intentionally omitted to avoid personal/search-term export."""
+    """Raw search queries and page URLs intentionally omitted from the export."""
     records = []
     for row in response.get("rows", []):
         keys = row["keys"]
@@ -189,6 +191,15 @@ def collect_pagespeed(url: str, strategy: str) -> dict:
     parsed = urlsplit(url)
     if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password:
         raise ValueError("--url requires a public HTTPS address without embedded credentials")
+    host = parsed.hostname.lower()
+    if host == "localhost" or host.endswith(".local") or "." not in host:
+        raise ValueError("--url requires a public HTTPS hostname")
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        address = None
+    if address is not None and not address.is_global:
+        raise ValueError("--url requires a public HTTPS address")
     query = {"url": url, "strategy": strategy}
     key = os.environ.get("GOOGLE_PAGESPEED_API_KEY")
     if key:
@@ -200,9 +211,14 @@ def collect_pagespeed(url: str, strategy: str) -> dict:
 
 def save_snapshot(result: dict, output_dir: Path) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
-    result["fetched_at_utc"] = datetime.now(timezone.utc).isoformat()
+    collected = datetime.now(timezone.utc)
+    result["fetched_at_utc"] = collected.isoformat()
     source = result["source"].replace("_api", "")
-    suffix = result.get("date_start", result.get("strategy", "snapshot"))
+    if "date_start" in result:
+        suffix = f"{result['date_start']}_{result['date_end']}"
+    else:
+        url_hash = hashlib.sha256(result.get("url", "").encode("utf-8")).hexdigest()[:12]
+        suffix = f"{result.get('strategy', 'snapshot')}_{url_hash}_{collected:%Y%m%dT%H%M%SZ}"
     output = output_dir / f"{source}_{suffix}.json"
     output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return output
