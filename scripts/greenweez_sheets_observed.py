@@ -15,10 +15,10 @@ from pathlib import Path
 SOURCE = "greenweez_google_sheets_aggregate_observed"
 DATA_STATUS = "source_observed_financial_semantics_unverified"
 DEFAULT_PATH = Path("target/greenweez_bridge/google_sheets_observed.json")
-ORDER_FIELDS = {"date", "order_rows", "distinct_order_ids", "turnover_as_stored"}
+ORDER_FIELDS = {"date", "order_rows", "distinct_order_ids", "missing_order_ids", "turnover_as_stored"}
 CAMPAIGN_FIELDS = {"date", "paid_source", "campaign_rows", "cost_as_stored", "impressions", "clicks"}
 ALLOWED_SOURCES = {"adwords", "bing", "facebook", "criteo"}
-COUNT_FIELDS = {"order_rows", "distinct_order_ids", "campaign_rows", "impressions", "clicks"}
+COUNT_FIELDS = {"order_rows", "distinct_order_ids", "missing_order_ids", "campaign_rows", "impressions", "clicks"}
 
 
 def _day(value: object) -> str:
@@ -69,10 +69,12 @@ def validate_observed(value: object) -> dict:
             raise ValueError("Duplicate Greenweez order daily date")
         order_dates.add(day)
         record = {"date": day}
-        for field in ("order_rows", "distinct_order_ids", "turnover_as_stored"):
+        for field in ("order_rows", "distinct_order_ids", "missing_order_ids", "turnover_as_stored"):
             record[field] = _amount(row[field], field)
-        if record["distinct_order_ids"] > record["order_rows"]:
-            raise ValueError("Distinct order IDs exceed source rows")
+        if record["missing_order_ids"] > record["order_rows"]:
+            raise ValueError("Missing IDs exceed source rows")
+        if record["distinct_order_ids"] > record["order_rows"] - record["missing_order_ids"]:
+            raise ValueError("Distinct known order IDs exceed rows with valid IDs")
         normalized_orders.append(record)
 
     campaign_grains = set()
