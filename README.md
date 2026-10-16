@@ -107,6 +107,16 @@ revenue against **40.6%** from new.
 
 ---
 
+## Unified NEXUS Commerce Intelligence workspace
+
+**E-Commerce is the master application repository.** The existing local [NEXUS Streamlit application](dashboard/README.md) now also contains **Greenweez · Finance** and **Overview · Sources** tabs. The Greenweez visual module and read-only aggregate mart adapter live in this repository. Its original finance dbt project remains an **independent upstream source**, not a joined transactional data table.
+
+The adapter accepts only recognized Greenweez finance/marketing DuckDB dbt marts and checks schema, row grain, daily/monthly totals, ad-margin definitions, source spend totals and SHA-256 provenance. Missing sources show *Not imported*. Synthetic inputs are visibly marked; independent external snapshots are marked *UNVERIFIED* until the original warehouse and refund semantics are reconciled. TheLook order revenue, Greenweez finance, Olist and Commerce Lab opt-in interactions are **never summed or presented as one merchant's sales**.
+
+Windows launch: `python -m pip install -r dashboard/requirements.txt` followed by `python -m streamlit run dashboard/google_marketing_app.py`. Source details and safe Greenweez import commands: [unified NEXUS plan](docs/NEXUS_UNIFIED_COMMERCE_PLAN.md).
+
+---
+
 ## NEXUS Commerce Lab — controlled test storefront
 
 The new [NEXUS Commerce Lab](storefront/README.md) is a separate, responsive, owned **test-only storefront** with a functioning sample catalog, in-browser cart, no-payment checkout, explicit consent controls and optional Google Analytics 4 custom `lab_*` events. It is designed as a fully reproducible, independently deployable **static Vercel site**; `storefront/vercel.json` sets build/output paths.
