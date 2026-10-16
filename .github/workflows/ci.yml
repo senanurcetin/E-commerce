@@ -66,8 +66,14 @@ jobs:
       - name: Install open-source dashboard dependencies
         run: pip install -r dashboard/requirements.txt
 
+      - name: Build reproducible native NEXUS Power BI PBIP and verify source isolation
+        run: |
+          python -m unittest discover -s tests -p 'test_build_powerbi.py' -v
+          python -m scripts.build_powerbi --out target/powerbi
+          python -m scripts.powerbi_acceptance --output target/powerbi/desktop_qa.json
+
       - name: Compile dashboard source
-        run: python -m py_compile dashboard/google_marketing_app.py dashboard/greenweez_finance.py scripts/google_dashboard_data.py scripts/lab_ga4_events.py scripts/greenweez_bridge.py scripts/ecommerce_marts_bridge.py dashboard/ecommerce_historical.py scripts/nexus_workspace.py scripts/greenweez_sheets_observed.py dashboard/greenweez_sheets.py dashboard/nexus_theme.py scripts/ga4_property_preflight.py scripts/powerbi_acceptance.py
+        run: python -m py_compile dashboard/google_marketing_app.py dashboard/greenweez_finance.py scripts/google_dashboard_data.py scripts/lab_ga4_events.py scripts/greenweez_bridge.py scripts/ecommerce_marts_bridge.py dashboard/ecommerce_historical.py scripts/nexus_workspace.py scripts/greenweez_sheets_observed.py dashboard/greenweez_sheets.py dashboard/nexus_theme.py scripts/ga4_property_preflight.py scripts/powerbi_acceptance.py scripts/build_powerbi.py
 
       - name: Validate local Chrome Lighthouse JSON parser
         run: python -m unittest discover -s tests -p 'test_local_lighthouse.py' -v
