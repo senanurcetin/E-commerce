@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -96,6 +97,17 @@ class GoogleMeasurementTests(unittest.TestCase):
         self.assertEqual(result["field_data"], "not_collected_use_crux_api")
         with self.assertRaisesRegex(ValueError, "public HTTPS"):
             gm.collect_pagespeed("http://localhost", "mobile")
+
+    def test_pagespeed_categories_follow_google_enum_contract(self):
+        with patch.object(gm, "fetch_json", return_value={"lighthouseResult": {}}) as mocked:
+            report = gm.collect_pagespeed("https://example.org/", "mobile")
+        query = parse_qs(urlsplit(mocked.call_args.args[0]).query)
+        self.assertEqual(
+            query["category"],
+            ["PERFORMANCE", "ACCESSIBILITY", "BEST_PRACTICES", "SEO"],
+        )
+        self.assertEqual(query["strategy"], ["mobile"])
+        self.assertEqual(report["source"], "pagespeed_insights_api")
 
     def test_snapshot_gitignored_location(self):
         with tempfile.TemporaryDirectory() as root:
