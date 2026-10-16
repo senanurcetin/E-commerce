@@ -55,7 +55,7 @@ test("only nonmonetary sandbox events with allowlisted fields", () => {
 
 function trackerHarness(measurementId, stored = null) {
   const backing = new Map();
-  if (stored) backing.set("nexus_commerce_lab_analytics_consent_v1", stored);
+  if (stored) backing.set("nexus_commerce_lab_analytics_consent_v2_" + measurementId, stored);
   const storage = {
     getItem: (key) => backing.get(key) || null,
     setItem: (key, value) => backing.set(key, value),
@@ -100,6 +100,40 @@ test("revoking consent disables future Google measurement calls", () => {
   assert.equal(h.host["ga-disable-G-ABC123456"], true);
   assert.equal(h.tracker.track("lab_checkout_completed", { quantity: 1 }), false);
   assert.equal(h.scripts.length, 1);
+});
+
+test("legacy consent or another property's consent never authorises new GA4 ID", () => {
+  const h = trackerHarness("G-NEW123456");
+  h.backing.set("nexus_commerce_lab_analytics_consent_v1", "allow");
+  h.backing.set("nexus_commerce_lab_analytics_consent_v2_G-OLD123456", "allow");
+  const fresh = createTracker({
+    measurementId: "G-NEW123456", host: h.host,
+    doc: { createElement: () => ({}), head: { appendChild() { throw Error("unexpected tag"); } } },
+    storage: {
+      getItem: (key) => h.backing.get(key) ?? null,
+      setItem: (key, value) => h.backing.set(key, value),
+    },
+  });
+  assert.equal(fresh.snapshot().consent, "unset");
+  assert.equal(fresh.snapshot().active, false);
+  assert.equal(h.scripts.length, 0);
+});
+
+test("explicit re-approval after rejection updates analytics consent to granted", () => {
+  const h = trackerHarness("G-ABC123456", "allow");
+  h.tracker.choose("deny");
+  h.tracker.choose("allow");
+  assert.equal(h.host["ga-disable-G-ABC123456"], false);
+  assert.equal(h.scripts.length, 1);
+  const commands = h.host.dataLayer.map((args) => [...args]);
+  assert.ok(commands.some((args) =>
+    args[0] === "consent" && args[1] === "update" &&
+    args[2].analytics_storage === "granted"
+  ));
+  assert.ok(commands.some((args) =>
+    args[0] === "consent" && args[1] === "default" &&
+    args[2].ad_storage === "denied"
+  ));
 });
 
 test("no valid owned property means no tracking, even after opt-in", () => {
