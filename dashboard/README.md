@@ -2,6 +2,17 @@
 
 Status: **implemented as a local web application** with a source-verification gate and an **explicit user-triggered PageSpeed Insights API call**. It is **not deployed** and does not automatically poll Google, and does not represent historical E-Commerce/Olist/Greenweez sales as Google-measured events. No demo or synthetic business metrics are substituted for absent accounts.
 
+## Original Greenweez source worksheets
+
+A separate **Greenweez · Source Sheets** tab displays date-level observations
+from the owner-authorized Google Sheets order and campaign workbooks. This is
+not the Greenweez dbt finance mart and **never** certifies original turnover
+as paid sales/revenue or cost as audited spend; no currency or attributed ROAS
+is inferred. The schema rejects raw order IDs and campaign names.
+
+Source and validation contract:
+[Greenweez original Sheets evidence](../docs/GREENWEEZ_SOURCE_SHEETS_EVIDENCE.md).
+
 ## Unified evidence overview and source controls
 
 The **Overview · Sources** page shows a source audit of all seven independent
