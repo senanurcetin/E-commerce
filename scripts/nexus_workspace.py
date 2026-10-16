@@ -31,11 +31,13 @@ from scripts.greenweez_bridge import (
 from scripts.google_dashboard_data import load_bundle
 from scripts.lab_ga4_events import load_lab_snapshot
 from scripts.local_lighthouse import load_lighthouse_reports
+from scripts.greenweez_sheets_observed import load_observed
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_LABELS = {
     "ecommerce": "E-Commerce historical dbt marts",
     "greenweez": "Greenweez finance + paid campaigns",
+    "greenweez_sheets": "Greenweez owned source worksheets",
     "commerce_lab_ga4": "NEXUS Commerce Lab opted-in test events",
     "ga4": "Google Analytics acquisition mart",
     "gsc": "Google Search Console search mart",
@@ -52,6 +54,7 @@ def paths_for(root: Path) -> dict[str, Path]:
     return {
         "ecommerce": root / "target" / "ecommerce_bridge" / "snapshot.json",
         "greenweez": root / "target" / "greenweez_bridge" / "snapshot.json",
+        "greenweez_sheets": root / "target" / "greenweez_bridge" / "google_sheets_observed.json",
         "commerce_lab_ga4": root / "target" / "google_measurement" / "lab_ga4_events.json",
         "google_marts": root / "target" / "google_measurement" / "marts",
         "local_lighthouse": root / "target" / "google_measurement" / "local_lighthouse",
@@ -99,6 +102,23 @@ def inspect_sources(root: Path = DEFAULT_ROOT, *, overrides: dict[str, Path] | N
             name, "synthetic" if prov.startswith("synthetic") else "external_unverified",
             rows, prov, NOT_BUSINESS_EVIDENCE,
         ))
+
+    try:
+        observed = load_observed(paths["greenweez_sheets"])
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        report.append(_record("greenweez_sheets", "invalid", detail=str(exc)))
+    else:
+        if observed is None:
+            report.append(_record("greenweez_sheets", "missing",
+                                  detail="Owned worksheets have not been aggregated into a local source report"))
+        else:
+            rows = sum(observed["row_counts"].values())
+            report.append(_record(
+                "greenweez_sheets", "external_unverified", rows,
+                observed["source_system"],
+                "Authenticated worksheet values observed; currency, turnover and cost "
+                "semantics not independently audited. No order IDs or campaign names exported.",
+            ))
 
     try:
         lab = load_lab_snapshot(paths["commerce_lab_ga4"])
