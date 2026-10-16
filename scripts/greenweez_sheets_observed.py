@@ -15,10 +15,10 @@ from pathlib import Path
 SOURCE = "greenweez_google_sheets_aggregate_observed"
 DATA_STATUS = "source_observed_financial_semantics_unverified"
 DEFAULT_PATH = Path("target/greenweez_bridge/google_sheets_observed.json")
-ORDER_FIELDS = {"date", "order_rows", "distinct_order_ids", "missing_order_ids", "turnover_as_stored"}
-CAMPAIGN_FIELDS = {"date", "paid_source", "campaign_rows", "cost_as_stored", "impressions", "clicks"}
+ORDER_FIELDS = {"date", "order_rows", "distinct_order_ids", "missing_order_ids", "missing_turnover_rows", "turnover_as_stored"}
+CAMPAIGN_FIELDS = {"date", "paid_source", "campaign_rows", "missing_cost_rows", "missing_impressions_rows", "missing_clicks_rows", "cost_as_stored", "impressions", "clicks"}
 ALLOWED_SOURCES = {"adwords", "bing", "facebook", "criteo"}
-COUNT_FIELDS = {"order_rows", "distinct_order_ids", "missing_order_ids", "campaign_rows", "impressions", "clicks"}
+COUNT_FIELDS = {"order_rows", "distinct_order_ids", "missing_order_ids", "missing_turnover_rows", "campaign_rows", "missing_cost_rows", "missing_impressions_rows", "missing_clicks_rows", "impressions", "clicks"}
 
 
 def _day(value: object) -> str:
@@ -69,10 +69,10 @@ def validate_observed(value: object) -> dict:
             raise ValueError("Duplicate Greenweez order daily date")
         order_dates.add(day)
         record = {"date": day}
-        for field in ("order_rows", "distinct_order_ids", "missing_order_ids", "turnover_as_stored"):
+        for field in ("order_rows", "distinct_order_ids", "missing_order_ids", "missing_turnover_rows", "turnover_as_stored"):
             record[field] = _amount(row[field], field)
-        if record["missing_order_ids"] > record["order_rows"]:
-            raise ValueError("Missing IDs exceed source rows")
+        if record["missing_order_ids"] > record["order_rows"] or record["missing_turnover_rows"] > record["order_rows"]:
+            raise ValueError("Missing data counters exceed source rows")
         if record["distinct_order_ids"] > record["order_rows"] - record["missing_order_ids"]:
             raise ValueError("Distinct known order IDs exceed rows with valid IDs")
         normalized_orders.append(record)
@@ -91,9 +91,11 @@ def validate_observed(value: object) -> dict:
             raise ValueError("Duplicate campaign date/source grain")
         campaign_grains.add(grain)
         record = {"date": day, "paid_source": source}
-        for field in ("campaign_rows", "cost_as_stored", "impressions", "clicks"):
+        for field in ("campaign_rows", "missing_cost_rows", "missing_impressions_rows", "missing_clicks_rows", "cost_as_stored", "impressions", "clicks"):
             record[field] = _amount(row[field], field)
-        if record["clicks"] > record["impressions"]:
+        if any(record[key] > record["campaign_rows"] for key in ("missing_cost_rows", "missing_impressions_rows", "missing_clicks_rows")):
+            raise ValueError("Missing campaign values exceed source rows")
+        if not (record["missing_clicks_rows"] or record["missing_impressions_rows"]) and record["clicks"] > record["impressions"]:
             raise ValueError("Campaign clicks exceed impressions")
         normalized_campaigns.append(record)
 
