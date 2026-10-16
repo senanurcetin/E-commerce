@@ -13,6 +13,8 @@ import unittest
 from streamlit.testing.v1 import AppTest
 
 from scripts.google_dashboard_data import SCHEMA
+from scripts.greenweez_bridge import validate_snapshot as validate_greenweez
+from datetime import datetime, timezone
 
 
 APP = Path(__file__).resolve().parents[1] / "dashboard/google_marketing_app.py"
@@ -69,8 +71,59 @@ class GoogleMeasurementAppSmokeTests(unittest.TestCase):
             self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
             self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
             self.assertEqual(len(app.metric), 0, "Unavailable sources must not display KPI figures")
-            self.assertEqual(len(app.tabs), 5, "Source tabs and separate lab tab stay visible without data")
+            self.assertEqual(len(app.tabs), 7, "Unified independent source tabs remain accessible without data")
             self.assertTrue(any("Website URL" == field.label for field in app.text_input))
+
+    def test_greenweez_import_renders_separate_source_only(self):
+        """Test-only fixture cannot be claimed as a real Greenweez business result."""
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            sample = root / "greenweez_ci_only.json"
+            value = {
+                "schema_version": 1,
+                "source_system": "greenweez_dbt_marts",
+                "provenance": "synthetic_demo",
+                "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+                "source_sha256": "e" * 64,
+                "tables": {
+                    "daily": [
+                        {"date": "2023-01-02", "transactions": 1, "revenue": 100.0,
+                         "operational_margin": 30.0, "ads_cost": 10.0,
+                         "ads_margin": 20.0, "ads_impression": 200, "ads_clicks": 5},
+                    ],
+                    "monthly": [
+                        {"datemonth": "2023-01-01", "transactions": 1, "revenue": 100.0,
+                         "operational_margin": 30.0, "ads_cost": 10.0,
+                         "ads_margin": 20.0, "ads_impression": 200, "ads_clicks": 5},
+                    ],
+                    "marketing_source": [],
+                    "refunds": [],
+                },
+                "row_counts": {"daily": 1, "monthly": 1, "marketing_source": 0, "refunds": 0},
+            }
+            sample.write_text(json.dumps(validate_greenweez(value)), encoding="utf-8")
+            app = AppTest.from_file(str(APP), default_timeout=30).run()
+            next(field for field in app.text_input if field.label == "Validated export folder").set_value(str(root)).run()
+            next(field for field in app.text_input if field.label == "Greenweez snapshot file").set_value(str(sample)).run()
+            self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
+            self.assertTrue(any("Greenweez" in tab.label for tab in app.tabs))
+            labels = [metric.label for metric in app.metric]
+            self.assertIn("Greenweez revenue · stored units", labels)
+            self.assertNotIn("Purchase revenue · property currency", labels)
+            self.assertNotIn("Lab completed test checkouts", labels)
+            self.assertTrue(any("Synthetic" in warning.message for warning in app.warning))
+
+    def test_rejected_greenweez_snapshot_does_not_show_finance_kpis(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            corrupted = root / "corrupt.json"
+            corrupted.write_text(json.dumps({"rows": [{"revenue": 99999999}]}), encoding="utf-8")
+            app = AppTest.from_file(str(APP), default_timeout=30).run()
+            next(field for field in app.text_input if field.label == "Validated export folder").set_value(str(root)).run()
+            next(field for field in app.text_input if field.label == "Greenweez snapshot file").set_value(str(corrupted)).run()
+            self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
+            self.assertFalse(any("Greenweez revenue · stored units" == m.label for m in app.metric))
+            self.assertTrue(any("Greenweez source" in e.message for e in app.error))
 
     def test_commerce_lab_tab_never_fabricates_unconnected_revenue(self):
         with tempfile.TemporaryDirectory() as folder:
