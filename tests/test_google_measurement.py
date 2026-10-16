@@ -102,6 +102,7 @@ class GoogleMeasurementTests(unittest.TestCase):
             output = gm.save_snapshot({
                 "source": "ga4_data_api",
                 "date_start": "2026-10-01",
+                "date_end": "2026-10-02",
                 "rows": [{"sessions": 10}],
             }, Path(root))
             saved = json.loads(output.read_text(encoding="utf-8"))
