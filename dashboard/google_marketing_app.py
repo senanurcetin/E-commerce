@@ -31,6 +31,8 @@ from scripts.local_lighthouse import load_lighthouse_reports, parse_lighthouse_r
 from scripts.lab_ga4_events import load_lab_snapshot, EVENT_NAMES as LAB_EVENT_NAMES
 from scripts.greenweez_bridge import load_snapshot as load_greenweez_snapshot
 from dashboard.greenweez_finance import greenweez_finance_tab
+from scripts.ecommerce_marts_bridge import load_snapshot as load_historical_snapshot
+from dashboard.ecommerce_historical import historical_ecommerce_tab
 
 PALETTE = {
     "background": "#080F25",
@@ -445,6 +447,11 @@ with st.sidebar:
     st.markdown("### NEXUS / SOURCE CONTROLS")
     st.caption("Private local workspace · source-verified reports")
     folder = st.text_input("Validated export folder", value=str(location))
+    historical_folder = st.text_input(
+        "Historical E-Commerce snapshot file",
+        value=str(ROOT / "target" / "ecommerce_bridge" / "snapshot.json"),
+        help="Only source-qualified, aggregated dbt marts. No raw user/order IDs.",
+    )
     greenweez_folder = st.text_input(
         "Greenweez snapshot file",
         value=str(ROOT / "target" / "greenweez_bridge" / "snapshot.json"),
@@ -472,16 +479,31 @@ except (ValueError, OSError) as exc:
     greenweez_snapshot = None
     greenweez_error = str(exc)
 
+historical_error = None
+try:
+    historical_snapshot = load_historical_snapshot(Path(historical_folder))
+except (OSError, ValueError) as exc:
+    historical_snapshot = None
+    historical_error = str(exc)
+
 st.markdown("### Measurement sources")
 source_meta = [
     ("GA4 / ACQUISITION", "ga4", "GA4 property access required"),
     ("GSC / ORGANIC SEARCH", "gsc", "Verified Search Console property required"),
     ("PAGESPEED / LIGHTHOUSE", "pagespeed", "Run a public website audit below"),
+    ("E-COMMERCE / HISTORY", "historical", "Separate historical orders and sessions"),
     ("GREENWEEZ / FINANCE", "greenweez", "Independent dbt finance and ad marts"),
 ]
-cols = st.columns(4)
+cols = st.columns(5)
 for col, (title, key, explanation) in zip(cols, source_meta):
-    if key == "greenweez":
+    if key == "historical":
+        count = len(historical_snapshot["tables"]["orders"]) if historical_snapshot else 0
+        state = (
+            "Synthetic source" if historical_snapshot and historical_snapshot["provenance"] == "synthetic_ci"
+            else "External · unverified" if historical_snapshot
+            else "Invalid source" if historical_error else "Not imported"
+        )
+    elif key == "greenweez":
         count = len(greenweez_snapshot["tables"]["daily"]) if greenweez_snapshot else 0
         state = (
             "Synthetic source" if greenweez_snapshot and greenweez_snapshot["provenance"] == "synthetic_demo"
@@ -503,6 +525,8 @@ for col, (title, key, explanation) in zip(cols, source_meta):
 
 if greenweez_error:
     st.error("Greenweez source integrity gate: " + greenweez_error)
+if historical_error:
+    st.error("Historical E-Commerce source integrity gate: " + historical_error)
 
 if error_message:
     st.caption("Source status: No complete validated export found. " + error_message)
@@ -591,8 +615,8 @@ if not error_message:
             "sources": manifest.get("source_summary", {}),
         })
 
-overview_tab, greenweez_tab, tab1, tab2, tab3, tab4, tab5 = st.tabs(
-    ["Overview · Sources", "Greenweez · Finance", "GA4 · Acquisition",
+overview_tab, historical_tab, greenweez_tab, tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    ["Overview · Sources", "E-Commerce · Historical", "Greenweez · Finance", "GA4 · Acquisition",
      "GSC · Organic Search", "PSI · Lighthouse",
      "Commerce Lab · Test Events", "Data Contracts"]
 )
@@ -612,8 +636,10 @@ with overview_tab:
         "aggregates; campaign-attributed revenue is unavailable."
     )
     source_rows = [
-        {"Domain": "E-Commerce historical", "Status": "Upstream dbt models in this repo",
-         "Metric scope": "Separate TheLook-like historical dataset"},
+        {"Domain": "E-Commerce historical",
+         "Status": "Not imported" if historical_snapshot is None
+                   else historical_snapshot["provenance"],
+         "Metric scope": "Separate root dbt completed-order and session marts"},
         {"Domain": "Greenweez finance", "Status":
          "Not imported" if greenweez_snapshot is None
          else greenweez_snapshot["provenance"],
@@ -625,6 +651,8 @@ with overview_tab:
          "Metric scope": "GA4/GSC/PageSpeed each with separate identity"},
     ]
     st.dataframe(pd.DataFrame(source_rows), hide_index=True, width="stretch")
+with historical_tab:
+    historical_ecommerce_tab(Path(historical_folder))
 with greenweez_tab:
     greenweez_finance_tab(Path(greenweez_folder))
 with tab1:
