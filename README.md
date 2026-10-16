@@ -115,6 +115,9 @@ The analytics project now includes a **read-only Google measurement starter** co
 
 **Source-isolated BI exports:** Run [`scripts/google_measurement_marts.py`](scripts/google_measurement_marts.py) on authenticated collector snapshots to produce GA4 daily channel, GSC daily device and PageSpeed lab CSV marts, with [documented contracts and reconciliation safeguards](docs/GOOGLE_MARTS_AND_BI.md). No real snapshot means no business-metric export; the workflow never substitutes demo figures. Google Ads spend, CrUX field Web Vitals, GTM instrumentation, and Looker Studio remain gated follow-up work. The new offline tests validate API result normalization without any Google credentials.
 
+**NEXUS web dashboard:** [Open-source Streamlit viewer](dashboard/google_marketing_app.py) ([setup, screenshots/metric caveats and acceptance](dashboard/README.md)) reads only validated GA4/GSC/PSI CSV exports, providing source-specific interactive charts in a dark navy/cyan/purple theme. It shows a clear missing-data state if no authorized Google reports are available; it is not yet deployed.
+
+
 ---
 
 ## Business Questions Answered

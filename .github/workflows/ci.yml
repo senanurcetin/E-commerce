@@ -44,3 +44,24 @@ jobs:
 
       - name: Run 57 data quality tests (model layer only)
         run: dbt test --profiles-dir .github/dbt-profiles --exclude "source:*"
+
+  google-dashboard-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install open-source dashboard dependencies
+        run: pip install -r dashboard/requirements.txt
+
+      - name: Compile dashboard source
+        run: python -m py_compile dashboard/google_marketing_app.py scripts/google_dashboard_data.py
+
+      - name: Run Streamlit empty-state and verified-test-source smoke checks
+        run: python -m unittest discover -s tests -p 'smoke_google_marketing_app.py' -v
