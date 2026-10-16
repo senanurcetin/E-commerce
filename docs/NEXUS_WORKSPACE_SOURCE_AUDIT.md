@@ -20,8 +20,8 @@ Machine-readable for CI/operator evidence:
 python -m scripts.nexus_workspace status --json
 ~~~
 
-The output reports seven independent data groups: historical E-Commerce, Greenweez
-finance, consented Commerce Lab GA4 test events, GA4 acquisition, GSC search, PSI
+The output reports eight independent data groups: historical E-Commerce, Greenweez
+finance, original Greenweez Google Sheets source observations, consented Commerce Lab GA4 test events, GA4 acquisition, GSC search, PSI
 lab runs and local Chrome Lighthouse.
 
 | Status | Meaning |
