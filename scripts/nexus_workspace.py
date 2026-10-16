@@ -74,9 +74,13 @@ def _record(name: str, status: str, rows: int = 0, provenance: str = "",
     }
 
 
-def inspect_sources(root: Path = DEFAULT_ROOT) -> list[dict]:
+def inspect_sources(root: Path = DEFAULT_ROOT, *, overrides: dict[str, Path] | None = None) -> list[dict]:
     """Never performs network calls, writes or cross-source monetary joins."""
     paths = paths_for(root)
+    if overrides:
+        if not set(overrides) <= set(paths):
+            raise ValueError("Unknown source path override rejected")
+        paths.update({k: Path(v) for k, v in overrides.items()})
     report = []
 
     for name, load in (("ecommerce", load_ecommerce), ("greenweez", load_greenweez)):
