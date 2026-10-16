@@ -15,9 +15,11 @@ python -m pip install -r dashboard\requirements.txt
 python -m streamlit run dashboard\google_marketing_app.py
 ~~~
 
-Open http://localhost:8501 . In **GET STARTED · Run your first real PageSpeed audit**, enter your own public website, for example the HTTPS URL of your published portfolio (not localhost), choose Mobile or Desktop, and click **Run real PageSpeed audit**. The URL is submitted to Google's PageSpeed Insights service on your explicit request only. The API may apply a quota or require an optional `GOOGLE_PAGESPEED_API_KEY`; no synthetic results are shown if Google denies the request.
+Open http://localhost:8501 . Under **GET STARTED · Run your first real PageSpeed audit**, either select **Tricentis Demo Web Shop** or **nopCommerce Demo Store** from the new **E-commerce demo site** selector, or enter your own public HTTPS website. Choose Mobile or Desktop and click **Run real PageSpeed audit**. The selector never triggers a network request until you submit. The URL is submitted to Google's PageSpeed Insights service on your explicit request only. The API may apply a quota or require an optional `GOOGLE_PAGESPEED_API_KEY`; no synthetic results are shown if Google denies the request.
 
 The app automatically writes a time-stamped JSON snapshot under gitignored `target/google_measurement/`, then produces a validated `marts/manifest.json` and source-specific CSV files. It refreshes the report. GA4 and GSC remain **Not connected** until their *own* read-only property credentials are configured.
+
+For provenance, limitations and a safe learning route to the official GA4 demo account and BigQuery's **obfuscated Google Merchandise Store sample**, see [public ecommerce test stores and source separation](../docs/PUBLIC_ECOMMERCE_TEST_STORES.md). Neither external demo store is linked to the historical TheLook warehouse transactions.
 
 ### Manual collector alternative (no GA4/GSC property required)
 
