@@ -32,11 +32,11 @@ External sites Tricentis / nopCommerce: independent Lighthouse benchmark only.
 
 | Stage | Deliverables | Gate | Current state |
 | --- | --- | --- | --- |
-| P0 — Contract | Report source separation, real-vs-test event naming, GA4 consent rules, budget and publishing safeguards | Existing TheLook transactions never ascribed to the new site | In this PR |
-| P1 — Storefront | Responsive NEXUS dark consumer storefront, illustrated sandbox catalog, product filters, cart, accessible controls, no-payment checkout | Human can browse/cart/complete test flow, no payment or PII collection | In this PR |
-| P2 — First-party instrumentation | Optional owned GA4 Measurement ID via deployment build environment; explicit opt-in; custom `lab_*` event names only | Zero Google tracking without valid ID and consent, no GA4 `purchase` or monetary value | In this PR |
-| P3 — CI/launch bundle | Dependency-free Node unit tests, HTML/CSS/JS static build, Vercel root-dir deploy config, source audit | CI green + clean HTML bundle; deployment remains manual | In this PR |
-| P4 — Owned domain | Deploy controlled host, inspect privacy/consent, ensure HTTPS, run actual PageSpeed mobile/desktop | Real accessible domain and external Google report evidenced | BLOCKED until site deployment |
+| P0 — Contract | Report source separation, real-vs-test event naming, GA4 consent rules, budget and publishing safeguards | Existing TheLook transactions never ascribed to the new site | **Done** · PR #26 |
+| P1 — Storefront | Responsive NEXUS dark consumer storefront, illustrated sandbox catalog, product filters, cart, accessible controls, no-payment checkout | Human can browse/cart/complete test flow, no payment or PII collection | **Code + CI done**; physical browser review pending |
+| P2 — First-party instrumentation | Optional owned GA4 Measurement ID via deployment build environment; explicit opt-in; custom `lab_*` event names only | Zero Google tracking without valid ID and consent, no GA4 `purchase` or monetary value | **Code + tests done**; owned GA4 property not connected |
+| P3 — CI/launch bundle | Dependency-free Node unit tests, HTML/CSS/JS static build, Vercel root-dir deploy config, source audit | CI green + clean HTML bundle | **Done** · 3 CI jobs green; Vercel first deployment READY |
+| P4 — Owned domain | Deploy controlled host, inspect privacy/consent, ensure HTTPS, run actual PageSpeed mobile/desktop | Public HTTPS reachable by Google and real PageSpeed evidence | **IN PROGRESS** · Vercel READY, deployment access protection active; external/public accessibility not verified |
 | P5 — Real GA4 | Create owned GA4 web data stream, set Measurement ID, verify real lab events in DebugView or reports | Authorized property + explicit opt-in + report/GA4 Data API reconciliation | BLOCKED pending account authorization |
 | P6 — GSC / Cloud | Verify owned host in Search Console; optional separate GA4 BigQuery export; add source-qualified dbt staging | Distinct dataset, schema and freshness tests, no fabricated orders | BLOCKED pending cloud authorization |
 | P7 — Product & portfolio | Real-source reports in NEXUS dashboard, current Power BI/Desktop metrics check, evidence screenshots, case-study claim review | Operator signs off accuracy and source provenance | Future acceptance |
@@ -52,6 +52,15 @@ External sites Tricentis / nopCommerce: independent Lighthouse benchmark only.
 - Each public/sandbox chart must include source, collection date, and a clearly readable `LAB / TEST CHECKOUT` status. No hidden fake business traffic.
 - Track the performance and accessibility of the controlled site separately from third-party demo benchmark pages.
 - The lab's static assets are open; the GitHub repository is not an authenticated commerce service.
+
+## Deployment status (2026-10-16)
+
+- GitHub source: [E-Commerce PR #26](https://github.com/senanurcetin/E-commerce/pull/26), merged to main at commit `65a8b8f37149ca097bdbb75e6624ce4de65d64b0`. dbt, Google dashboard and new Commerce Lab CI jobs all passed.
+- Vercel: project `nexus-commerce-lab` created under the authorized user's Vercel team. Its initial Git-based build was **READY** and exported the static files from `storefront/dist`.
+- Vercel production alias recorded as `https://nexus-commerce-lab.vercel.app/`. **Access protection is enabled** at the Vercel project level. This URL has NOT been independently verified reachable without Vercel sign-in.
+- Build log explicitly says **GA4 not configured**. No owned Measurement ID, property access, real lab GA4 event volume or actual PageSpeed score can be claimed.
+- Publishing a publicly reachable URL is **a separate access-control decision**. Do not disable project protection before the operator has reviewed the demo's privacy disclosure and test-only limitations.
+- A Google PageSpeed API request requires an externally reachable website; it cannot benchmark a deployment behind Vercel authentication.
 
 ## Release acceptance checklist
 

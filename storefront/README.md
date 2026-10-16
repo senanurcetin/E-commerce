@@ -32,7 +32,7 @@ Open **http://localhost:8788** for the production static bundle. The app is deli
 4. Keep the optional environment variable `NEXUS_GA4_MEASUREMENT_ID` blank until your own GA4 web data stream exists. Never enter an API key, Google service-account JSON or private token in this variable: it appears in the public page.
 5. Deploy and visually review the issued Vercel HTTPS URL before sharing. Configure a verified domain only if you own it.
 
-**Deployment is not performed or verified by this source-code PR.** The repo has no authority to claim a domain, own a GA4 property or publish the website automatically without an explicitly configured project.
+**Deployment status (16 October 2026):** A Vercel project named `nexus-commerce-lab` was created in the authorized user workspace and a Git deployment built successfully (READY) from `main` as `https://nexus-commerce-lab.vercel.app/`. **Vercel deployment protection is enabled**, so public, unauthenticated reachability has not been established. The build explicitly had **no GA4 Measurement ID**. No live browser, PageSpeed, GA4 property ownership or GSC result is verified yet. Public access and privacy review remain an operator release decision.
 
 ## Consent-first analytics
 
