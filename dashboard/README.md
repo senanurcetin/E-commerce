@@ -47,6 +47,12 @@ If Google's public PageSpeed Insights endpoint responds with HTTP 429 (rate limi
 
 The loader checks Lighthouse version, device, URL, timestamp and full category scores, rejecting partial/mock reports. Metrics are Lighthouse **lab** values only. These local reports are distinct from both PageSpeed Insights API output and real-user CrUX field Core Web Vitals. They do not generate GA4 sessions or order revenue. Full JSON reports may contain page URLs and diagnostics; **never commit these raw reports to Git**.
 
+### NEXUS Commerce Lab · separate GA4 event-reporting source
+
+The new **Commerce Lab · Test Events** tab is intentionally empty until the **dedicated NEXUS Commerce Lab GA4 property** is configured and the read-only collector exports verified daily `lab_*` event counts. It never substitutes the legacy ToyStore stream `G-EL4EZ01CVH` or the personal portfolio property, and never labels a test checkout as an actual order or revenue.
+
+Configuration and QA steps: [Commerce Lab independent GA4 event reporting](../docs/GA4_LAB_EVENT_REPORTING.md). The collector runs as `python -m scripts.lab_ga4_events --start YYYY-MM-DD --end YYYY-MM-DD` with a numeric, authorized `GA4_LAB_PROPERTY_ID`; the G-... Measurement ID alone cannot read Google Analytics reports. The source is kept in a separate gitignored JSON, outside the original GA4 acquisition/export contract.
+
 ### GA4 and Search Console later
 
 The GA4 Data API needs a numeric GA4 Property ID and read-only account authorization; GSC needs the exact verified site property and authorized read-only API access. Follow `docs/GOOGLE_MEASUREMENT_INTEGRATION.md`. They are *separate optional connectors*; the PageSpeed workflow works independently.
