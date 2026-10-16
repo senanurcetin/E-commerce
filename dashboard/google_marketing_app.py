@@ -34,6 +34,7 @@ from dashboard.greenweez_finance import greenweez_finance_tab
 from scripts.ecommerce_marts_bridge import load_snapshot as load_historical_snapshot
 from dashboard.ecommerce_historical import historical_ecommerce_tab
 from scripts.nexus_workspace import inspect_sources
+from dashboard.greenweez_sheets import greenweez_sheets_tab
 
 PALETTE = {
     "background": "#080F25",
@@ -453,6 +454,11 @@ with st.sidebar:
         value=str(ROOT / "target" / "ecommerce_bridge" / "snapshot.json"),
         help="Only source-qualified, aggregated dbt marts. No raw user/order IDs.",
     )
+    greenweez_sheet_file = st.text_input(
+        "Greenweez original Sheets evidence",
+        value=str(ROOT / "target" / "greenweez_bridge" / "google_sheets_observed.json"),
+        help="Only date-level, read-only aggregated Google Sheets evidence; original units unverified.",
+    )
     greenweez_folder = st.text_input(
         "Greenweez snapshot file",
         value=str(ROOT / "target" / "greenweez_bridge" / "snapshot.json"),
@@ -493,6 +499,7 @@ source_registry = inspect_sources(
         "ecommerce": Path(historical_folder),
         "greenweez": Path(greenweez_folder),
         "google_marts": Path(folder),
+        "greenweez_sheets": Path(greenweez_sheet_file),
     },
 )
 source_registry_by_name = {row["source"]: row for row in source_registry}
@@ -636,8 +643,8 @@ if not error_message:
             "sources": manifest.get("source_summary", {}),
         })
 
-overview_tab, historical_tab, greenweez_tab, tab1, tab2, tab3, tab4, tab5 = st.tabs(
-    ["Overview · Sources", "E-Commerce · Historical", "Greenweez · Finance", "GA4 · Acquisition",
+overview_tab, historical_tab, greenweez_tab, greenweez_sheets_page, tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    ["Overview · Sources", "E-Commerce · Historical", "Greenweez · Finance", "Greenweez · Source Sheets", "GA4 · Acquisition",
      "GSC · Organic Search", "PSI · Lighthouse",
      "Commerce Lab · Test Events", "Data Contracts"]
 )
@@ -698,6 +705,8 @@ with historical_tab:
     historical_ecommerce_tab(Path(historical_folder))
 with greenweez_tab:
     greenweez_finance_tab(Path(greenweez_folder))
+with greenweez_sheets_page:
+    greenweez_sheets_tab(Path(greenweez_sheet_file))
 with tab1:
     ga4_tab(tables["ga4"])
 with tab2:
