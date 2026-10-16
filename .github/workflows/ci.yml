@@ -30,6 +30,9 @@ jobs:
       - name: Offline Google measurement normalization tests
         run: python -m unittest discover -s tests -p 'test_google_measurement*.py' -v
 
+      - name: Validate first-party GA4 lab event query contracts without credentials
+        run: python -m unittest discover -s tests -p 'test_lab_ga4_events.py' -v
+
       - name: Parse project (validates all SQL and YAML)
         run: dbt parse --profiles-dir .github/dbt-profiles
 
@@ -61,7 +64,7 @@ jobs:
         run: pip install -r dashboard/requirements.txt
 
       - name: Compile dashboard source
-        run: python -m py_compile dashboard/google_marketing_app.py scripts/google_dashboard_data.py
+        run: python -m py_compile dashboard/google_marketing_app.py scripts/google_dashboard_data.py scripts/lab_ga4_events.py
 
       - name: Validate local Chrome Lighthouse JSON parser
         run: python -m unittest discover -s tests -p 'test_local_lighthouse.py' -v

@@ -28,6 +28,7 @@ from scripts.google_dashboard_data import (
 from scripts.google_dashboard_refresh import audit_public_site
 from scripts.google_test_sites import TEST_SITES, DEFAULT_TEST_SITE, test_site_url
 from scripts.local_lighthouse import load_lighthouse_reports, parse_lighthouse_report
+from scripts.lab_ga4_events import load_lab_snapshot, EVENT_NAMES as LAB_EVENT_NAMES
 
 PALETTE = {
     "background": "#080F25",
@@ -285,6 +286,71 @@ def pagespeed_tab(rows: list[dict]) -> None:
 
 
 
+def commerce_lab_ga4_tab() -> None:
+    """Distinct opted-in laboratory event counts; no purchase/revenue KPI."""
+    st.subheader("NEXUS Commerce Lab · Consented Test Interactions")
+    st.caption(
+        "An independent, first-party GA4 property is required. These are "
+        "event occurrences, NOT unique users, customer orders or sales revenue."
+    )
+    path = ROOT / "target" / "google_measurement" / "lab_ga4_events.json"
+    try:
+        loaded = load_lab_snapshot(path)
+    except (ValueError, OSError, json.JSONDecodeError) as exc:
+        st.error(f"Commerce Lab GA4 source validation failed: {exc}")
+        return
+    if loaded is None:
+        st.info(
+            "Commerce Lab GA4 is not connected. Create a dedicated GA4 property "
+            "and web data stream, deploy its new G-... Measurement ID, opt in on "
+            "the storefront, and run an authorized read-only export."
+        )
+        st.code(
+            "GA4_LAB_PROPERTY_ID=<numeric-property-id> "
+            "python -m scripts.lab_ga4_events "
+            "--start 2026-10-01 --end 2026-10-16",
+            language="bash",
+        )
+        return
+    rows, snapshot = loaded
+    st.caption(
+        f"Source: {snapshot['source']} · Property: {snapshot['property_id']} · "
+        f"Host: {snapshot['site_hostname']} · Extraction: {snapshot['extracted_at_utc']}"
+    )
+    if not rows:
+        st.info("Authenticated lab report returned no matching events in the selected window.")
+        return
+    selected = use_period(rows, "commerce_lab_ga4")
+    if not selected:
+        return
+    totals = {key: sum(r["event_count"] for r in selected if r["event_name"] == key)
+              for key in LAB_EVENT_NAMES}
+    labels = [
+        ("Lab page-view events", "lab_page_view"),
+        ("Lab add-to-cart events", "lab_add_to_cart"),
+        ("Lab remove-from-cart events", "lab_remove_from_cart"),
+        ("Lab completed test checkouts", "lab_checkout_completed"),
+    ]
+    for column, (label, event) in zip(st.columns(4), labels):
+        column.metric(label, f"{totals[event]:,}")
+    frame = pd.DataFrame(selected)
+    grouped = frame.groupby(["date", "event_name"], as_index=False)["event_count"].sum()
+    fig = px.line(
+        grouped, x="date", y="event_count", color="event_name", markers=True,
+        color_discrete_sequence=[
+            PALETTE["cyan"], PALETTE["purple"], PALETTE["pink"],
+        ],
+    )
+    fig.update_layout(**plot_config("Observed sandbox events · source-qualified daily counts"))
+    st.plotly_chart(fig, width="stretch")
+    st.dataframe(frame, width="stretch", hide_index=True)
+    st.caption(
+        "Custom lab_checkout_completed is a test-flow completion, never a GA4 "
+        "purchase. Event counts are not deduplicated users or validated orders. "
+        "No monetary attribution, CAC or ROAS is produced."
+    )
+
+
 def local_lighthouse_tab() -> None:
     """Source-specific browser Lighthouse JSON. Never presented as PSI/CrUX."""
     st.divider()
@@ -498,8 +564,9 @@ if not error_message:
             "sources": manifest.get("source_summary", {}),
         })
 
-tab1, tab2, tab3, tab4 = st.tabs(
-    ["GA4 · Acquisition", "GSC · Organic Search", "PSI · Lighthouse", "Data Contracts"]
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    ["GA4 · Acquisition", "GSC · Organic Search", "PSI · Lighthouse",
+     "Commerce Lab · Test Events", "Data Contracts"]
 )
 with tab1:
     ga4_tab(tables["ga4"])
@@ -509,6 +576,8 @@ with tab3:
     pagespeed_tab(tables["pagespeed"])
     local_lighthouse_tab()
 with tab4:
+    commerce_lab_ga4_tab()
+with tab5:
     st.subheader("Measurement Integrity & Next Steps")
     st.markdown(
         "**GA4:** one property at a time. Active users cannot be summed across channel/date rows.\n\n"
