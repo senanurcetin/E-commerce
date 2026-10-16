@@ -26,6 +26,7 @@ from scripts.google_dashboard_data import (
     filter_dates, kpis_ga4, kpis_gsc, latest_pagespeed, load_bundle,
 )
 from scripts.google_dashboard_refresh import audit_public_site
+from scripts.google_test_sites import TEST_SITES, DEFAULT_TEST_SITE, test_site_url
 
 PALETTE = {
     "background": "#080F25",
@@ -342,9 +343,24 @@ with st.expander(
         "Google PageSpeed Insights Lighthouse audit. "
         "Google receives the submitted URL; API quotas or availability may apply."
     )
+    st.markdown(
+        "**Choose a public demo storefront or enter your own site.** "
+        "These stores belong to third parties. Their live traffic, purchases "
+        "and transactions do not match the independent TheLook warehouse."
+    )
+    test_choice = st.selectbox(
+        "E-commerce demo site",
+        options=list(TEST_SITES),
+        index=list(TEST_SITES).index(DEFAULT_TEST_SITE),
+        help="Selecting a demo URL never starts an audit or retrieves analytics data.",
+    )
+    suggested_url = test_site_url(test_choice)
     with st.form("real_pagespeed_audit"):
         audit_url = st.text_input(
-            "Website URL", value="", placeholder="https://your-site.example/",
+            "Website URL",
+            value=suggested_url,
+            key=f"pagespeed_url_{list(TEST_SITES).index(test_choice)}",
+            placeholder="https://your-site.example/",
             help="Use a reachable public HTTPS page, not localhost or a private IP.",
         )
         audit_device = st.radio(
