@@ -14,6 +14,7 @@ from streamlit.testing.v1 import AppTest
 
 from scripts.google_dashboard_data import SCHEMA
 from scripts.greenweez_bridge import validate_snapshot as validate_greenweez
+from scripts.ecommerce_marts_bridge import validate_snapshot as validate_historical
 from datetime import datetime, timezone
 
 
@@ -71,8 +72,42 @@ class GoogleMeasurementAppSmokeTests(unittest.TestCase):
             self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
             self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
             self.assertEqual(len(app.metric), 0, "Unavailable sources must not display KPI figures")
-            self.assertEqual(len(app.tabs), 7, "Unified independent source tabs remain accessible without data")
+            self.assertEqual(len(app.tabs), 8, "Unified historical and financial source tabs stay available without data")
             self.assertTrue(any("Website URL" == field.label for field in app.text_input))
+
+    def test_historical_ecommerce_import_uses_distinct_business_domain(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            historical = root / "historical_ci.json"
+            payload = {
+                "schema_version": 1, "source_system": "ecommerce_dbt_marts",
+                "provenance": "synthetic_ci",
+                "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+                "source_sha256": "c" * 64,
+                "tables": {
+                    "orders": [{
+                        "date": "2023-02-01", "completed_orders": 1,
+                        "returned_orders": 0, "completed_revenue": 150.0,
+                        "returned_line_revenue": 0.0,
+                    }],
+                    "sessions": [{
+                        "date": "2023-02-01", "sessions": 2,
+                        "converted_sessions": 1, "page_view_events": 4,
+                    }],
+                },
+                "row_counts": {"orders": 1, "sessions": 1},
+            }
+            historical.write_text(json.dumps(validate_historical(payload)), encoding="utf-8")
+            app = AppTest.from_file(str(APP), default_timeout=30).run()
+            next(x for x in app.text_input if x.label == "Validated export folder").set_value(str(root)).run()
+            next(x for x in app.text_input if x.label == "Historical E-Commerce snapshot file").set_value(str(historical)).run()
+            self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
+            labels = [m.label for m in app.metric]
+            self.assertIn("Completed orders · distinct order IDs", labels)
+            self.assertIn("Sessions · dbt historical", labels)
+            self.assertNotIn("Greenweez revenue · stored units", labels)
+            self.assertNotIn("Purchase revenue · property currency", labels)
+            self.assertGreaterEqual(len(app.warning), 1)
 
     def test_greenweez_import_renders_separate_source_only(self):
         """Test-only fixture cannot be claimed as a real Greenweez business result."""
