@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#070d1a">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="NEXUS Commerce Lab — a consent-first storefront testing environment with test-only checkout. No real orders or payments.">
+  <title>NEXUS Commerce Lab — Measured by design</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./config.js" defer></script>
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <a class="skip-link" href="#catalog">Skip to products</a>
+  <div class="lab-ribbon"><span class="status-dot"></span> LAB ENVIRONMENT <span class="ribbon-divider">/</span> TEST CHECKOUT ONLY <span class="ribbon-divider">/</span> NO REAL PAYMENTS</div>
+  <header class="main-header">
+    <a class="brand" href="#top" aria-label="NEXUS Commerce Lab home"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span>NEXUS<span class="brand-micro">/ COMMERCE LAB</span></span></a>
+    <nav class="desktop-nav" aria-label="Primary navigation">
+      <a href="#catalog">Collection</a>
+      <a href="#method">Our method</a>
+      <a href="#analytics">Measurement</a>
+    </nav>
+    <div class="header-tools">
+      <div id="tracking-status" class="tracking-pill" role="status" aria-live="polite">Analytics off</div>
+      <button class="cart-trigger" id="open-cart" aria-label="Open test shopping cart">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M3 4h2l2.1 10.5a2 2 0 0 0 2 1.6H19a2 2 0 0 0 2-1.6L22 8H6" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="10" cy="20" r="1.3" fill="currentColor"/><circle cx="18" cy="20" r="1.3" fill="currentColor"/></svg>
+        <span class="cart-count" id="cart-count">0</span>
+      </button>
+    </div>
+  </header>
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="tiny-rule"></span> THE EXPERIMENTAL STOREFRONT / VOL. 01</p>
+        <h1>Measured<br><em>by design.</em></h1>
+        <p class="hero-lead">A better commerce experience starts with better evidence. Explore a considered collection built to test the journey, not fabricate sales.</p>
+        <div class="hero-actions">
+          <a href="#catalog" class="primary-link">Explore collection <span aria-hidden="true">↗</span></a>
+          <a href="#method" class="secondary-link">Explore the system <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="hero-footnote"><span class="pulsing-dot" aria-hidden="true"></span> Independent sandbox data source · No order fulfilment</div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="hero-grid"></div>
+        <div class="hero-aura"></div>
+        <div class="hero-circle ring-one"></div><div class="hero-circle ring-two"></div>
+        <div class="hero-object"><span class="orb orb-a"></span><span class="orb orb-b"></span><span class="orb-center"></span></div>
+        <span class="hero-coordinates">40° / 62° / 18°</span>
+        <span class="hero-card"><strong>OBJECT / 001</strong><small>A FORM STUDY</small></span>
+      </div>
+    </section>
+    <section class="metadata-strip" aria-label="Lab features">
+      <div><small>01 / COLLECTION</small><strong>Curated objects</strong></div>
+      <div><small>02 / EXPERIENCE</small><strong>Interactive journey</strong></div>
+      <div><small>03 / MEASUREMENT</small><strong>Opt-in analytics</strong></div>
+      <div><small>04 / COMMERCE</small><strong>No real payments</strong></div>
+    </section>
+    <section class="collection-section" id="catalog">
+      <div class="section-intro">
+        <div><p class="eyebrow">THE COLLECTION / 2026</p><h2>Form follows <em>feeling.</em></h2></div>
+        <p>Thoughtful objects for the spaces between work and everyday life. All products and prices are illustrative and used only for UX testing.</p>
+      </div>
+      <div id="category-filters" class="filter-list" role="group" aria-label="Filter collection"></div>
+      <div id="product-grid" class="product-grid" aria-live="polite"></div>
+    </section>
+    <section class="method-section" id="method">
+      <div class="method-symbol" aria-hidden="true"><span class="method-inner">N</span></div>
+      <div class="method-copy">
+        <p class="eyebrow">THE METHOD / SOURCE INTEGRITY</p>
+        <h2>Nothing to <em>hide.</em><br>Everything to <em>measure.</em></h2>
+        <p>This is a controlled technical test environment. Browse products, edit your cart and finish a clearly marked test checkout. Nothing here represents a real customer purchase.</p>
+        <div class="method-tags"><span>01 / No personal data requested</span><span>02 / No payment processing</span><span>03 / Consent-led events</span></div>
+      </div>
+    </section>
+    <section class="measurement-section" id="analytics">
+      <div><p class="eyebrow">ANALYTICS / NOT AN INFERENCE</p><h2>Real interactions.<br><em>Honest provenance.</em></h2></div>
+      <div class="measurement-copy">
+        <p>If you opt in and an owned GA4 property is connected, this site records actual browsing interactions as custom <code>lab_*</code> events. It never sends monetary values or GA4 purchase events.</p>
+        <p>Historical TheLook order data are independent of this website. Performance benchmarking uses Google's real PageSpeed Insights service, not synthetic scores.</p>
+        <button class="manage-consent" id="manage-consent">Manage analytics preference <span aria-hidden="true">↗</span></button>
+      </div>
+    </section>
+  </main>
+  <footer class="footer"><span class="footer-brand">NEXUS / COMMERCE LAB</span><span>PROVENANCE OVER PRETENCE.</span><span>© 2026 · SANDBOX ONLY</span></footer>
+  <div id="shade" class="shade" hidden></div>
+  <aside class="cart-panel" id="cart-panel" aria-label="Test shopping cart" aria-modal="true" role="dialog" hidden tabindex="-1">
+    <div class="cart-header"><div><span class="eyebrow">YOUR SELECTION / LAB</span><h2>Test cart</h2></div><button class="icon-button" id="close-cart" aria-label="Close cart">×</button></div>
+    <div class="cart-items" id="cart-items"></div>
+    <div class="cart-bottom"><p class="cart-disclaimer">Illustrative pricing. This is not a real order and no payment will be processed.</p><div class="cart-total"><span>Test total</span><strong id="cart-total">$0</strong></div><button class="checkout-button" id="checkout-button" disabled>Complete test checkout <span aria-hidden="true">↗</span></button></div>
+  </aside>
+  <div class="checkout-modal" id="checkout-modal" aria-modal="true" role="dialog" aria-labelledby="checkout-heading" hidden tabindex="-1">
+    <div class="modal-symbol" aria-hidden="true">✓</div>
+    <p class="eyebrow">SANDBOX FLOW COMPLETE</p>
+    <h2 id="checkout-heading">Journey verified.</h2>
+    <p>Your test checkout finished locally. No order was placed, no payment taken and no customer details collected.</p>
+    <button id="close-checkout" class="checkout-button">Continue exploring <span aria-hidden="true">↗</span></button>
+  </div>
+  <div class="consent-bar" id="consent-bar" role="region" aria-label="Optional analytics preference" hidden>
+    <div><strong>Optional measurement, your choice.</strong><p>We only load Google Analytics after you allow it. Testing the store does not require tracking.</p></div>
+    <div class="consent-actions"><button id="deny-analytics" class="outline-button">Reject</button><button id="allow-analytics" class="consent-accept">Allow analytics</button></div>
+  </div>
+</body>
+</html>
