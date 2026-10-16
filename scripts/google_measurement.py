@@ -201,7 +201,7 @@ def collect_pagespeed(url: str, strategy: str) -> dict:
     if address is not None and not address.is_global:
         raise ValueError("--url requires a public HTTPS address")
     query = {"url": url, "strategy": strategy,
-             "category": ["performance", "accessibility", "best-practices", "seo"]}
+             "category": ["PERFORMANCE", "ACCESSIBILITY", "BEST_PRACTICES", "SEO"]}
     key = os.environ.get("GOOGLE_PAGESPEED_API_KEY")
     if key:
         query["key"] = key
