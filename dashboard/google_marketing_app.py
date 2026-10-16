@@ -239,6 +239,43 @@ def pagespeed_tab(rows: list[dict]) -> None:
             ("SEO", "seo_score"),
         )):
             cols[i].metric(name, "N/A" if r[col] in ("", None) else f"{float(r[col]):.0f}/100")
+    # Side-by-side device comparison from the latest *actual* lab audit.
+    chart_rows = []
+    for r in selected:
+        for name, column in (
+            ("Performance", "performance_score"),
+            ("Accessibility", "accessibility_score"),
+            ("Best practices", "best_practices_score"),
+            ("SEO", "seo_score"),
+        ):
+            if r[column] not in ("", None):
+                chart_rows.append({
+                    "Device": r["strategy"].title(), "Category": name,
+                    "Lighthouse score": float(r[column]),
+                })
+    if chart_rows:
+        fig = px.bar(
+            pd.DataFrame(chart_rows), x="Category", y="Lighthouse score",
+            color="Device", barmode="group", range_y=[0, 100],
+            color_discrete_sequence=[PALETTE["cyan"], PALETTE["purple"]],
+        )
+        fig.update_layout(**plot_config("Latest lab score comparison · 0–100"))
+        st.plotly_chart(fig, width="stretch")
+
+    # Preserve audit history; never substitute sampled Core Web Vitals.
+    history = pd.DataFrame([r for r in rows if r["url"] == url])
+    history["lab_lcp_ms"] = pd.to_numeric(history["lab_lcp_ms"], errors="coerce")
+    history = history.dropna(subset=["lab_lcp_ms"])
+    if len(history) > 1:
+        history = history.sort_values("extracted_at_utc")
+        trend = px.line(
+            history, x="extracted_at_utc", y="lab_lcp_ms",
+            color="strategy", markers=True,
+            color_discrete_sequence=[PALETTE["cyan"], PALETTE["purple"]],
+        )
+        trend.update_layout(**plot_config("Lab LCP across recorded audits · milliseconds"))
+        st.plotly_chart(trend, width="stretch")
+
     display = pd.DataFrame(selected)
     st.dataframe(display, width="stretch", hide_index=True)
     download_frame(display, "Export these Lighthouse audits", "nexus_pagespeed_latest.csv")
