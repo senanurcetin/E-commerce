@@ -1,0 +1,23 @@
+default:
+  target: ci
+  outputs:
+    ci:
+      type: duckdb
+      path: target/ci.duckdb
+      schema: analytics
+      threads: 1
+    demo:
+      type: duckdb
+      path: target/demo.duckdb
+      schema: analytics
+      threads: 1
+    gsheet:
+      type: duckdb
+      path: target/gsheet.duckdb
+      schema: analytics
+      threads: 1
+    gsheet_real:
+      type: duckdb
+      path: target/gsheet_real.duckdb
+      schema: analytics
+      threads: 1

@@ -1,0 +1,8 @@
+[sqlfluff]
+templater = dbt
+dialect = ansi
+max_line_length = 120
+exclude_rules = LT05, ST06, AM04, RF04, CV03, CP02
+
+[sqlfluff:templater:dbt]
+profiles_dir = .github/dbt-profiles
