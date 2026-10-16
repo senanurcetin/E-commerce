@@ -72,6 +72,12 @@ On-demand independent FlawPilot quick scan of `https://nexus-commerce-lab.vercel
 - The deploy remains **GA4-unconfigured**. No opted-in test traffic, conversion events, purchase metrics, Google Ads ROAS or Google Search Console clicks can be claimed.
 - The first-party NEXUS Commerce Lab is now the default public measurement target in the local dashboard (separate PR); Tricentis and nopCommerce remain clearly labeled external benchmarks.
 
+## GA4 legacy-stream discovery (2026-10-16)
+
+The owner's Google Analytics Data streams screen and subsequent stream details confirmed the existing **ToyStore Website** stream for `https://senanurcetin.github.io/GTM/`. GitHub [senanurcetin/GTM](https://github.com/senanurcetin/GTM) confirms the legacy storefront's GTM container and `dataLayer` prototype. This **does not** authorize using the existing ToyStore web Measurement ID on the new Commerce Lab.
+
+For property-wide source separation, create a dedicated **NEXUS Commerce Lab** GA4 property and its own web Measurement ID. The new Vercel deployment should remain **GA4 disconnected** until that identity is supplied and deployed. The details, exact UI steps, safety restrictions and verification gates are in [GA4 Commerce Lab Activation](GA4_COMMERCE_LAB_ACTIVATION.md).
+
 ## Release acceptance checklist
 
 - Run `node --test storefront/tests/*.test.mjs`.
