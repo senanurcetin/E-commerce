@@ -20,12 +20,14 @@ def evidence():
         "row_counts": {"orders": 3, "campaigns": 2},
         "daily_orders": [
             {"date": "2021-08-01", "order_rows": 3, "distinct_order_ids": 2,
-             "missing_order_ids": 1, "turnover_as_stored": 99.2},
+             "missing_order_ids": 1, "missing_turnover_rows": 1, "turnover_as_stored": 99.2},
         ],
         "daily_campaigns": [
             {"date": "2021-08-01", "paid_source": "facebook", "campaign_rows": 1,
+             "missing_cost_rows": 0, "missing_impressions_rows": 0, "missing_clicks_rows": 0,
              "cost_as_stored": 7.5, "impressions": 50, "clicks": 10},
             {"date": "2021-08-01", "paid_source": "adwords", "campaign_rows": 1,
+             "missing_cost_rows": 0, "missing_impressions_rows": 0, "missing_clicks_rows": 0,
              "cost_as_stored": 4.0, "impressions": 30, "clicks": 5},
         ],
     }
