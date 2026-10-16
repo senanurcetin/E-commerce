@@ -111,11 +111,20 @@ revenue against **40.6%** from new.
 
 The E-Commerce master repository also includes an independent [historical E-Commerce dbt-mart adapter](docs/NEXUS_HISTORICAL_MART_BRIDGE.md) and **E-Commerce · Historical** dashboard tab. It shows completed distinct orders, completed-line revenue, returned orders, sessions and view events from the existing root dbt marts. No raw user/order IDs are exported; no Greenweez or NEXUS Lab data are attributed to this historical source. Root CI seed data remain explicitly synthetic.
 
+## Observed Greenweez Google Sheets
+
+The unified NEXUS interface now also includes a separately validated
+[Greenweez source-sheet evidence view](docs/GREENWEEZ_SOURCE_SHEETS_EVIDENCE.md).
+It is **not** the same as the Greenweez dbt finance mart: source worksheet
+turnover and advertising cost are shown as stored, without asserted currency,
+payment certification, attribution or ROAS. Aggregate-only records are kept
+locally; order IDs and campaign names are not published.
+
 ## NEXUS — consolidated source audit
 
 Both independent E-Commerce and Greenweez dbt projects are integrated in this
 repo and share one Streamlit application. The new **Overview · Sources**
-evidence registry audits seven local source groups and makes absent,
+evidence registry audits eight local source groups and makes absent,
 synthetic, unaudited and API-sourced data explicit. From the E-Commerce root:
 
 ~~~cmd
