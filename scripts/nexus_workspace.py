@@ -112,23 +112,29 @@ def inspect_sources(root: Path = DEFAULT_ROOT) -> list[dict]:
                 "API-observed TEST event counts, never real paid checkout or financial revenue",
             ))
 
+    google_tables = None
+    google_status = ""
+    google_problem = ""
+    try:
+        google_tables, _ = load_bundle(paths["google_marts"])
+    except FileNotFoundError as exc:
+        google_status = "missing" if not (paths["google_marts"] / "manifest.json").exists() else "invalid"
+        google_problem = str(exc)
+    except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+        google_status = "invalid"
+        google_problem = str(exc)
     for key in ("ga4", "gsc", "pagespeed"):
-        try:
-            # Load once only across these three source domains.
-            if key == "ga4":
-                google_tables, google_manifest = load_bundle(paths["google_marts"])
-            records = google_tables[key] if "google_tables" in locals() else []
+        if google_tables is None:
+            report.append(_record(key, google_status, detail=google_problem))
+        else:
+            records = google_tables[key]
             if not records:
                 report.append(_record(key, "api_empty", 0,
                                       detail="Valid source manifest exists but no matching rows"))
             else:
                 report.append(_record(key, "api_snapshot", len(records),
                                       records[0]["source_system"],
-                                      "Verified API snapshot format; not automatically a live feed"))
-        except FileNotFoundError:
-            report.append(_record(key, "missing", detail="No validated local Google API mart"))
-        except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
-            report.append(_record(key, "invalid", detail=str(exc)))
+                                      "Validated API snapshot format; not automatically a live feed"))
 
     try:
         lighthouse = load_lighthouse_reports(paths["local_lighthouse"])
