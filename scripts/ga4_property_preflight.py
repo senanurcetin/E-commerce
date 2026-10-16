@@ -97,7 +97,8 @@ def main() -> int:
     try:
         token = access_token(GA4_SCOPE)
         prop_id = discover_property(token)
-    except (OSError, RuntimeError, ValueError, ImportError) as exc:
+    except Exception as exc:
+        # Do not print credential material, access tokens or HTTP response bodies.
         print(f"BLOCKED: Analytics Admin read-only property identity not confirmed ({type(exc).__name__}).")
         return 2
     print(f"Verified owned Commerce Lab GA4 Property ID: {prop_id}")
