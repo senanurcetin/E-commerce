@@ -10,7 +10,7 @@ To import known Greenweez finance marts into E-Commerce on Windows, first build 
 
 ~~~cmd
 cd /d C:\Users\MONSTER\E-commerce
-python -m scripts.greenweez_bridge --db "C:\Users\MONSTER\greenweez-finance-campaign-analytics\target\demo.duckdb" --provenance synthetic_demo
+python -m scripts.greenweez_bridge --db "C:\Users\MONSTER\E-commerce\integrations\greenweez\target\demo.duckdb" --provenance synthetic_demo
 ~~~
 
 Use the optional flag `--provenance external_unverified` only for external snapshots, e.g., source-authored Greenweez BigQuery exports, which remain **unverified until an independent reconciliation**. No option can self-certify a file as actual business finance. Refresh the Streamlit page after importing. Source snapshot defaults to the gitignored `target/greenweez_bridge/snapshot.json`.

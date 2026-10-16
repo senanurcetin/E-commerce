@@ -1,0 +1,4 @@
+google-cloud-bigquery
+db-dtypes
+pandas
+duckdb

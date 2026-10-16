@@ -1,0 +1,13 @@
+# Template for running the project against the real BigQuery warehouse.
+# Copy to ~/.dbt/profiles.yml (or point --profiles-dir at a folder holding it)
+# and fill in your own project / credentials. Never commit real credentials.
+default:
+  target: bigquery
+  outputs:
+    bigquery:
+      type: bigquery
+      method: oauth            # or service-account with keyfile
+      project: workintech-working
+      dataset: dbt_dev         # staging/intermediate land here; marts land in `<dataset>_finance`
+      location: EU
+      threads: 4

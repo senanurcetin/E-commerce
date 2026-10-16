@@ -112,3 +112,44 @@ jobs:
         run: |
           node storefront/scripts/build.mjs
           grep -Fq 'ga4MeasurementId: "G-ABC123456"' storefront/dist/config.js
+
+  greenweez-dbt-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout E-Commerce including consolidated Greenweez project
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install Greenweez standalone dbt adapter
+        run: pip install 'dbt-core~=1.11.0' 'dbt-duckdb~=1.10.0'
+
+      - name: Install Greenweez pinned dbt-utils
+        working-directory: integrations/greenweez
+        run: dbt deps --profiles-dir .github/dbt-profiles
+
+      - name: Seed Greenweez synthetic raw tables
+        working-directory: integrations/greenweez
+        run: dbt seed --profiles-dir .github/dbt-profiles --target ci
+
+      - name: Build & test Greenweez finance and campaign marts independently
+        working-directory: integrations/greenweez
+        run: dbt build --profiles-dir .github/dbt-profiles --target ci --exclude resource_type:seed
+
+      - name: Greenweez full dbt marts-to-NEXUS bridge acceptance
+        run: |
+          python -m scripts.greenweez_bridge --db integrations/greenweez/target/ci.duckdb --provenance synthetic_demo
+          python -m unittest discover -s tests -p 'test_greenweez_bridge.py' -v
+
+      - name: Build Greenweez Google Sheets-shaped synthetic mode
+        working-directory: integrations/greenweez
+        run: |
+          dbt seed --profiles-dir .github/dbt-profiles --target gsheet
+          dbt build --profiles-dir .github/dbt-profiles --target gsheet --vars '{source_system: fvt_gsheet}' --selector fvt_gsheet --indirect-selection cautious --exclude resource_type:seed
+
+      - name: Verify fvt_gsheet finance marts also satisfy E-Commerce bridge
+        run: python -m scripts.greenweez_bridge --db integrations/greenweez/target/gsheet.duckdb --provenance synthetic_demo --output target/greenweez_bridge/gsheet_synthetic.json

@@ -109,7 +109,7 @@ revenue against **40.6%** from new.
 
 ## Unified NEXUS Commerce Intelligence workspace
 
-**E-Commerce is the master application repository.** The existing local [NEXUS Streamlit application](dashboard/README.md) now also contains **Greenweez · Finance** and **Overview · Sources** tabs. The Greenweez visual module and read-only aggregate mart adapter live in this repository. Its original finance dbt project remains an **independent upstream source**, not a joined transactional data table.
+**E-Commerce is the master application repository.** The existing local [NEXUS Streamlit application](dashboard/README.md) now also contains **Greenweez · Finance** and **Overview · Sources** tabs. The Greenweez visual module, aggregate mart adapter and **complete upstream dbt source** now live in this repository: models and independent test project are under [integrations/greenweez](integrations/README.md). The original repository remains a separate historical upstream source; no cross-business transactional merge is performed.
 
 The adapter accepts only recognized Greenweez finance/marketing DuckDB dbt marts and checks schema, row grain, daily/monthly totals, ad-margin definitions, source spend totals and SHA-256 provenance. Missing sources show *Not imported*. Synthetic inputs are visibly marked; independent external snapshots are marked *UNVERIFIED* until the original warehouse and refund semantics are reconciled. TheLook order revenue, Greenweez finance, Olist and Commerce Lab opt-in interactions are **never summed or presented as one merchant's sales**.
 

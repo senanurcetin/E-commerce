@@ -1,0 +1,34 @@
+version: 2
+
+unit_tests:
+  - name: operational_margin_survives_missing_ship_record
+    description: "An order without a shipping row keeps a non-NULL operational margin."
+    model: int_orders_operational
+    config:
+      # its inputs are the gwz_raw staging models, which are not used in fvt_gsheet mode
+      enabled: "{{ var('source_system', 'gwz_raw') == 'gwz_raw' }}"
+    given:
+      - input: ref('int_orders_margin')
+        rows:
+          - {orders_id: 1, date_date: "2023-01-01", revenue: 100, quantity: 2, purchase_cost: 60, margin: 40}
+          - {orders_id: 2, date_date: "2023-01-01", revenue: 50, quantity: 1, purchase_cost: 20, margin: 30}
+      - input: ref('stg_raw__ship')
+        rows:
+          - {orders_id: 1, shipping_fee: 5, log_cost: 2, ship_cost: 3}
+    expect:
+      rows:
+        - {orders_id: 1, operational_margin: 40, has_ship_record: true}
+        - {orders_id: 2, operational_margin: 30, has_ship_record: false}
+
+  - name: monthly_average_basket_is_weighted
+    description: "Monthly basket is total revenue / total orders, not the mean of daily baskets."
+    model: finance_campaigns_month
+    given:
+      - input: ref('finance_campaigns_day')
+        rows:
+          - {date: "2023-01-01", revenue: 100, transactions: 1, ads_margin: 0, operational_margin: 0, ads_cost: 0, ads_impression: 0, ads_clicks: 0, quantity: 1, purchase_cost: 0, margin: 0, shipping_fee: 0, log_cost: 0, ship_cost: 0}
+          - {date: "2023-01-02", revenue: 300, transactions: 3, ads_margin: 0, operational_margin: 0, ads_cost: 0, ads_impression: 0, ads_clicks: 0, quantity: 3, purchase_cost: 0, margin: 0, shipping_fee: 0, log_cost: 0, ship_cost: 0}
+          - {date: "2023-01-03", revenue: 0, transactions: 0, ads_margin: -5, operational_margin: 0, ads_cost: 5, ads_impression: 0, ads_clicks: 0, quantity: 0, purchase_cost: 0, margin: 0, shipping_fee: 0, log_cost: 0, ship_cost: 0}
+    expect:
+      rows:
+        - {datemonth: "2023-01-01", average_basket: 100, transactions: 4, ads_cost: 5, ads_margin: -5}

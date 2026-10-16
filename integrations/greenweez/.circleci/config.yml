@@ -1,0 +1,68 @@
+version: 2.1
+
+# Real DuckDB-backed integration checks using committed synthetic seeds.
+# Never calls BigQuery, real Google Sheets, or production data.
+jobs:
+  dbt-duckdb-quality:
+    docker:
+      - image: cimg/python:3.11
+    resource_class: medium
+    working_directory: ~/repo
+    environment:
+      DBT_PROFILES_DIR: ".github/dbt-profiles"
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - greenweez-dbt-pip-v1-{{ checksum "requirements.txt" }}
+            - greenweez-dbt-pip-v1-
+      - run:
+          name: Install locked dbt/lint dependencies
+          command: python -m pip install -r requirements.txt
+      - save_cache:
+          key: greenweez-dbt-pip-v1-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/.cache/pip
+      - run:
+          name: YAML and SQL lint
+          command: |
+            yamllint .
+            dbt deps
+            sqlfluff lint models tests
+          no_output_timeout: 15m
+      - run:
+          name: Seed and build synthetic DuckDB source
+          command: |
+            dbt seed
+            dbt build --exclude resource_type:seed
+          no_output_timeout: 15m
+      - run:
+          name: Verify second source adapter against synthetic GSheet-mode fixtures
+          command: |
+            dbt seed --target gsheet
+            dbt build --target gsheet --vars '{source_system: fvt_gsheet}' --selector fvt_gsheet --indirect-selection cautious --exclude resource_type:seed
+          no_output_timeout: 15m
+      - run:
+          name: Run dashboard smoke tests in both modes
+          command: |
+            python -m pip install -r demo/requirements.txt
+            python demo/smoke_test.py target/ci.duckdb sources
+            python demo/smoke_test.py target/gsheet.duckdb no-sources
+      - run:
+          name: Generate dbt docs
+          command: dbt docs generate
+          no_output_timeout: 15m
+      - store_artifacts:
+          path: target/index.html
+          destination: dbt-docs/index.html
+      - store_artifacts:
+          path: target/manifest.json
+          destination: dbt-docs/manifest.json
+      - store_artifacts:
+          path: target/catalog.json
+          destination: dbt-docs/catalog.json
+
+workflows:
+  verify:
+    jobs:
+      - dbt-duckdb-quality
