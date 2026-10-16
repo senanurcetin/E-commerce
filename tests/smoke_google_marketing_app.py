@@ -69,8 +69,17 @@ class GoogleMeasurementAppSmokeTests(unittest.TestCase):
             self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
             self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
             self.assertEqual(len(app.metric), 0, "Unavailable sources must not display KPI figures")
-            self.assertEqual(len(app.tabs), 4, "Each source tab stays visible without data")
+            self.assertEqual(len(app.tabs), 5, "Source tabs and separate lab tab stay visible without data")
             self.assertTrue(any("Website URL" == field.label for field in app.text_input))
+
+    def test_commerce_lab_tab_never_fabricates_unconnected_revenue(self):
+        with tempfile.TemporaryDirectory() as folder:
+            app = AppTest.from_file(str(APP), default_timeout=30).run()
+            next(field for field in app.text_input if field.label == "Validated export folder").set_value(folder).run()
+            self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
+            self.assertTrue(any("Commerce Lab" in tab.label for tab in app.tabs))
+            self.assertFalse(any("Lab completed test checkouts" == metric.label for metric in app.metric))
+            self.assertFalse(any("Purchase revenue · property currency" == metric.label for metric in app.metric))
 
     def test_ecommerce_demo_picker_prefills_url_without_scanning(self):
         with tempfile.TemporaryDirectory() as folder:
