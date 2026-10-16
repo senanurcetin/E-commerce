@@ -55,6 +55,24 @@ Both commands output only gitignored E-Commerce target/greenweez_bridge/snapshot
 - Greenweez historical refunds have uncertain units; don't subtract them or publish net revenue unless the unit is independently confirmed.
 - Do not sum monetary values, customers or transactions across Greenweez, TheLook and the controlled NEXUS Commerce Lab. Currency is not verified by this bridge.
 
+### Historical E-Commerce source integration
+
+The existing root dbt order and session marts now have their own **read-only
+aggregate bridge** and separate **E-Commerce · Historical** Streamlit tab.
+They report distinct completed-order IDs (not raw order-item counts),
+completed/returned revenue separately, daily web sessions and session-purchase
+indicators. All exported values preserve historical source identity. No raw
+order/customer identifiers are exported, and no independent Greenweez or
+owned Commerce Lab events are joined.
+
+Windows synthetic CI example (never presented as real production finance):
+
+~~~cmd
+python -m scripts.ecommerce_marts_bridge --db targetci.duckdb --provenance synthetic_ci
+~~~
+
+See [historical data release conditions](NEXUS_HISTORICAL_MART_BRIDGE.md).
+
 ## Release plan
 
 | Stage | Deliverable | Status |
