@@ -76,12 +76,23 @@ class GoogleMeasurementAppSmokeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             app = AppTest.from_file(str(APP), default_timeout=30).run()
             next(field for field in app.text_input if field.label == "Validated export folder").set_value(folder).run()
-            store = next(field for field in app.selectbox if field.label == "E-commerce demo site")
-            store.set_value("Tricentis Demo Web Shop").run()
+            store = next(field for field in app.selectbox if field.label == "Measurement target")
+            store.set_value("Tricentis Demo Web Shop (third-party)").run()
             url = next(field for field in app.text_input if field.label == "Website URL")
             self.assertEqual(url.value, "https://demowebshop.tricentis.com/")
             self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
             self.assertEqual(len(app.metric), 0, "Changing preset must not start an API call")
+
+    def test_own_store_is_initial_website_target_and_no_api_is_called(self):
+        with tempfile.TemporaryDirectory() as folder:
+            app = AppTest.from_file(str(APP), default_timeout=30).run()
+            next(field for field in app.text_input if field.label == "Validated export folder").set_value(folder).run()
+            store = next(field for field in app.selectbox if field.label == "Measurement target")
+            self.assertEqual(store.value, "NEXUS Commerce Lab (owned test storefront)")
+            url = next(field for field in app.text_input if field.label == "Website URL")
+            self.assertEqual(url.value, "https://nexus-commerce-lab.vercel.app/")
+            self.assertEqual(len(app.metric), 0)
+            self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
 
     def test_pagespeed_only_source_does_not_require_ga4_or_gsc(self):
         with tempfile.TemporaryDirectory() as folder:

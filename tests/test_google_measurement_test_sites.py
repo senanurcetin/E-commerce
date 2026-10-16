@@ -5,16 +5,17 @@ from scripts.google_test_sites import DEFAULT_TEST_SITE, TEST_SITES, test_site_u
 
 
 class TestSitePresets(unittest.TestCase):
-    def test_default_does_not_select_someone_elses_store(self):
-        self.assertEqual(TEST_SITES[DEFAULT_TEST_SITE], "")
+    def test_default_is_our_controlled_lab(self):
+        self.assertEqual(TEST_SITES[DEFAULT_TEST_SITE], "https://nexus-commerce-lab.vercel.app/")
+        self.assertNotEqual(TEST_SITES[DEFAULT_TEST_SITE], "https://demo.nopcommerce.com/")
 
     def test_public_demo_urls_are_https_and_have_unique_hosts(self):
         urls = [url for url in TEST_SITES.values() if url]
-        self.assertEqual(len(urls), 2)
+        self.assertEqual(len(urls), 3)
         self.assertEqual(len(set(urls)), len(urls))
         self.assertEqual(
             set(urls),
-            {"https://demowebshop.tricentis.com/", "https://demo.nopcommerce.com/"},
+            {"https://demowebshop.tricentis.com/", "https://demo.nopcommerce.com/", "https://nexus-commerce-lab.vercel.app/"},
         )
         self.assertTrue(all(url.startswith("https://") for url in urls))
 

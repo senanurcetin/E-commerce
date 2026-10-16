@@ -15,7 +15,9 @@ python -m pip install -r dashboard\requirements.txt
 python -m streamlit run dashboard\google_marketing_app.py
 ~~~
 
-Open http://localhost:8501 . Under **GET STARTED · Run your first real PageSpeed audit**, either select **Tricentis Demo Web Shop** or **nopCommerce Demo Store** from the new **E-commerce demo site** selector, or enter your own public HTTPS website. Choose Mobile or Desktop and click **Run real PageSpeed audit**. The selector never triggers a network request until you submit. The URL is submitted to Google's PageSpeed Insights service on your explicit request only. The API may apply a quota or require an optional `GOOGLE_PAGESPEED_API_KEY`; no synthetic results are shown if Google denies the request.
+Open http://localhost:8501 . Under **GET STARTED · Run your first real PageSpeed audit**, the **Measurement target** menu now defaults to our controlled **NEXUS Commerce Lab** at `https://nexus-commerce-lab.vercel.app/`. You can instead select **Tricentis Demo Web Shop** or **nopCommerce Demo Store** for unrelated external benchmarks, or enter a custom HTTPS URL. Choose Mobile or Desktop and click **Run real PageSpeed audit**. The selector never triggers a network request until you submit. The URL is submitted to Google's PageSpeed Insights service on your explicit request only. The API may apply a quota or require an optional `GOOGLE_PAGESPEED_API_KEY`; no synthetic results are shown if Google denies the request.
+
+The target selection itself makes **no API request**. Click the audit button to request actual Lighthouse metrics from Google; no third-party performance numbers are substituted if the PageSpeed API fails. The independent [FlawPilot health report](https://flawpilot.com/report/X88JSW) cannot be used as a Google Lighthouse report.
 
 The app automatically writes a time-stamped JSON snapshot under gitignored `target/google_measurement/`, then produces a validated `marts/manifest.json` and source-specific CSV files. It refreshes the report. GA4 and GSC remain **Not connected** until their *own* read-only property credentials are configured.
 
