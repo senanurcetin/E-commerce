@@ -18,6 +18,8 @@ def evidence():
         "observed_at_utc": datetime.now(timezone.utc).isoformat(),
         "source_sheets": ["Media at Greenweez - orders", "Media at Greenweez - campaigns"],
         "row_counts": {"orders": 3, "campaigns": 2},
+        "origin_coverage": {"ga_rows": 2, "non_ga_rows": 1,
+                            "ga_missing_turnover": 0, "non_ga_missing_turnover": 1},
         "daily_orders": [
             {"date": "2021-08-01", "order_rows": 3, "distinct_order_ids": 2,
              "missing_order_ids": 1, "missing_turnover_rows": 1, "turnover_as_stored": 99.2},
@@ -75,6 +77,22 @@ class GreenweezSourceSheetsTests(unittest.TestCase):
                 item["observed_at_utc"] = "2030-10-01T00:00:00+00:00"
             with self.subTest(mutation=mutation), self.assertRaises(ValueError):
                 validate_observed(item)
+
+    def test_ga_origin_coverage_must_reconcile_missing_turnover(self):
+        item = evidence()
+        validate_observed(item)
+        failures = [
+            {"ga_rows": 1, "non_ga_rows": 1},
+            {"ga_missing_turnover": 1},
+            {"non_ga_missing_turnover": 0},
+            {"ga_rows": -1},
+        ]
+        for mutation in failures:
+            with self.subTest(mutation=mutation):
+                bad = evidence()
+                bad["origin_coverage"].update(mutation)
+                with self.assertRaises(ValueError):
+                    validate_observed(bad)
 
     def test_failed_worksheet_is_rejected_without_export(self):
         with tempfile.TemporaryDirectory() as folder:
