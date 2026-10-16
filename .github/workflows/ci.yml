@@ -27,6 +27,9 @@ jobs:
       - name: Install dbt packages
         run: dbt deps --profiles-dir .github/dbt-profiles
 
+      - name: Offline Google measurement normalization tests
+        run: python -m unittest discover -s tests -p 'test_google_measurement.py' -v
+
       - name: Parse project (validates all SQL and YAML)
         run: dbt parse --profiles-dir .github/dbt-profiles
 
