@@ -13,6 +13,7 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 import sys
+import json
 
 import pandas as pd
 import plotly.express as px
@@ -228,7 +229,7 @@ def pagespeed_tab(rows: list[dict]) -> None:
             ("Best Practices", "best_practices_score"),
             ("SEO", "seo_score"),
         )):
-            cols[i].metric(name, "N/A" if not r[col] else f"{float(r[col]):.0f}/100")
+            cols[i].metric(name, "N/A" if r[col] in ("", None) else f"{float(r[col]):.0f}/100")
     display = pd.DataFrame(selected)
     st.dataframe(display, use_container_width=True, hide_index=True)
     download_frame(display, "Export these Lighthouse audits", "nexus_pagespeed_latest.csv")
