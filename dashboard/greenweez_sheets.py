@@ -44,9 +44,13 @@ def greenweez_sheets_tab(path: Path) -> None:
     campaign = pd.DataFrame(obs["daily_campaigns"])
     orders["date"] = pd.to_datetime(orders["date"])
     campaign["date"] = pd.to_datetime(campaign["date"])
-    first, second = st.columns(2)
+    first, second, third = st.columns(3)
     first.metric("Source order rows · not reconciled transactions", f"{orders['order_rows'].sum():,}")
-    second.metric("Source worksheet turnover · stored units", f"{orders['turnover_as_stored'].sum():,.2f}")
+    second.metric("Known distinct order IDs · incomplete if IDs missing", f"{orders['distinct_order_ids'].sum():,}")
+    third.metric("Source worksheet turnover · stored units", f"{orders['turnover_as_stored'].sum():,.2f}")
+    missing_ids = int(orders["missing_order_ids"].sum())
+    if missing_ids:
+        st.warning(f"{missing_ids:,} source order rows have no order ID; the distinct count is only a lower bound.")
     c1, c2 = st.columns(2)
     with c1:
         fig = px.line(
