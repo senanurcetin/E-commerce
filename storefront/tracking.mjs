@@ -8,7 +8,7 @@ const CONSENT_KEY_PREFIX = "nexus_commerce_lab_analytics_consent_v2_";
  */
 export function createTracker({ measurementId = "", host, doc, storage }) {
   const valid = validateMeasurementId(measurementId);
-  // Never carry a previous property\'s consent to a different GA4 stream.
+  // Never carry a previous property's consent to a different GA4 stream.
   const consentKey = valid ? CONSENT_KEY_PREFIX + measurementId : null;
   let consent = "unset";
   let injected = false;
@@ -28,7 +28,13 @@ export function createTracker({ measurementId = "", host, doc, storage }) {
     host.gtag = host.gtag || function gtag() {
       host.dataLayer.push(arguments);
     };
-    // Analytics is disabled until explicit opt-in; even then, never send an\n    // automatic GA4 page_view or purchase event.\n    host.gtag("consent", "default", { analytics_storage: "denied", ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied" });\n    host.gtag("consent", "update", { analytics_storage: "granted" });\n    host.gtag("js", new Date());
+    // Only load the tag after opt-in; never send automatic page_view or purchase.
+    host.gtag("consent", "default", {
+      analytics_storage: "denied", ad_storage: "denied",
+      ad_user_data: "denied", ad_personalization: "denied",
+    });
+    host.gtag("consent", "update", { analytics_storage: "granted" });
+    host.gtag("js", new Date());
     host.gtag("config", measurementId, { send_page_view: false });
     const script = doc.createElement("script");
     script.async = true;
