@@ -72,6 +72,17 @@ class GoogleMeasurementAppSmokeTests(unittest.TestCase):
             self.assertEqual(len(app.tabs), 4, "Each source tab stays visible without data")
             self.assertTrue(any("Website URL" == field.label for field in app.text_input))
 
+    def test_ecommerce_demo_picker_prefills_url_without_scanning(self):
+        with tempfile.TemporaryDirectory() as folder:
+            app = AppTest.from_file(str(APP), default_timeout=30).run()
+            next(field for field in app.text_input if field.label == "Validated export folder").set_value(folder).run()
+            store = next(field for field in app.selectbox if field.label == "E-commerce demo site")
+            store.set_value("Tricentis Demo Web Shop").run()
+            url = next(field for field in app.text_input if field.label == "Website URL")
+            self.assertEqual(url.value, "https://demowebshop.tricentis.com/")
+            self.assertEqual(len(app.exception), 0, [e.message for e in app.exception])
+            self.assertEqual(len(app.metric), 0, "Changing preset must not start an API call")
+
     def test_pagespeed_only_source_does_not_require_ga4_or_gsc(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
