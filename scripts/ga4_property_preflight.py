@@ -95,7 +95,8 @@ def main() -> int:
         print("Nothing queried or collected. Run --resolve only after authorized ADC setup.")
         return 0
     try:
-        token = (lab_access_token(GA4_SCOPE) if os.environ.get("NEXUS_GA4_KEYLESS_IMPERSONATION", "")\n             else access_token(GA4_SCOPE))
+        token = (lab_access_token(GA4_SCOPE) if os.environ.get("NEXUS_GA4_KEYLESS_IMPERSONATION", "")
+             else access_token(GA4_SCOPE))
         prop_id = discover_property(token)
     except Exception as exc:
         # Do not print credential material, access tokens or HTTP response bodies.
