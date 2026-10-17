@@ -6,7 +6,7 @@ Run from the repository root:
 Google Analytics *numeric property ID*, not public G-... Measurement ID.
 The target property must be a dedicated owner-controlled Commerce Lab GA4
 property; the old ToyStore and personal portfolio streams are not valid inputs.
-Requires Application Default Credentials with Analytics read-only access.
+Requires Analytics read-only ADC, or explicit keyless gcloud impersonation\n(NEXUS_GA4_KEYLESS_IMPERSONATION=1 and delegated IAM permissions).
 No demonstration data or fallback metrics are exported.
 """
 from __future__ import annotations
@@ -18,7 +18,7 @@ import math
 import os
 from pathlib import Path
 
-from scripts.google_measurement import access_token, fetch_json, validate_dates, GA4_SCOPE
+from scripts.google_measurement import access_token, fetch_json, validate_dates, GA4_SCOPE, lab_access_token
 
 HOSTNAME = "nexus-commerce-lab.vercel.app"
 EVENT_NAMES = (
@@ -70,7 +70,7 @@ def collect_lab_events(property_id: str, start: str, end: str) -> dict:
     if not isinstance(property_id, str) or not property_id.isdigit():
         raise ValueError("A dedicated numeric GA4_LAB_PROPERTY_ID is required")
     validate_dates(start, end)
-    token = access_token(GA4_SCOPE)
+    token = lab_access_token(GA4_SCOPE)
     endpoint = f"https://analyticsdata.googleapis.com/v1beta/properties/{property_id}:runReport"
     rows = []
     offset = 0
