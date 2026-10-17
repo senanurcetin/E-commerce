@@ -1,0 +1,41 @@
+name: BigQuery OIDC metadata connection
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bigquery-metadata:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: bigquery-readonly
+    timeout-minutes: 12
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      BILLING_PROJECT: ${{ vars.GCP_BQ_BILLING_PROJECT }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify required configuration
+        env:
+          PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          SERVICE_ACCOUNT: ${{ vars.GCP_BQ_SERVICE_ACCOUNT }}
+        run: |
+          test -n "$PROVIDER" || { echo 'Missing GCP_WIF_PROVIDER'; exit 2; }
+          test -n "$SERVICE_ACCOUNT" || { echo 'Missing GCP_BQ_SERVICE_ACCOUNT'; exit 2; }
+          test -n "$BILLING_PROJECT" || { echo 'Missing GCP_BQ_BILLING_PROJECT'; exit 2; }
+      - name: Authenticate via short-lived Google ADC
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_BQ_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.GCP_BQ_BILLING_PROJECT }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Install BigQuery read-only client
+        run: python -m pip install 'google-cloud-bigquery>=3,<5'
+      - name: Check source metadata and zero-byte dry-run
+        run: python -m scripts.bigquery_connection_probe
