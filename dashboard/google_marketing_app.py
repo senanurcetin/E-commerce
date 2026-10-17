@@ -35,7 +35,7 @@ from scripts.ecommerce_marts_bridge import load_snapshot as load_historical_snap
 from dashboard.ecommerce_historical import historical_ecommerce_tab
 from scripts.nexus_workspace import inspect_sources
 from dashboard.greenweez_sheets import greenweez_sheets_tab
-from dashboard.nexus_theme import apply_theme, hero, plot_layout, COLORS
+from dashboard.nexus_theme import apply_theme, hero, plot_layout, COLORS, brand_icon
 
 PALETTE = {
     "background": COLORS["page"],
@@ -49,7 +49,7 @@ PALETTE = {
 
 st.set_page_config(
     page_title="NEXUS | Commerce Intelligence",
-    page_icon="◈", layout="wide",
+    page_icon=brand_icon(), layout="wide",
 )
 apply_theme()
 
