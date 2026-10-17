@@ -34,6 +34,11 @@ TABLES = {
     "gwz_finance_refund_sheet_1": {"orders_id", "datetime", "refund"},
     "gwz_finance_campaign": {"datetime", "cost"},
 }
+# Accept scalar values that the downstream dbt staging layer can cast safely.
+# BOOL, BYTES, JSON, STRUCT and repeated fields cannot be finance/date inputs.
+DATE_TYPES = frozenset(("STRING", "DATE", "DATETIME", "TIMESTAMP"))
+NUMERIC_TYPES = frozenset(("STRING", "INTEGER", "INT64", "FLOAT", "FLOAT64",
+                           "NUMERIC", "BIGNUMERIC"))
 PROJECT_ID = re.compile(r"[a-z][a-z0-9-]{4,62}")
 DATASET_ID = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,1023}")
 
@@ -226,6 +231,14 @@ def preview(client, bigquery, project: str, dataset: str, *, cap: int, max_rows:
         missing = sorted(required - columns)
         if missing:
             raise ValueError(f"{table}: missing required source columns: {', '.join(missing)}")
+        for name in required:
+            field = schema[name]
+            expected_types = (DATE_TYPES if name in ("datetime", "date_date")
+                              else NUMERIC_TYPES)
+            actual_type = str(getattr(field, "field_type", "")).upper()
+            mode = str(getattr(field, "mode", "NULLABLE")).upper()
+            if actual_type not in expected_types or mode == "REPEATED":
+                raise ValueError(f"{table}: incompatible or repeated source type for {name}")
         sql = table_sql(project, dataset, table, max_rows)
         dry = client.query(sql, location=location, job_config=bigquery.QueryJobConfig(
             dry_run=True, use_query_cache=False, maximum_bytes_billed=cap,
