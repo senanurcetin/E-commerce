@@ -422,8 +422,13 @@ def main(argv: list[str] | None = None) -> int:
         billing = args.billing_project or project
         # Defer all Google imports/authentication until the mapping is validated.
         from google.cloud import bigquery
-        from google.oauth2.credentials import Credentials
-        client = bigquery.Client(project=billing, credentials=Credentials(token=access_token()))
+        if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+            # GitHub Actions OIDC auth exports short-lived Application Default Credentials.
+            client = bigquery.Client(project=billing)
+        else:
+            from google.oauth2.credentials import Credentials
+            client = bigquery.Client(project=billing,
+                                     credentials=Credentials(token=access_token()))
         try:
             location, plan = preview(client, bigquery, project, dataset,
                                      cap=args.max_bytes_billed, max_rows=args.max_rows)
