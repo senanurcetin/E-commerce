@@ -14,8 +14,8 @@ for (const file of ["index.html", "styles.css", "app.mjs", "core.mjs", "tracking
   await cp(resolve(root, file), resolve(dist, file));
 }
 // Brand remains faithful to the owner's original Google Drive PNG.
-// Static assets must be copied into Vercel's deployed storefront/dist directory.
-await cp(resolve(root, "..", "branding", "nexus_official_transparent.png"),
+// Keep a byte-identical copy inside storefront/ for Vercel rootDirectory isolation.
+await cp(resolve(root, "nexus-logo.png"),
          resolve(dist, "nexus-logo.png"));
 await writeFile(
   resolve(dist, "config.js"),
