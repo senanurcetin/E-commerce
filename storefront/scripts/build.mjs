@@ -10,9 +10,13 @@ if (supplied && !validateMeasurementId(supplied)) {
   throw new Error("Invalid NEXUS_GA4_MEASUREMENT_ID. Expected public GA4 G-XXXXXXXX Measurement ID.");
 }
 await mkdir(dist, { recursive: true });
-for (const file of ["index.html", "styles.css", "app.mjs", "core.mjs", "tracking.mjs"]) {
+for (const file of ["index.html", "styles.css", "app.mjs", "core.mjs", "tracking.mjs", "favicon.svg"]) {
   await cp(resolve(root, file), resolve(dist, file));
 }
+// Brand remains faithful to the owner's original Google Drive PNG.
+// Static assets must be copied into Vercel's deployed storefront/dist directory.
+await cp(resolve(root, "..", "branding", "nexus_official_transparent.png"),
+         resolve(dist, "nexus-logo.png"));
 await writeFile(
   resolve(dist, "config.js"),
   "/* Public measurement configuration (never store tokens or secrets here). */\n" +
