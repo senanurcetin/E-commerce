@@ -13,6 +13,12 @@ from pathlib import Path
 from scripts.cloud_source_inventory import EXPECTED, PROJECTS, OUT as INVENTORY_PATH
 
 OUTPUT = Path("target/cloud_inventory/source_mapping_candidates.json")
+# Existing known application source pins; these are explicitly selected operational
+# identities, never inferred as globally unique in a partial inventory.
+PINNED_SOURCES = {
+    "ecommerce": ("workintech-working", "e_ticaret"),
+    "greenweez_gsheet": ("workintech-working", "fvt_gsheet"),
+}
 VAR_NAMES = {
     "ecommerce": ("ecommerce_source_project", "ecommerce_source_dataset"),
     "greenweez_raw": ("greenweez_raw_project", "greenweez_raw_dataset"),
@@ -68,6 +74,13 @@ def resolve(inventory: dict) -> dict:
             status = "ready_for_manual_review"
         item = {"status": status, "required_tables": list(required),
                 "complete_candidates": candidates}
+        pin = PINNED_SOURCES.get(domain)
+        if pin and {"project": pin[0], "dataset": pin[1]} in candidates:
+            item["pinned_source_table_contract"] = {
+                "project": pin[0], "dataset": pin[1],
+                "required_tables_present": True,
+                "scope": "exact_dataset_metadata_only_not_global_unique_or_row_verified",
+            }
         if status == "ready_for_manual_review":
             pvar, dvar = VAR_NAMES[domain]
             item["suggested_dbt_vars"] = {
@@ -101,6 +114,11 @@ def main() -> int:
     for domain, decision in report["sources"].items():
         print(domain + ": " + decision["status"] +
               "; complete candidates=" + str(len(decision["complete_candidates"])))
+        if decision.get("pinned_source_table_contract"):
+            pin = decision["pinned_source_table_contract"]
+            print("  Existing source pin has complete table names:",
+                  pin["project"] + "." + pin["dataset"],
+                  "(not proof of rows or global uniqueness)")
     print("Evidence-only mapping report:", args.output)
     return 0 if report["status"] == "all_unique" else 1
 
