@@ -12,7 +12,8 @@ class NexusOfficialBrandTests(unittest.TestCase):
         icon = brand_icon()
         self.assertEqual(icon.size, (256, 256))
         self.assertEqual(icon.mode, "RGBA")
-        self.assertNotEqual(icon.getpixel((128, 60)), icon.getpixel((10, 10)))
+        colored = sum(1 for px in icon.getdata() if px != (10, 20, 40, 255))
+        self.assertGreater(colored, 8000, "Official NEXUS X must remain visible")
         self.assertEqual(icon.getpixel((0, 0))[:3], (10, 20, 40))
 
     def test_streamlit_uses_native_brand_assets(self):
