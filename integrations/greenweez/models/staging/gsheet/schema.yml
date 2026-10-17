@@ -7,8 +7,8 @@ sources:
       Covers 2021-10-01 to 2021-10-15 (13,362 orders). It is a static snapshot, so no freshness
       check is configured. On the DuckDB targets the same table names are served by synthetic seeds.
       Fivetran bookkeeping columns (`_line`, `_row`, `_fivetran_synced`) are not used.
-    database: "{{ 'workintech-working' if target.type == 'bigquery' else target.database }}"
-    schema: "{{ 'fvt_gsheet' if target.type == 'bigquery' else target.schema }}"
+    database: "{{ var('greenweez_gsheet_project', 'workintech-working') if target.type == 'bigquery' else target.database }}"
+    schema: "{{ var('greenweez_gsheet_dataset', 'fvt_gsheet') if target.type == 'bigquery' else target.schema }}"
     tables:
       - name: orders
         identifier: gwz_finance_orders_orders

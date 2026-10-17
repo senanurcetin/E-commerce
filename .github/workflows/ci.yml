@@ -97,7 +97,7 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_ga4_property_preflight.py' -v
 
       - name: Verify two-project BigQuery inventory is metadata-only and token-safe
-        run: python -m unittest discover -s tests -p 'test_cloud_source_inventory.py' -v
+        run: python -m unittest discover -s tests -p 'test_cloud_source_*.py' -v
 
       - name: Validate NEXUS design tokens and Power BI honesty gates
         run: |

@@ -6,8 +6,8 @@ sources:
       Raw Greenweez dataset. On BigQuery it is the real `gwz_raw_data` dataset;
       on the DuckDB targets (ci, demo) the same table names are served by the
       synthetic seeds in `seeds/`.
-    database: "{{ 'workintech-working' if target.type == 'bigquery' else target.database }}"
-    schema: "{{ 'gwz_raw_data' if target.type == 'bigquery' else target.schema }}"
+    database: "{{ var('greenweez_raw_project', 'workintech-working') if target.type == 'bigquery' else target.database }}"
+    schema: "{{ var('greenweez_raw_dataset', 'gwz_raw_data') if target.type == 'bigquery' else target.schema }}"
     tables:
       - name: sales
         identifier: raw_gz_sales
