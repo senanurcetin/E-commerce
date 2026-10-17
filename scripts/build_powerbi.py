@@ -20,6 +20,7 @@ import shutil
 from scripts.ecommerce_marts_bridge import load_snapshot as load_ecommerce
 from scripts.greenweez_bridge import load_snapshot as load_greenweez
 from scripts.greenweez_sheets_observed import load_observed
+from scripts.greenweez_import_audit import load_import_audit, reporting_rows
 from scripts.lab_ga4_events import load_lab_snapshot
 from scripts.nexus_workspace import inspect_sources
 
@@ -54,6 +55,15 @@ TABLES = {
         ("campaign_rows", "int64"), ("missing_cost_rows", "int64"),
         ("cost_as_stored", "double"), ("impressions", "int64"),
         ("clicks", "int64"),
+    ],
+    "GreenweezImportAudit": [
+        ("table_name", "string"), ("source_project", "string"),
+        ("source_dataset", "string"), ("row_count", "int64"),
+        ("min_date", "dateTime"), ("max_date", "dateTime"),
+        ("zero_amount_values", "int64"), ("negative_amount_values", "int64"),
+        ("unmatched_shipping_orders", "int64"),
+        ("unmatched_refund_orders", "int64"),
+        ("provenance", "string"), ("finance_verified", "string"),
     ],
     "CommerceLabEvents": [
         ("date", "dateTime"), ("event_name", "string"), ("event_count", "int64"),
@@ -129,7 +139,16 @@ PAGES = [
          ("lineChart", "GreenweezOrdersObserved", ["date"], "Observed Turnover Only (source units)", "Nonblank turnover observations only"),
          ("clusteredColumnChart", "GreenweezCampaignObserved", ["paid_source"], "Observed Campaign Cost (source units)", "Source-platform campaign cost (unverified)"),
      ]},
-    {"id": "f904a7041e7d64bd021c", "title": "06 · Commerce Lab Tests",
+    {"id": "ab197ab073123077bd68", "title": "06 · Greenweez Import Evidence",
+     "cards": [], "charts": [
+         ("tableEx", "GreenweezImportAudit",
+          ["table_name", "row_count", "min_date", "max_date",
+           "zero_amount_values", "negative_amount_values",
+           "unmatched_shipping_orders", "unmatched_refund_orders",
+           "provenance", "finance_verified"], None,
+          "BigQuery source import evidence · NOT finance-verified"),
+     ]},
+    {"id": "f904a7041e7d64bd021c", "title": "07 · Commerce Lab Tests",
      "cards": [("CommerceLabEvents", "Lab Test Events (not orders)")],
      "charts": [
          ("clusteredColumnChart", "CommerceLabEvents", ["event_name"], "Lab Test Events (not orders)", "Opted-in test event counts"),
@@ -159,6 +178,14 @@ def read_sources(root: Path) -> tuple[dict[str, list[dict]], list[dict]]:
     if observed:
         result["GreenweezOrdersObserved"] = observed["daily_orders"]
         result["GreenweezCampaignObserved"] = observed["daily_campaigns"]
+    try:
+        quality = load_import_audit(
+            root / "integrations/greenweez/target/gsheet_real.duckdb")
+    except (ValueError, OSError, ImportError):
+        # Fail closed: invalid source evidence appears as INVALID in SourceRegistry.
+        quality = None
+    if quality:
+        result["GreenweezImportAudit"] = reporting_rows(quality)
     lab = load_lab_snapshot(root / "target/google_measurement/lab_ga4_events.json")
     if lab:
         result["CommerceLabEvents"] = lab[0]

@@ -112,3 +112,16 @@ Run:
 ~~~cmd
 python -m unittest discover -s tests -p test_nexus_workspace.py -v
 ~~~
+
+
+## Local Greenweez BigQuery import audit visibility
+
+The ninth independent NEXUS source group is `greenweez_import_audit`.
+It reads `integrations/greenweez/target/gsheet_real.duckdb` in **read-only**
+mode and validates the single `import_audit.source_quality` record. No
+order IDs, customer details or monetary totals leave the database.
+Missing import → `missing`; invalid/tampered record → `invalid`.
+Only a valid, pinned `workintech-working.fvt_gsheet` import audit is reported
+as `external_unverified`: four source table row counts and date ranges are
+**not** an independent finance audit. The status table in NEXUS and the Power
+BI Source Assurance page expose this additional group.

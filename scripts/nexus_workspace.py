@@ -32,12 +32,14 @@ from scripts.google_dashboard_data import load_bundle
 from scripts.lab_ga4_events import load_lab_snapshot
 from scripts.local_lighthouse import load_lighthouse_reports
 from scripts.greenweez_sheets_observed import load_observed
+from scripts.greenweez_import_audit import load_import_audit
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_LABELS = {
     "ecommerce": "E-Commerce historical dbt marts",
     "greenweez": "Greenweez finance + paid campaigns",
     "greenweez_sheets": "Greenweez owned source worksheets",
+    "greenweez_import_audit": "Greenweez authorized Sheets import quality",
     "commerce_lab_ga4": "NEXUS Commerce Lab opted-in test events",
     "ga4": "Google Analytics acquisition mart",
     "gsc": "Google Search Console search mart",
@@ -55,6 +57,7 @@ def paths_for(root: Path) -> dict[str, Path]:
         "ecommerce": root / "target" / "ecommerce_bridge" / "snapshot.json",
         "greenweez": root / "target" / "greenweez_bridge" / "snapshot.json",
         "greenweez_sheets": root / "target" / "greenweez_bridge" / "google_sheets_observed.json",
+        "greenweez_import_audit": root / "integrations" / "greenweez" / "target" / "gsheet_real.duckdb",
         "commerce_lab_ga4": root / "target" / "google_measurement" / "lab_ga4_events.json",
         "google_marts": root / "target" / "google_measurement" / "marts",
         "local_lighthouse": root / "target" / "google_measurement" / "local_lighthouse",
@@ -118,6 +121,24 @@ def inspect_sources(root: Path = DEFAULT_ROOT, *, overrides: dict[str, Path] | N
                 observed["source_system"],
                 "Authenticated worksheet values observed; currency, turnover and cost "
                 "semantics not independently audited. No order IDs or campaign names exported.",
+            ))
+
+    try:
+        quality = load_import_audit(paths["greenweez_import_audit"])
+    except (ValueError, OSError, ImportError) as exc:
+        report.append(_record("greenweez_import_audit", "invalid",
+                              detail="Local Greenweez import audit invalid or unreadable"))
+    else:
+        if quality is None:
+            report.append(_record("greenweez_import_audit", "missing",
+                                  detail="No local real-source DuckDB import/audit exists"))
+        else:
+            source_row_count = sum(table["rows"] for table in quality["tables"].values())
+            report.append(_record(
+                "greenweez_import_audit", "external_unverified",
+                source_row_count, quality["provenance"],
+                "Four source table row counts and date ranges checked locally; "
+                "financial semantics, currency and business revenue remain unverified.",
             ))
 
     try:
