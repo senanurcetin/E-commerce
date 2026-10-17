@@ -9,7 +9,7 @@ Google Cloud UI; **do not recreate** these resources:
 | --- | --- |
 | Identity/data project | `workintech-working` |
 | Pool | `nexus-gha` (Enabled) |
-| Provider | `nexus-main` (OIDC / Enabled) |
+| Provider | `nexus-github-main` (OIDC / Enabled) |
 | Provider project number shown in pool principal | `566421350777` |
 | Service account | `nexus-bq-readonly@workintech-working.iam.gserviceaccount.com` |
 | WIF service-account binding | `attribute.repository_id="1217831974"` (visible under Connected service accounts) |
@@ -23,7 +23,7 @@ the canonical Commerce repository (verify the project number using the
 provider detail screen before saving):
 
 ```text
-GCP_WIF_PROVIDER=projects/566421350777/locations/global/workloadIdentityPools/nexus-gha/providers/nexus-main
+GCP_WIF_PROVIDER=projects/566421350777/locations/global/workloadIdentityPools/nexus-gha/providers/nexus-github-main
 GCP_BQ_SERVICE_ACCOUNT=nexus-bq-readonly@workintech-working.iam.gserviceaccount.com
 GCP_BQ_BILLING_PROJECT=workintech-working
 ```
@@ -75,7 +75,7 @@ export IDENTITY_PROJECT='YOUR_AUTHORIZED_IDENTITY_PROJECT'
 export BILLING_PROJECT='YOUR_AUTHORIZED_BILLING_PROJECT'
 export NUMBER="$(gcloud projects describe "$IDENTITY_PROJECT" --format='value(projectNumber)')"
 export POOL='nexus-gha'
-export PROVIDER='nexus-main'
+export PROVIDER='nexus-github-main'
 export ACCOUNT='nexus-bq-readonly'
 export SA="${ACCOUNT}@${IDENTITY_PROJECT}.iam.gserviceaccount.com"
 
