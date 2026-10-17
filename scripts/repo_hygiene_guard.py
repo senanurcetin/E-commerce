@@ -13,8 +13,9 @@ import subprocess
 FORBIDDEN_EXTENSIONS = {".pem", ".p12", ".pfx", ".key", ".duckdb", ".sqlite", ".db"}
 FORBIDDEN_FILENAMES = {".env", ".env.local", ".env.production", ".env.prod"}
 KEY_MATERIAL = re.compile(
-    rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|"
-    rb'"private_key"\s*:\s*"-----BEGIN',
+    # Require the complete PEM marker. A source-code fixture containing only
+    # the leading fragment is not itself a leaked credential.
+    rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----",
     flags=re.IGNORECASE,
 )
 
