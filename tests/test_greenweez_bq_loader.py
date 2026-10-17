@@ -212,3 +212,86 @@ class PrepublicationRowContractsTests(unittest.TestCase):
         data["customer_email"]="private@example.org"
         with self.assertRaisesRegex(ValueError,"invalid projection"):
             loader.validate_import_frame("gwz_finance_orders_orders",data)
+
+
+
+class TransferAtomicityTests(unittest.TestCase):
+    """End-to-end import tests use only synthetic DataFrames and a fake BQ client."""
+
+    @staticmethod
+    def data():
+        import pandas as pd
+        return {
+            "gwz_finance_orders_orders": pd.DataFrame({
+                "orders_id":[10,11], "datetime":["2021-10-01 12:00:00UTC","2021-10-02 12:00:00UTC"],
+                "turnover":[0,100], "purchase_cost":[0,90], "ship_fee":[5,5],
+            }),
+            "gwz_finance_shipping_shipping": pd.DataFrame({
+                "orders_id":[10,11], "date_date":["2021-10-01","2021-10-02"],
+                "log_cost":[2,3], "ship_cost":[1,2],
+            }),
+            "gwz_finance_refund_sheet_1": pd.DataFrame({
+                "orders_id":[10,11], "datetime":["2021-10-01","2021-10-02"],
+                "refund":[50,100],
+            }),
+            "gwz_finance_campaign": pd.DataFrame({
+                "datetime":["2021-10-01","2021-10-02"], "cost":[10,20],
+            }),
+        }
+
+    @staticmethod
+    def client(data):
+        class Result:
+            def __init__(self, frame):
+                self.frame = frame
+            def result(self):
+                return self
+            def to_dataframe(self, **kwargs):
+                return self.frame.copy()
+        class Client:
+            def query(self, sql, **kwargs):
+                matches = [table for table in data
+                           if "." + table + chr(96) in sql]
+                if len(matches) != 1:
+                    raise AssertionError("Unexpected source SQL")
+                return Result(data[matches[0]])
+        class BQ:
+            @staticmethod
+            def QueryJobConfig(**kwargs):
+                return kwargs
+        return Client(), BQ()
+
+    def test_all_four_sources_publish_quality_evidence_in_same_db(self):
+        import duckdb
+        source, bq = self.client(self.data())
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "real.duckdb"
+            result = loader.transfer(source, bq, "workintech-working", "fvt_gsheet",
+                                     "EU", output=path, cap=100000, max_rows=1000)
+            self.assertEqual(result["row_counts"]["gwz_finance_orders_orders"], 2)
+            con = duckdb.connect(str(path), read_only=True)
+            try:
+                raw = con.execute("SELECT report FROM import_audit.source_quality").fetchone()[0]
+                audit = json.loads(raw)
+                self.assertEqual(audit["provenance"], "external_unverified")
+                self.assertFalse(audit["financial_semantics_verified"])
+                self.assertEqual(audit["join_coverage"]["orders_without_shipping"], 0)
+                self.assertEqual(audit["tables"]["gwz_finance_orders_orders"]["zero_count"]["turnover"], 1)
+                columns = [col[1] for col in con.execute(
+                    "PRAGMA table_info('analytics.gwz_finance_orders_orders')").fetchall()]
+                self.assertNotIn("customer_email", columns)
+            finally:
+                con.close()
+
+    def test_failed_later_table_preserves_existing_database(self):
+        data = self.data()
+        data["gwz_finance_shipping_shipping"].loc[1,"orders_id"] = 10
+        source, bq = self.client(data)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "real.duckdb"
+            path.write_bytes(b"ORIGINAL_DB")
+            with self.assertRaisesRegex(ValueError, "duplicates"):
+                loader.transfer(source, bq, "workintech-working", "fvt_gsheet",
+                                "EU", output=path, cap=100000, max_rows=1000)
+            self.assertEqual(path.read_bytes(), b"ORIGINAL_DB")
+            self.assertFalse(path.with_name(path.name + ".staging").exists())
