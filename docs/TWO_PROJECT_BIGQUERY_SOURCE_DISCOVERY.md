@@ -53,3 +53,54 @@ dbt parse --profiles-dir .github/dbt-profiles --target ci --vars '{"greenweez_ra
 ```
 
 The current defaults remain: E-Commerce `workintech-working.e_ticaret`, Greenweez raw `workintech-working.gwz_raw_data`, and Greenweez sheets `workintech-working.fvt_gsheet`. These are **unverified defaults**, not evidence of active data. `dbt parse` is an offline configuration check, not a source query or proof of table access. Live BigQuery testing and downstream marts must wait for a verified, authorized warehouse connection. Greenweez DuckDB CI/demo targets keep their existing synthetic-seed routing.
+
+
+## Greenweez real Fivetran/Sheets import: controlled local handoff
+
+The legacy script previously deleted its existing DuckDB before querying BigQuery.
+It now requires a **unique, complete** metadata mapping, validates actual source
+table schemas, performs four **BigQuery dry-run jobs**, and leaves the old local DB
+unchanged unless every source completes successfully. No service-account key file
+is needed: it uses the existing signed-in `gcloud auth login` user and an
+in-memory short-lived access token.
+
+From the E-Commerce root on Windows, run these only **after** the two metadata
+inventory commands above have finished:
+
+```powershell
+python -m pip install -r integrations/greenweez/scripts/requirements-bq.txt
+python integrations/greenweez/scripts/load_gsheet_from_bigquery.py
+```
+
+This default **preview** calls BigQuery metadata and query dry-run endpoints but
+**downloads no data** and does not change `gsheet_real.duckdb`. A query job
+permission can still be required. The source project/dataset is derived from
+the local `source_mapping_candidates.json`, never guessed from a similar name.
+If source location differs from the query-billing project, explicitly pass
+`--billing-project workintech-working` (requires BigQuery jobs.create there).
+
+Once the preview shows four verified column sets and acceptable bytes, authorize
+the real read by running:
+
+```powershell
+python integrations/greenweez/scripts/load_gsheet_from_bigquery.py --execute
+```
+
+The default per-query billing ceiling is **50,000,000 bytes**, and the default
+row ceiling is 250,000 per table. These are guards, *not* a guarantee of a
+zero-cost operation. The resulting real-data file is gitignored at
+`integrations/greenweez/target/gsheet_real.duckdb`; never commit/share it.
+If `gcloud` access only permits metadata, the preview will stop and report the
+authorization blocker; it will not silently substitute demo rows.
+
+After this local import, enter `integrations/greenweez` and run:
+
+```powershell
+dbt deps --profiles-dir .github/dbt-profiles
+dbt build --profiles-dir .github/dbt-profiles --target gsheet_real --vars "{source_system: fvt_gsheet}" --selector fvt_gsheet --indirect-selection cautious --exclude resource_type:seed
+```
+
+Only after reviewing this real-but-uncertified mart should it be sent through
+the NEXUS source-qualified bridge, with provenance `external_unverified`.
+Do **not** promote source order turnover, refund figures or ad spend to certified
+financial KPIs until units, currency and business semantics reconcile.

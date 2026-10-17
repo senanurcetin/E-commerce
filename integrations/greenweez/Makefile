@@ -45,9 +45,12 @@ load-gsheet-real:  ## copy the real fvt_gsheet tables from BigQuery (read-only) 
 	pip install -r scripts/requirements-bq.txt
 	python scripts/load_gsheet_from_bigquery.py
 
-build-gsheet-real: load-gsheet-real  ## build the marts on the real Google Sheets data
+load-gsheet-real-execute:  ## import only after a verified unique mapping and a bounded query preview
+	python scripts/load_gsheet_from_bigquery.py --execute
+
+build-gsheet-real: load-gsheet-real-execute  ## explicit, capped real-source import then local marts
 	$(DBT) build --target gsheet_real --vars '{source_system: fvt_gsheet}' --selector fvt_gsheet --indirect-selection cautious --exclude resource_type:seed
 
-demo-gsheet-real: build-gsheet-real  ## dashboard on the real Google Sheets data (needs GOOGLE_APPLICATION_CREDENTIALS)
+demo-gsheet-real: build-gsheet-real  ## authenticated via short-lived gcloud user token (no key files)
 	pip install -r demo/requirements.txt
 	DEMO_DB=target/gsheet_real.duckdb DEMO_DATA_LABEL="Google Sheets export (real data, 2021-10-01 to 2021-10-15)" streamlit run demo/app.py
