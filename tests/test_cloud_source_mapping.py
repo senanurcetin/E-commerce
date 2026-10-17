@@ -75,3 +75,25 @@ class SourceMappingTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+
+class KnownDatasetEvidenceTests(unittest.TestCase):
+    def test_known_full_source_pin_visible_even_if_global_scan_incomplete(self):
+        inventory = fake_inventory(partial=True)
+        # Correctly named existing source dataset; other project remains inaccessible.
+        sheets = next(d for d in inventory["results"][0]["datasets"]
+                      if "greenweez_gsheet" in d["matches"])
+        sheets["dataset"] = "fvt_gsheet"
+        report = mapping.resolve(inventory)
+        item = report["sources"]["greenweez_gsheet"]
+        self.assertEqual(item["status"], "inventory_incomplete")
+        self.assertNotIn("suggested_dbt_vars", item)
+        self.assertEqual(item["pinned_source_table_contract"]["dataset"], "fvt_gsheet")
+        self.assertEqual(report["status"], "needs_review")
+
+    def test_no_false_pin_for_other_ambiguous_source(self):
+        inventory = fake_inventory(duplicated=True)
+        report = mapping.resolve(inventory)
+        self.assertNotIn("pinned_source_table_contract",
+                         report["sources"]["greenweez_raw"])

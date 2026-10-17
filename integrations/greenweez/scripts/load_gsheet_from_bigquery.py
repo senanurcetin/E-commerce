@@ -1,6 +1,8 @@
 """Safe, source-qualified BigQuery -> local Greenweez Sheets DuckDB import.
 
-Runs only after a complete metadata inventory identifies exactly one Sheets dataset.
+Uses an exact, owner-scoped Sheets source confirmed by metadata table contract.
+An incomplete global inventory is allowed only for the pinned existing source
+and only if the independently supplied inventory corroborates the mapping.
 Default is a zero-row dry-run of four BigQuery SELECT statements (may require
 BigQuery jobs.create). Only --execute downloads data and publishes a local file.
 Do not commit output data or print credentials/order IDs.
@@ -17,6 +19,10 @@ import subprocess
 OWNER_ROOT = Path(__file__).resolve().parents[3]
 GREENWEEZ_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MAPPING = OWNER_ROOT / "target/cloud_inventory/source_mapping_candidates.json"
+DEFAULT_INVENTORY = OWNER_ROOT / "target/cloud_inventory/bq_source_locations.json"
+# Existing dbt source pin, explicitly chosen for this E-Commerce workspace.
+# Do not infer a canonical source from the unrelated project with overlapping tables.
+SCOPED_SHEETS_SOURCE = ("workintech-working", "fvt_gsheet")
 DEFAULT_OUTPUT = GREENWEEZ_ROOT / "target/gsheet_real.duckdb"
 ALLOWED_PROJECTS = ("workintech-working", "data-analiz-490513")
 TABLES = {
@@ -29,18 +35,57 @@ PROJECT_ID = re.compile(r"[a-z][a-z0-9-]{4,62}")
 DATASET_ID = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,1023}")
 
 
-def checked_source(report: dict) -> tuple[str, str]:
-    """Refuse partial, fabricated, ambiguous or out-of-scope source mappings."""
+def check_inventory_evidence(inventory: dict, project: str, dataset: str, report: dict) -> None:
+    """Verify the exact known dataset against the separate, read-only metadata export.
+
+    This verifies table *names*, not data semantics or global source uniqueness.
+    Access-denied unrelated datasets never become negative/positive evidence.
+    """
+    if not isinstance(inventory, dict) or inventory.get("schema_version") != 1:
+        raise ValueError("Missing or unsupported BigQuery inventory")
+    if (not inventory.get("scanned_at_utc")
+            or inventory.get("scanned_at_utc") != report.get("inventory_scanned_at_utc")):
+        raise ValueError("Mapping and inventory refer to different scans")
+    projects = inventory.get("results")
+    if not isinstance(projects, list) or len(projects) != len(ALLOWED_PROJECTS):
+        raise ValueError("Unexpected project count in BigQuery inventory")
+    seen = set()
+    chosen = None
+    for item in projects:
+        if not isinstance(item, dict) or item.get("project") not in ALLOWED_PROJECTS:
+            raise ValueError("Unexpected project in BigQuery inventory")
+        name = item["project"]
+        if name in seen:
+            raise ValueError("Duplicate project in BigQuery inventory")
+        seen.add(name)
+        if item.get("status") != "listed" or not isinstance(item.get("datasets"), list):
+            raise ValueError("Target inventory cannot be independently reviewed")
+        if name == project:
+            matches = [x for x in item["datasets"]
+                       if isinstance(x, dict) and x.get("dataset") == dataset]
+            if len(matches) != 1:
+                raise ValueError("Exact pinned BigQuery dataset not listed once")
+            chosen = matches[0]
+    if chosen is None or chosen.get("status") != "listed":
+        raise ValueError("Pinned dataset table metadata unavailable")
+    match = chosen.get("matches", {}).get("greenweez_gsheet")
+    if (not isinstance(match, dict)
+            or set(match.get("found", [])) != set(TABLES)
+            or match.get("all_required_tables_present") is not True
+            or match.get("expected") != len(TABLES)):
+        raise ValueError("Pinned source does not contain all expected Greenweez Sheets tables")
+
+
+def checked_source(report: dict, inventory: dict | None = None) -> tuple[str, str]:
+    """Resolve the selected source; global uniqueness and scoped pin are distinct."""
     if not isinstance(report, dict) or report.get("schema_version") != 1:
         raise ValueError("Missing or unsupported source mapping")
-    if report.get("inventory_complete") is not True:
-        raise ValueError("Source inventory incomplete: permissions or listing errors")
     item = report.get("sources", {}).get("greenweez_gsheet")
-    if not isinstance(item, dict) or item.get("status") != "ready_for_manual_review":
-        raise ValueError("Greenweez Sheets source not uniquely discovered")
+    if not isinstance(item, dict):
+        raise ValueError("Greenweez Sheets mapping absent")
     candidates = item.get("complete_candidates")
     if not isinstance(candidates, list) or len(candidates) != 1:
-        raise ValueError("Expected exactly one fully matching Sheets source")
+        raise ValueError("Expected exactly one selected full Sheets source")
     candidate = candidates[0]
     if not isinstance(candidate, dict):
         raise ValueError("Invalid Sheets mapping candidate")
@@ -49,16 +94,29 @@ def checked_source(report: dict) -> tuple[str, str]:
             or not PROJECT_ID.fullmatch(project)
             or not isinstance(dataset, str) or not DATASET_ID.fullmatch(dataset)):
         raise ValueError("Invalid or unapproved source project/dataset")
-    values = item.get("suggested_dbt_vars")
-    if not isinstance(values, dict) or values != {
-        "greenweez_gsheet_project": project,
-        "greenweez_gsheet_dataset": dataset,
-    }:
-        raise ValueError("Candidate does not agree with dbt source mapping")
     if set(item.get("required_tables", [])) != set(TABLES):
         raise ValueError("Incomplete or unexpected Sheets source table contract")
-    return project, dataset
 
+    if report.get("inventory_complete") is True:
+        if item.get("status") != "ready_for_manual_review":
+            raise ValueError("Complete inventory has no uniquely confirmed Sheets source")
+        values = item.get("suggested_dbt_vars")
+        if not isinstance(values, dict) or values != {
+            "greenweez_gsheet_project": project,
+            "greenweez_gsheet_dataset": dataset,
+        }:
+            raise ValueError("Candidate does not agree with dbt source mapping")
+    else:
+        if item.get("status") != "inventory_incomplete":
+            raise ValueError("Partial inventory source status unexpected")
+        if (project, dataset) != SCOPED_SHEETS_SOURCE:
+            raise ValueError("Partial inventory can only preview the explicitly pinned existing Sheets source")
+        if inventory is None:
+            raise ValueError("Partial inventory requires the original corroborating BigQuery inventory")
+
+    if inventory is not None:
+        check_inventory_evidence(inventory, project, dataset, report)
+    return project, dataset
 
 def table_sql(project: str, dataset: str, table: str, max_rows: int) -> str:
     if (project not in ALLOWED_PROJECTS or not PROJECT_ID.fullmatch(project)
@@ -152,6 +210,7 @@ def transfer(client, bigquery, project: str, dataset: str, location: str,
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--mapping", type=Path, default=DEFAULT_MAPPING)
+    parser.add_argument("--inventory", type=Path, default=DEFAULT_INVENTORY)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--billing-project", choices=ALLOWED_PROJECTS)
     parser.add_argument("--max-bytes-billed", type=int, default=50_000_000,
@@ -165,7 +224,11 @@ def main(argv: list[str] | None = None) -> int:
         if args.max_bytes_billed < 1 or not 1 <= args.max_rows <= 1000000:
             raise ValueError("Query byte and row caps must be positive")
         mapping = json.loads(args.mapping.read_text(encoding="utf-8"))
-        project, dataset = checked_source(mapping)
+        inventory = json.loads(args.inventory.read_text(encoding="utf-8"))
+        project, dataset = checked_source(mapping, inventory=inventory)
+        if mapping.get("inventory_complete") is not True:
+            print("SCOPED PREVIEW ONLY: other BigQuery datasets inaccessible;",
+                  "the existing Sheets source has a complete table-name contract.")
         billing = args.billing_project or project
         # Defer all Google imports/authentication until the mapping is validated.
         from google.cloud import bigquery

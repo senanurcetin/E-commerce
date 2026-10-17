@@ -104,3 +104,6 @@ Only after reviewing this real-but-uncertified mart should it be sent through
 the NEXUS source-qualified bridge, with provenance `external_unverified`.
 Do **not** promote source order turnover, refund figures or ad spend to certified
 financial KPIs until units, currency and business semantics reconcile.
+
+
+For dated, owner-supplied table-level findings and the explicit scoped-source policy, see [2026-10-17 BigQuery inventory findings](BIGQUERY_INVENTORY_FINDINGS_2026-10-17.md). The original raw JSON inventory is not committed.

@@ -93,3 +93,69 @@ class SourceGuardTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+
+class ScopedSheetsEvidenceTests(unittest.TestCase):
+    """Partial scan permits preview only for exact source already configured in dbt."""
+
+    @staticmethod
+    def incomplete():
+        m = mapping()
+        m["inventory_complete"] = False
+        m["inventory_scanned_at_utc"] = "2026-10-17T10:18:09+00:00"
+        item = m["sources"]["greenweez_gsheet"]
+        item["status"] = "inventory_incomplete"
+        item["complete_candidates"] = [
+            {"project": "workintech-working", "dataset": "fvt_gsheet"}
+        ]
+        item.pop("suggested_dbt_vars", None)
+        inventory = {
+            "schema_version": 1, "scanned_at_utc": m["inventory_scanned_at_utc"],
+            "results": [
+                {"project": "workintech-working", "status": "listed",
+                 "datasets": [
+                    {"dataset": "_unreadable", "status": "table_list_unavailable"},
+                    {"dataset": "fvt_gsheet", "status": "listed",
+                     "matches": {"greenweez_gsheet": {
+                         "found": list(loader.TABLES),
+                         "expected": len(loader.TABLES),
+                         "all_required_tables_present": True,
+                     }}}
+                 ], "metadata_errors": [{"dataset": "_unreadable", "reason": "HTTP 403"}]},
+                {"project": "data-analiz-490513", "status": "listed",
+                 "datasets": [], "metadata_errors": []},
+            ]
+        }
+        return m, inventory
+
+    def test_unrelated_403_does_not_block_exact_pinned_source(self):
+        report, inventory = self.incomplete()
+        self.assertEqual(loader.checked_source(report, inventory),
+                         ("workintech-working", "fvt_gsheet"))
+        with self.assertRaisesRegex(ValueError, "requires"):
+            loader.checked_source(report)
+
+    def test_modified_table_membership_denied(self):
+        report, inventory = self.incomplete()
+        inventory["results"][0]["datasets"][1]["matches"]["greenweez_gsheet"]["found"].pop()
+        with self.assertRaisesRegex(ValueError, "expected"):
+            loader.checked_source(report, inventory)
+
+    def test_mismatched_scan_time_denied(self):
+        report, inventory = self.incomplete()
+        inventory["scanned_at_utc"] = "older scan"
+        with self.assertRaisesRegex(ValueError, "different scans"):
+            loader.checked_source(report, inventory)
+
+    def test_another_project_cannot_be_inferred_from_partial_scan(self):
+        report, inventory = self.incomplete()
+        report["sources"]["greenweez_gsheet"]["complete_candidates"][0]["project"] = "data-analiz-490513"
+        with self.assertRaisesRegex(ValueError, "explicitly pinned"):
+            loader.checked_source(report, inventory)
+
+    def test_unlisted_pinned_dataset_denied(self):
+        report, inventory = self.incomplete()
+        inventory["results"][0]["datasets"].pop()
+        with self.assertRaisesRegex(ValueError, "not listed once"):
+            loader.checked_source(report, inventory)
