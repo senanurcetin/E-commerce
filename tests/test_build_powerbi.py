@@ -5,7 +5,10 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from scripts.build_powerbi import build, TABLES, PAGES, MODEL_NAME, MEASURES
+from scripts.build_powerbi import (
+    build, TABLES, PAGES, MODEL_NAME, MEASURES,
+    BRAND_LOGO_NAME, BRAND_THEME_NAME, ROOT,
+)
 
 
 class PBIPBuildTests(unittest.TestCase):
@@ -37,6 +40,21 @@ class PBIPBuildTests(unittest.TestCase):
             )
             self.assertEqual(pbir["datasetReference"]["byPath"]["path"],
                              f"../{MODEL_NAME}.SemanticModel")
+            report_dir = project / f"{MODEL_NAME}.Report"
+            registered_dir = report_dir / "StaticResources" / "RegisteredResources"
+            logo = registered_dir / BRAND_LOGO_NAME
+            self.assertTrue(logo.is_file())
+            self.assertEqual(logo.read_bytes(),
+                             (ROOT / "branding/nexus_official_transparent.png").read_bytes())
+            theme = json.loads((registered_dir / BRAND_THEME_NAME).read_text())
+            self.assertEqual(theme["name"], BRAND_THEME_NAME)
+            report_def = json.loads((report_dir / "definition/report.json").read_text())
+            self.assertEqual(report_def["themeCollection"]["customTheme"]["name"],
+                             BRAND_THEME_NAME)
+            packages = report_def["resourcePackages"][0]["items"]
+            self.assertEqual({p["type"] for p in packages}, {"CustomTheme", "Image"})
+            self.assertEqual({p["name"] for p in packages},
+                             {BRAND_THEME_NAME, BRAND_LOGO_NAME})
             pages = json.loads(
                 (project / f"{MODEL_NAME}.Report" /
                  "definition/pages/pages.json").read_text()
@@ -49,7 +67,19 @@ class PBIPBuildTests(unittest.TestCase):
                     (page_dir / "page.json").read_text())["displayName"],
                     page["title"])
                 self.assertEqual(len(list(page_dir.glob("visuals/*/visual.json"))),
-                                 len(page["cards"]) + len(page["charts"]))
+                                 1 + len(page["cards"]) + len(page["charts"]))
+            for page in PAGES:
+                pdir = project / f"{MODEL_NAME}.Report" / "definition/pages" / page["id"]
+                brand = json.loads((pdir / "visuals/nexus_brand_logo/visual.json").read_text())
+                self.assertEqual(brand["visual"]["visualType"], "image")
+                item = brand["visual"]["objects"]["image"][0]["properties"]["sourceFile"]["image"]
+                self.assertEqual(item["url"]["expr"]["ResourcePackageItem"]["ItemName"],
+                                 BRAND_LOGO_NAME)
+                self.assertEqual(
+                    json.loads((pdir / "page.json").read_text())["objects"]["background"][0]
+                    ["properties"]["color"]["solid"]["color"]["expr"]["Literal"]["Value"],
+                    "'#080F20'",
+                )
             tmdl_dir = project / f"{MODEL_NAME}.SemanticModel" / "definition/tables"
             self.assertEqual(len(list(tmdl_dir.glob("*.tmdl"))), len(TABLES))
             text = (tmdl_dir / "GreenweezOrdersObserved.tmdl").read_text()
