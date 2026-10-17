@@ -152,7 +152,7 @@ Palette: **NEXUS navy/cyan/purple**, responsive Streamlit Plotly figures, time f
 - Dashboard CLI: streamlit run dashboard/google_marketing_app.py
 - CI smoke test: tests/smoke_google_marketing_app.py using Streamlit AppTest on empty and synthetic isolated **test-only** export fixtures, plus dbt CI run.
 - Source authorization and a fresh live account reconciliation are **outside CI**; publishing a public dashboard requires an access policy and appropriate masking of account/property IDs.
-- Google Sheets Greenweez campaign linkage is developed in its separate repository: https://github.com/senanurcetin/greenweez-finance-campaign-analytics/blob/main/docs/GOOGLE_SHEETS_CAMPAIGN_LINKAGE.md .
+- Google Sheets Greenweez campaign linkage is maintained in this repository: [integrated campaign audit evidence](../integrations/greenweez/docs/GOOGLE_SHEETS_CAMPAIGN_LINKAGE.md) and [audit script](../integrations/greenweez/scripts/audit_sheet_campaign_links.py).
 
 ## Further product gates
 
