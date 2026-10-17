@@ -125,3 +125,22 @@ Only a valid, pinned `workintech-working.fvt_gsheet` import audit is reported
 as `external_unverified`: four source table row counts and date ranges are
 **not** an independent finance audit. The status table in NEXUS and the Power
 BI Source Assurance page expose this additional group.
+
+
+## Reconcile the import audit against actual local source tables
+
+The ninth source is no longer considered `external_unverified` from a
+plausible JSON audit alone. NEXUS and the Power BI generator now open
+the exact pinned local `gsheet_real.duckdb` read-only and independently
+recompute aggregates from the four `analytics.gwz_finance_*` tables.
+
+Required projected columns, row counts, minimum/maximum dates, invalid
+dates, per-field zero/negative counts, unique order keys, unique
+campaign days and missing shipping/refund links must match the embedded
+`import_audit.source_quality` record. Any discrepancy marks the source
+`invalid` and prevents publication of that audit's Power BI rows.
+Only aggregate numbers are compared; raw IDs and money totals are never
+emitted to logs, NEXUS, or Power BI. This is **local structural
+consistency**, not independent warehouse provenance or financial
+certification. A deliberate edit that preserves all observed aggregates
+cannot be ruled out without a trusted cryptographic provenance source.

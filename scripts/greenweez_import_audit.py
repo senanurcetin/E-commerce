@@ -88,6 +88,110 @@ def validate_audit(audit: object) -> dict:
     return audit
 
 
+# Exact table/column allowlists from the source-projected Greenweez DuckDB.
+# No IDs or original money totals are materialized in application responses.
+SOURCE_CONTRACTS = {
+    "gwz_finance_orders_orders": (
+        "orders_id", "datetime", ("turnover", "purchase_cost", "ship_fee")
+    ),
+    "gwz_finance_shipping_shipping": (
+        "orders_id", "date_date", ("log_cost", "ship_cost")
+    ),
+    "gwz_finance_refund_sheet_1": (
+        "orders_id", "datetime", ("refund",)
+    ),
+    "gwz_finance_campaign": (None, "datetime", ("cost",)),
+}
+
+
+def verify_physical_tables(connection, audit: dict) -> None:
+    """Reconcile embedded audit against real DuckDB tables using SQL aggregates.
+
+    This catches missing/replaced tables, modified dates/counts, changed zero or
+    negative amounts, key duplicates and broken order-side link coverage.
+    It is a structural consistency check, NOT cryptographic integrity and NOT
+    independent certification of a merchant's business accounting.
+    """
+    audit = validate_audit(audit)
+    for table, (key, date_field, amounts) in SOURCE_CONTRACTS.items():
+        physical = {
+            row[0] for row in connection.execute(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_schema='analytics' AND table_name=?",
+                [table],
+            ).fetchall()
+        }
+        required = ({key} if key else set()) | {date_field} | set(amounts)
+        if physical != required:
+            raise ValueError(f"{table}: missing, extra or replaced source columns")
+
+        day = f"TRY_CAST(SUBSTR(CAST({date_field} AS VARCHAR), 1, 10) AS DATE)"
+        expressions = [
+            "COUNT(*) AS row_count",
+            f"MIN({day}) AS min_date",
+            f"MAX({day}) AS max_date",
+            f"SUM(CASE WHEN {day} IS NULL THEN 1 ELSE 0 END) AS invalid_dates",
+        ]
+        if key:
+            expressions.extend([
+                f"SUM(CASE WHEN TRY_CAST({key} AS BIGINT) IS NULL "
+                "THEN 1 ELSE 0 END) AS invalid_keys",
+                f"COUNT(DISTINCT TRY_CAST({key} AS BIGINT)) AS distinct_keys",
+            ])
+        for field in amounts:
+            as_number = f"TRY_CAST({field} AS DOUBLE)"
+            expressions.extend([
+                f"SUM(CASE WHEN {as_number} IS NULL "
+                f"THEN 1 ELSE 0 END) AS invalid_{field}",
+                f"SUM(CASE WHEN {as_number} < 0 "
+                f"THEN 1 ELSE 0 END) AS negative_{field}",
+                f"SUM(CASE WHEN {as_number} = 0 "
+                f"THEN 1 ELSE 0 END) AS zero_{field}",
+            ])
+        values = connection.execute(
+            "SELECT " + ", ".join(expressions) + f" FROM analytics.{table}"
+        ).fetchone()
+        row_count, start, end, invalid_dates = values[:4]
+        expected = audit["tables"][table]
+        if (row_count != expected["rows"] or invalid_dates != 0
+                or start is None or end is None
+                or start.isoformat() != expected["start_date"]
+                or end.isoformat() != expected["end_date"]):
+            raise ValueError(f"{table}: source row count or date coverage differs from audit")
+        index = 4
+        if key:
+            invalid_keys, unique_keys = values[index:index + 2]
+            index += 2
+            if invalid_keys or unique_keys != row_count:
+                raise ValueError(f"{table}: source order key integrity differs from audit")
+        for field in amounts:
+            invalid, negative, zero = values[index:index + 3]
+            index += 3
+            if (invalid or
+                    negative != expected["negative_count"][field] or
+                    zero != expected["zero_count"][field]):
+                raise ValueError(f"{table}: source amount distribution differs from audit")
+        if not key and row_count != connection.execute(
+            f"SELECT COUNT(DISTINCT {day}) FROM analytics.{table}"
+        ).fetchone()[0]:
+            raise ValueError(f"{table}: duplicated campaign source day")
+
+    for label, source in (
+        ("shipping", "gwz_finance_shipping_shipping"),
+        ("refund", "gwz_finance_refund_sheet_1"),
+    ):
+        missing = connection.execute(
+            "SELECT COUNT(*) FROM analytics.gwz_finance_orders_orders AS orders "
+            f"LEFT JOIN analytics.{source} AS linked "
+            "ON TRY_CAST(orders.orders_id AS BIGINT) = "
+            "TRY_CAST(linked.orders_id AS BIGINT) "
+            "WHERE linked.orders_id IS NULL"
+        ).fetchone()[0]
+        if missing != audit["join_coverage"][f"orders_without_{label}"]:
+            raise ValueError(f"Greenweez {label} join coverage differs from source audit")
+
+
+
 def load_import_audit(db: Path) -> dict | None:
     """Read one sealed local audit row from DuckDB without touching raw tables."""
     db = Path(db)
@@ -98,17 +202,20 @@ def load_import_audit(db: Path) -> dict | None:
         connection = duckdb.connect(str(db), read_only=True)
         try:
             rows = connection.execute("SELECT report FROM import_audit.source_quality").fetchall()
+            if len(rows) != 1 or not isinstance(rows[0][0], str):
+                raise ValueError("Greenweez import evidence must have exactly one JSON report")
+            try:
+                record = json.loads(rows[0][0])
+            except json.JSONDecodeError as exc:
+                raise ValueError("Greenweez import evidence JSON invalid") from exc
+            validate_audit(record)
+            verify_physical_tables(connection, record)
+            return record
         finally:
             connection.close()
     except duckdb.Error as exc:
-        raise ValueError("Greenweez source audit unavailable or unreadable") from exc
-    if len(rows) != 1 or not isinstance(rows[0][0], str):
-        raise ValueError("Greenweez import evidence must have exactly one JSON report")
-    try:
-        record = json.loads(rows[0][0])
-    except json.JSONDecodeError as exc:
-        raise ValueError("Greenweez import evidence JSON invalid") from exc
-    return validate_audit(record)
+        # Avoid disclosing raw SQL errors or private source content through UI.
+        raise ValueError("Greenweez local tables do not match import quality evidence") from exc
 
 
 def reporting_rows(audit: dict) -> list[dict]:
