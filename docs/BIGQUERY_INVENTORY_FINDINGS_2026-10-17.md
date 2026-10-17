@@ -70,3 +70,27 @@ A private, aggregate-only `import_audit.source_quality` JSON record is
 stored inside the same staged DuckDB as the finance source tables, including
 period coverage and missing order-side shipping/refund links. These are
 technical checks, not financial certification or evidence of live execution.
+
+
+## Offline P0 readiness evidence (no GCP API execution)
+
+For a portable, sanitized readiness decision from the two owner-supplied
+metadata-only JSONs, run from the E-Commerce repository root:
+
+```powershell
+python -m scripts.cloud_source_readiness
+```
+
+The report is written to the gitignored
+`target/cloud_inventory/p0_readiness.json`, with exact pinned sources
+(`e_ticaret` 4/4, `fvt_gsheet` 4/4), a **separate** TheLook 4/4
+candidate, and the incomplete Greenweez raw 3/7 source. It does **not**
+include inaccessible dataset names, account details, rows, credential
+materials, or raw order metadata.
+
+The report intentionally sets `p0_live_preflight_complete=false`,
+`bigquery_schema_checked=false` and
+`financial_semantics_verified=false`, regardless of the metadata result.
+The next gate remains a **separately authorized** live BigQuery schema
+and cost dry-run. Do not mistake an offline source identity match for
+BigQuery read permissions or an approved financial KPI.
