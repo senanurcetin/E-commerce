@@ -35,10 +35,22 @@ CONTRACT = {
     ).split(),
 }
 # Only scalar types; field names and source identities are fixed by this script.
-ALLOWED = frozenset((
-    "STRING", "INTEGER", "INT64", "FLOAT", "FLOAT64",
-    "NUMERIC", "BIGNUMERIC", "DATE", "DATETIME", "TIMESTAMP",
-))
+NUMERIC_COLUMNS = {
+    "events": {"id", "user_id", "sequence_number"},
+    "order_items": {"id", "order_id", "user_id", "product_id", "inventory_item_id", "sale_price"},
+    "products": {"id", "cost", "retail_price", "distribution_center_id"},
+    "users": {"id", "age", "latitude", "longitude"},
+}
+DATETIME_COLUMNS = {
+    "events": {"created_at"},
+    "order_items": {"created_at", "shipped_at", "delivered_at", "returned_at"},
+    "products": set(),
+    "users": {"created_at"},
+}
+NUMERIC_TYPES = frozenset(("STRING", "INTEGER", "INT64", "FLOAT", "FLOAT64",
+                           "NUMERIC", "BIGNUMERIC"))
+DATETIME_TYPES = frozenset(("STRING", "DATE", "DATETIME", "TIMESTAMP"))
+TEXT_TYPES = frozenset(("STRING",))
 
 
 def verify_inventory(inventory: dict, mapping: dict) -> None:
@@ -77,7 +89,10 @@ def preflight(client, bigquery, *, cap: int = 100_000_000) -> dict:
             col = by_name[name]
             dtype = str(getattr(col, "field_type", "")).upper()
             mode = str(getattr(col, "mode", "NULLABLE")).upper()
-            if dtype not in ALLOWED or mode == "REPEATED":
+            accepted = (NUMERIC_TYPES if name in NUMERIC_COLUMNS[table]
+                        else DATETIME_TYPES if name in DATETIME_COLUMNS[table]
+                        else TEXT_TYPES)
+            if dtype not in accepted or mode == "REPEATED":
                 raise ValueError(f"{table}: unsuitable or repeated field {name}")
             types[name] = dtype
         job = client.query(sql(table), location=location,
