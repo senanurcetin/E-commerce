@@ -31,6 +31,16 @@ class KeylessAuthTests(unittest.TestCase):
         self.assertEqual(kwargs["token"], "short-lived-user-token")
 
     @patch.dict(os.environ, {"NEXUS_GA4_KEYLESS_IMPERSONATION": "1"})
+    @patch("scripts.google_measurement.os.name", "nt")
+    @patch("scripts.google_measurement.fetch_json",
+           return_value={"accessToken": "ci-only-windows-token"})
+    @patch("scripts.google_measurement.subprocess.run")
+    def test_windows_powershell_install_uses_gcloud_cmd(self, run, fetch):
+        run.return_value = subprocess.CompletedProcess([], 0, "ci-user-token\n", "")
+        self.assertEqual(lab_access_token(GA4_SCOPE), "ci-only-windows-token")
+        self.assertEqual(run.call_args.args[0][0], "gcloud.cmd")
+
+    @patch.dict(os.environ, {"NEXUS_GA4_KEYLESS_IMPERSONATION": "1"})
     def test_gsc_scope_is_not_eligible(self):
         with self.assertRaises(ValueError):
             lab_access_token(GSC_SCOPE)
