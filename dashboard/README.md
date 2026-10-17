@@ -58,7 +58,7 @@ BigQuery marts and Power BI files still require reconciliation.
 
 The original Google Measurement dashboard entrypoint is now the **unified** local NEXUS Commerce Intelligence interface. All original GA4, GSC, Lighthouse and owned Commerce Lab tabs remain independent, and new **Overview · Sources** / **Greenweez · Finance** tabs live in this same app. The finance bridge intentionally NEVER equates Greenweez customers, refunds or business revenue with TheLook or NEXUS test checkout events.
 
-To import known Greenweez finance marts into E-Commerce on Windows, first build the Greenweez upstream project's own DuckDB dbt outputs. Then run:
+To import known Greenweez finance marts into E-Commerce on Windows, first build the embedded Greenweez dbt subproject's DuckDB outputs. Then run:
 
 ~~~cmd
 cd /d C:\Users\MONSTER\E-commerce
