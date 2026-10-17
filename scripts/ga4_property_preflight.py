@@ -12,7 +12,7 @@ import os
 import re
 from urllib.parse import quote
 
-from scripts.google_measurement import access_token, fetch_json, GA4_SCOPE
+from scripts.google_measurement import access_token, fetch_json, GA4_SCOPE, lab_access_token
 
 OWNED_MEASUREMENT_ID = "G-F0B2EQVC8M"
 OWNED_STREAM_ID = "16145034201"
@@ -83,7 +83,7 @@ def discover_property(token: str) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--resolve", action="store_true",
-                        help="Use existing authorized ADC to identify Commerce Lab property")
+                        help="Use authorized Analytics ADC or opt-in keyless service account impersonation")
     args = parser.parse_args()
     if not args.resolve:
         print("OWNER SITE: https://nexus-commerce-lab.vercel.app/")
@@ -91,11 +91,12 @@ def main() -> int:
         print("EXPECTED Stream ID: " + OWNED_STREAM_ID)
         print("GA4 API credential present: " + str(bool(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"))))
         print("Property ID: not established by Measurement ID alone")
-        print("Next: Admin > Property details for numeric ID, plus Analytics read-only ADC.")
+        print("Next: use Analytics read-only ADC or NEXUS_GA4_KEYLESS_IMPERSONATION=1 with authorized gcloud.")
         print("Nothing queried or collected. Run --resolve only after authorized ADC setup.")
         return 0
     try:
-        token = access_token(GA4_SCOPE)
+        token = (lab_access_token(GA4_SCOPE) if os.environ.get("NEXUS_GA4_KEYLESS_IMPERSONATION", "")
+             else access_token(GA4_SCOPE))
         prop_id = discover_property(token)
     except Exception as exc:
         # Do not print credential material, access tokens or HTTP response bodies.

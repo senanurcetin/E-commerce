@@ -17,6 +17,7 @@ import ipaddress
 from datetime import date, datetime, timezone
 import json
 import os
+import subprocess
 from pathlib import Path
 from urllib.parse import quote, urlencode, urlsplit
 from urllib.request import Request, urlopen
@@ -44,6 +45,49 @@ def access_token(scope: str) -> str:
     credentials, _ = google.auth.default(scopes=[scope])
     credentials.refresh(GoogleAuthRequest())
     return credentials.token
+
+
+def lab_access_token(scope: str) -> str:
+    """Obtain an Analytics-only token without a JSON private key when opted in.
+
+    The active gcloud user must hold Service Account Token Creator on ONLY
+    nexus-commerce-lab@workintech-working. Its temporary user token is sent
+    to Google's IAM Credentials API, requesting exactly Analytics read-only
+    scope for a short-lived service-account token. No token is printed,
+    persisted, logged, or transmitted to any other service.
+    """
+    method = os.environ.get("NEXUS_GA4_KEYLESS_IMPERSONATION", "")
+    if not method:
+        return access_token(scope)
+    if method != "1" or scope != GA4_SCOPE:
+        raise ValueError("Unsupported NEXUS GA4 keyless auth configuration")
+    try:
+        proc = subprocess.run(
+            ["gcloud", "auth", "print-access-token", "--project=workintech-working"],
+            check=False, capture_output=True, text=True, timeout=45,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise RuntimeError("Could not obtain current gcloud user credentials") from exc
+    if proc.returncode != 0 or not proc.stdout.strip():
+        raise RuntimeError("Active gcloud user login required for GA4 keyless impersonation")
+    user_token = proc.stdout.strip()
+    try:
+        response = fetch_json(
+            "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/"
+            "nexus-commerce-lab@workintech-working.iam.gserviceaccount.com:generateAccessToken",
+            body={"scope": [GA4_SCOPE], "lifetime": "1800s"},
+            token=user_token,
+        )
+    except Exception as exc:
+        # Suppress provider response bodies, which can include auth diagnostics.
+        raise RuntimeError(
+            "GA4 service account impersonation denied: verify "
+            "roles/iam.serviceAccountTokenCreator on the service account"
+        ) from None
+    token = response.get("accessToken") if isinstance(response, dict) else None
+    if not isinstance(token, str) or not token.strip():
+        raise RuntimeError("IAMCredentials API did not return an access token")
+    return token
 
 
 def fetch_json(url: str, body: dict | None = None, token: str | None = None) -> dict:
