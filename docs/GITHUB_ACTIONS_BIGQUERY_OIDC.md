@@ -1,5 +1,54 @@
 # NEXUS Commerce Intelligence — BigQuery via GitHub Actions OIDC
 
+## Configuration status — 17 October 2026
+
+The WorkinTech-Working account owner confirmed the existing components in the
+Google Cloud UI; **do not recreate** these resources:
+
+| Item | Existing setting |
+| --- | --- |
+| Identity/data project | `workintech-working` |
+| Pool | `nexus-gha` (Enabled) |
+| Provider | `nexus-main` (OIDC / Enabled) |
+| Provider project number shown in pool principal | `566421350777` |
+| Service account | `nexus-bq-readonly@workintech-working.iam.gserviceaccount.com` |
+| WIF service-account binding | `attribute.repository_id="1217831974"` (visible under Connected service accounts) |
+
+The connected service account shown in the UI demonstrates the WIF IAM binding,
+**not** that a GitHub OIDC exchange or BigQuery query has succeeded.
+No `Download config` is required for GitHub Actions auth@v3.
+
+The following three GitHub Actions **variables** are the intended values for
+the canonical Commerce repository (verify the project number using the
+provider detail screen before saving):
+
+```text
+GCP_WIF_PROVIDER=projects/566421350777/locations/global/workloadIdentityPools/nexus-gha/providers/nexus-main
+GCP_BQ_SERVICE_ACCOUNT=nexus-bq-readonly@workintech-working.iam.gserviceaccount.com
+GCP_BQ_BILLING_PROJECT=workintech-working
+```
+
+Manual tasks still outstanding:
+
+1. Grant service account `roles/bigquery.jobUser` on the billing project
+   (`workintech-working`), if an administrator authorizes this.
+2. Grant the account **BigQuery Metadata Viewer** on the
+   `workintech-working.e_ticaret` and `workintech-working.fvt_gsheet`
+   datasets. Later row access must be approved separately.
+3. In GitHub Settings → Environments, create `bigquery-readonly`, restrict to
+   `main`, optionally add a required reviewer.
+4. Configure the three variables above, then manually run
+   `BigQuery OIDC metadata connection` on `main`. Do not select a fork or
+   another repository; no other repo is authorized by this project's
+   `repository_id` binding yet.
+5. Verify the job **actually succeeds**; successful *offline* CI alone is not
+   evidence of successful Google authentication.
+
+The existing setup commands below are for fresh installations **only**.
+Avoid repeating create commands for already-existing pool/provider/service
+accounts. The GitHub workflow only checks metadata and zero-row dry-runs; it
+does not ingest actual data.
+
 ## Purpose and scope
 
 GitHub repository: senanurcetin/nexus-commerce-intelligence (immutable repository ID 1217831974).
@@ -9,8 +58,10 @@ service-account JSON key or long-lived credential belongs in GitHub.
 
 Targets are source-pinned to workintech-working.e_ticaret and
 workintech-working.fvt_gsheet, four tables each. A run reads only
-dataset/table schema metadata and performs SELECT 1 AS nexus_auth_probe
-as a dry-run. It fetches no records and certifies no merchant finance.
+dataset/table schema metadata, validates the required source columns against
+the maintained E-Commerce and Greenweez field contracts, and performs a
+constant SELECT 1 AS nexus_auth_probe dry-run. It fetches no records and
+certifies no merchant finance.
 
 ## Google Cloud Shell bootstrap
 

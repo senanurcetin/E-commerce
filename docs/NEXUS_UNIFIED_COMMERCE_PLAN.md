@@ -112,3 +112,14 @@ dbt or TheLook revenue. See
 | 10 | Final business/evidence and UI acceptance for presentation | Pending |
 
 Source schema tests use synthetic CI fixtures exclusively, never as real production numbers. The unified app is not presentation-ready until business data, original BI artifacts and source ownership are independently checked.
+
+## Implementation status — GitHub OIDC metadata gate (17 October 2026)
+
+The manual `bigquery-connection.yml` pipeline and source-pinned schema checker
+are now implemented. The user has confirmed `nexus-gha`, `nexus-main`, the
+`nexus-bq-readonly` service account and its repository-ID federation binding
+in the Google Cloud UI. **No real GitHub-to-BigQuery connection has been
+accepted yet.** BigQuery `jobUser`, per-dataset metadata permissions, GitHub
+Environment/Variables and the first `workflow_dispatch` are separate pending
+steps; see [OIDC setup](GITHUB_ACTIONS_BIGQUERY_OIDC.md) and the
+[execution plan](NEXUS_COMMERCE_EXECUTION_PLAN.md).
