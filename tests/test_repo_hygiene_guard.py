@@ -31,7 +31,7 @@ class RepoHygieneTests(unittest.TestCase):
             root = Path(folder)
             (root / "safe.json").write_text('{"status":"synthetic_ci"}')
             (root / "unsafe.json").write_text(
-                '{"private_key":"-----BEGIN " + "PRIVATE KEY-----ABC"}'
+                '{"private_key":"-----BEGIN ' + 'PRIVATE KEY-----ABC"}'
             )
             self.assertEqual(audit(root, ["safe.json"]), [])
             findings = audit(root, ["safe.json", "unsafe.json"])
