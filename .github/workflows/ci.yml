@@ -102,6 +102,9 @@ jobs:
       - name: Verify two-project BigQuery inventory is metadata-only and token-safe
         run: python -m unittest discover -s tests -p 'test_cloud_source_*.py' -v
 
+      - name: Validate zero-row historical E-Commerce BigQuery preflight
+        run: python -m unittest discover -s tests -p 'test_ecommerce_bigquery_preflight.py' -v
+
       - name: Validate metadata-only P0 source readiness without BigQuery queries
         run: python -m unittest discover -s tests -p 'test_cloud_source_readiness.py' -v
 

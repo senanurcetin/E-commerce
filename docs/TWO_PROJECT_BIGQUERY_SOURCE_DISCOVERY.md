@@ -133,3 +133,22 @@ location, scan timestamp and the row/byte limits. It excludes tokens,
 individual orders, unrelated source fields, customer information and
 financial amounts. Review it locally; do not commit the receipt or
 real data into this public repository.
+
+
+## P3 historical E-Commerce zero-row live source preflight
+
+A separate local CLI validates the exact existing workintech-working.e_ticaret
+source against the original scan/mapping and the required fields used by the
+four root dbt staging models. It checks live field types and uses four BigQuery
+dry-run SELECTs with a per-query bytes ceiling; no customer rows are loaded.
+
+Windows PowerShell from the repository root:
+
+    python -m pip install -r integrations/greenweez/scripts/requirements-bq.txt
+    python -m scripts.ecommerce_bigquery_preflight
+
+The atomic, gitignored receipt is generated at
+target/cloud_inventory/ecommerce_live_preflight.json. It only records fields,
+types, query estimates, source identity and a timestamp. It does not verify
+TheLook population equivalence, actual finance totals or Power BI refresh.
+The data-analiz-490513.thelook_ecommerce alternative remains independent.
