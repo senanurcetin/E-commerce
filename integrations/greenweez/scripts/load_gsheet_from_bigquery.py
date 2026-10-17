@@ -108,7 +108,7 @@ def checked_source(report: dict, inventory: dict | None = None) -> tuple[str, st
             raise ValueError("Candidate does not agree with dbt source mapping")
     else:
         if item.get("status") != "inventory_incomplete":
-            raise ValueError("Partial inventory source status unexpected")
+            raise ValueError("Source inventory incomplete: partial source status unexpected")
         if (project, dataset) != SCOPED_SHEETS_SOURCE:
             raise ValueError("Partial inventory can only preview the explicitly pinned existing Sheets source")
         if inventory is None:
