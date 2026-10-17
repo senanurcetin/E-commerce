@@ -20,7 +20,7 @@ class PBIPBuildTests(unittest.TestCase):
             self.assertEqual(result["exported_table_rows"]["ECommerceOrders"], 0)
             self.assertEqual(result["exported_table_rows"]["GreenweezFinance"], 0)
             self.assertEqual(result["exported_table_rows"]["CommerceLabEvents"], 0)
-            self.assertEqual(len(result["pages"]), 6)
+            self.assertEqual(len(result["pages"]), 7)
             self.assertFalse(result["powerbi_desktop_accepted"])
             self.assertFalse(result["financial_claims_verified"])
             for name, fields in TABLES.items():
@@ -29,7 +29,7 @@ class PBIPBuildTests(unittest.TestCase):
                 ) as handle:
                     r = list(csv.DictReader(handle))
                     if name == "SourceRegistry":
-                        self.assertEqual(len(r), 8)
+                        self.assertEqual(len(r), 9)
                     else:
                         self.assertEqual(r, [], f"{name}: fabricated source KPI")
             project = out / "project"

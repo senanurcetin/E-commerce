@@ -124,3 +124,18 @@ theme imported, and business amounts independently reconciled.
 Do not commit the generated \`target/powerbi/\` folder to GitHub. For sharing
 a report, publish only an audited PBIX/PBIP with appropriately governed
 data/security. Do not expose raw orders or paid campaign identifiers.
+
+
+## Greenweez import evidence in PBIP
+
+The report now contains **seven** pages. Page 06, `Greenweez Import Evidence`,
+shows a source-isolated, aggregate-only table: original four BigQuery source
+tables, date ranges, row counts, counts of zero/negative amount *values*, and
+unmatched shipping/refund order counts. The source identity and `NO` finance
+verification flag are explicit. It never shows order IDs or amounts.
+
+The `GreenweezImportAudit.csv` source contains only a header until an actual
+local `gsheet_real.duckdb` exists with a valid embedded
+`import_audit.source_quality` record. Missing/invalid source evidence is
+reported separately by `SourceRegistry`; it does not synthesize records,
+mark external finance as certified or substitute for Power BI Desktop refresh.

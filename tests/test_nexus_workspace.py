@@ -12,10 +12,10 @@ from scripts import nexus_workspace as workspace
 
 
 class WorkspaceTests(unittest.TestCase):
-    def test_empty_workspace_has_eight_missing_domains_no_false_zero_kpis(self):
+    def test_empty_workspace_has_nine_missing_domains_no_false_zero_kpis(self):
         with tempfile.TemporaryDirectory() as folder:
             report = workspace.inspect_sources(Path(folder))
-        self.assertEqual(len(report), 8)
+        self.assertEqual(len(report), 9)
         self.assertEqual(set(x["source"] for x in report), set(workspace.SOURCE_LABELS))
         self.assertTrue(all(x["status"] == "missing" for x in report), report)
         self.assertTrue(all(x["rows"] == 0 and not x["real_business_verified"] for x in report))

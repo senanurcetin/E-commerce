@@ -76,7 +76,7 @@ jobs:
           python -m scripts.powerbi_acceptance --output target/powerbi/desktop_qa.json
 
       - name: Compile dashboard source
-        run: python -m py_compile dashboard/google_marketing_app.py dashboard/greenweez_finance.py scripts/google_dashboard_data.py scripts/lab_ga4_events.py scripts/greenweez_bridge.py scripts/ecommerce_marts_bridge.py dashboard/ecommerce_historical.py scripts/nexus_workspace.py scripts/greenweez_sheets_observed.py dashboard/greenweez_sheets.py dashboard/nexus_theme.py scripts/ga4_property_preflight.py scripts/powerbi_acceptance.py scripts/build_powerbi.py
+        run: python -m py_compile dashboard/google_marketing_app.py dashboard/greenweez_finance.py scripts/google_dashboard_data.py scripts/lab_ga4_events.py scripts/greenweez_bridge.py scripts/ecommerce_marts_bridge.py dashboard/ecommerce_historical.py scripts/nexus_workspace.py scripts/greenweez_sheets_observed.py scripts/greenweez_import_audit.py dashboard/greenweez_sheets.py dashboard/nexus_theme.py scripts/ga4_property_preflight.py scripts/powerbi_acceptance.py scripts/build_powerbi.py
 
       - name: Validate local Chrome Lighthouse JSON parser
         run: python -m unittest discover -s tests -p 'test_local_lighthouse.py' -v
@@ -87,8 +87,11 @@ jobs:
       - name: Validate historical E-Commerce mart aggregation and source isolation
         run: python -m unittest discover -s tests -p 'test_ecommerce_marts_bridge.py' -v
 
-      - name: Validate eight-source NEXUS audit and staged source publishing
+      - name: Validate nine-source NEXUS audit and staged source publishing
         run: python -m unittest discover -s tests -p 'test_nexus_workspace.py' -v
+
+      - name: Validate private Greenweez import audit and PBIP evidence
+        run: python -m unittest discover -s tests -p 'test_greenweez_import_audit.py' -v
 
       - name: Validate ID-free Google Sheets source evidence and finance caveats
         run: python -m unittest discover -s tests -p 'test_greenweez_sheets_observed.py' -v
