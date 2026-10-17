@@ -2,14 +2,14 @@
 
 ## Goal and architecture
 
-E-Commerce is the MASTER GitHub product repository and now hosts one NEXUS Streamlit interface with independent tabs: **Overview**, **Greenweez Finance**, **GA4 Acquisition**, **GSC Search**, **PageSpeed**, **NEXUS Commerce Lab test events** and **Data Contracts**.
+NEXUS Commerce Intelligence is the single maintained GitHub product repository and now hosts one NEXUS Streamlit interface with independent tabs: **Overview**, **Greenweez Finance**, **GA4 Acquisition**, **GSC Search**, **PageSpeed**, **NEXUS Commerce Lab test events** and **Data Contracts**.
 
 - E-Commerce / TheLook historical business analytics: existing dbt and Power BI artifacts within this repository.
-- Greenweez: original independent dbt finance/campaign upstream at https://github.com/senanurcetin/greenweez-finance-campaign-analytics. E-Commerce now contains its **read-only DuckDB finance-mart bridge and its own NEXUS visual module**; raw order/customer data is not copied.
+- Greenweez: complete independent finance/campaign dbt subproject, tests, safe BigQuery-to-DuckDB importer, audited mart bridge and its NEXUS visual module are maintained **within this same GitHub repository** under [integrations/greenweez/](../integrations/greenweez/README.md). No raw customer records are copied to the unified viewer.
 - NEXUS Commerce Lab: owned sandbox website, optional opted-in GA4 custom lab events; never a source of historical TheLook orders.
 - Olist notebooks: separate sample business domain.
 
-The addition is an **integrated app / data-product view**, not a row-wise merger of companies or proof that they share customers, transactions, currency, advertisers, or a date window. The complete original Greenweez dbt source is now vendored under integrations/greenweez/ as a squashed Git subtree. The original GitHub repository remains a distinct upstream identity and is unchanged.
+This is an integrated application/data-product view, not a row-wise merger of businesses, customers, currency, transactions or advertising attribution. Greenweez's code is kept as a separate nested dbt project, with no active upstream repo dependency. The legacy standalone repository's **GitHub deletion remains an administrator-only step**; see [migration gates](REPOSITORY_CONSOLIDATION.md).
 
 ### Source statuses and controls
 

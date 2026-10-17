@@ -17,7 +17,7 @@ Import the theme into an **actual editable** Power BI Desktop report with **View
 
 ### QA automation
 
-From the E-Commerce repo root:
+From the NEXUS Commerce Intelligence repository root:
 
 ~~~cmd
 python -m scripts.powerbi_acceptance --output target\powerbi_acceptance.json

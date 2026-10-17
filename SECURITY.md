@@ -2,7 +2,7 @@
 
 ## Private vulnerability reports
 
-Email [senanur.cetin.work@gmail.com](mailto:senanur.cetin.work@gmail.com) with subject `[E-commerce security]`, the affected version/commit, impact and safe reproduction steps. Do not post credentials, personal data or actionable exploit details in a public issue. This research/portfolio repository has no guaranteed security response or support schedule.
+Email [senanur.cetin.work@gmail.com](mailto:senanur.cetin.work@gmail.com) with subject `[NEXUS Commerce Intelligence security]`, the affected version/commit, impact and safe reproduction steps. Do not post credentials, personal data or actionable exploit details in a public issue. This research/portfolio repository has no guaranteed security response or support schedule.
 
 ## Warehouse and data boundaries
 

@@ -1,17 +1,21 @@
-# E-commerce Analytics Engineering
+# NEXUS Commerce Intelligence
 
 ![E-commerce Analytics Engineering — illustrated project cover](docs/assets/ecommerce-analytics-cover.svg)
 
 > **Editorial illustration, not a dashboard screenshot.** The three [Power BI captures](#power-bi-dashboard) below are historical snapshots, not verified renders of the new NEXUS theme. See the [Power BI visual QA gate](docs/POWER_BI_VISUAL_QA.md) before interpreting them as current.
 
-[![CI](https://github.com/senanurcetin/E-commerce/actions/workflows/ci.yml/badge.svg)](https://github.com/senanurcetin/E-commerce/actions/workflows/ci.yml)
+**CI:** [Unified GitHub Actions pipeline](.github/workflows/ci.yml) · [One-repository migration checklist](docs/REPOSITORY_CONSOLIDATION.md)
 ![dbt Cloud](https://img.shields.io/badge/dbt%20Cloud-IDE-orange)
 ![BigQuery](https://img.shields.io/badge/BigQuery-Warehouse-blue)
 ![Power BI](https://img.shields.io/badge/Power%20BI-Dashboard-yellow)
 ![DuckDB](https://img.shields.io/badge/DuckDB-CI%2FLocal-lightgrey)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-**Analytics engineering case study** — end-to-end pipeline built in **dbt Cloud**, warehoused in **BigQuery**, and visualized in **Power BI**. Transforms raw e-commerce clickstream events and order transactions into BI-ready mart tables through a 3-layer dbt architecture (staging → intermediate → marts).
+**NEXUS Commerce Intelligence** is the unified analytics-engineering workspace for historical E-Commerce, Greenweez finance/campaign data, Commerce Lab experiments, and separate GA4/GSC/PSI measurements. It combines their engineering pipelines and reporting interface—not the merchants' revenue, customer populations or unverified financial attribution.
+
+**Target GitHub name:** nexus-commerce-intelligence. The actual GitHub repository is still E-commerce until an administrator renames it. The legacy standalone Greenweez repository is pending administrator deletion; no runtime code depends on it. See the [migration runbook](docs/REPOSITORY_CONSOLIDATION.md).
+
+The historical E-Commerce dbt pipeline has staging → intermediate → marts with BigQuery production targets and DuckDB-based offline CI. The separate Greenweez dbt project lives at [integrations/greenweez/](integrations/greenweez/README.md) and is tested by the same root CI. The NEXUS dashboard and Power BI PBIP generator keep business sources isolated and financial claims explicitly unverified.
 
 The repo also runs fully on **DuckDB** (CI and local) using Jinja adapter dispatch, so every model and test can be reproduced without BigQuery access.
 
@@ -21,21 +25,25 @@ The repo also runs fully on **DuckDB** (CI and local) using Jinja adapter dispat
 
 **Release readiness:** [Evidence-scoped candidate notes](docs/RELEASE_NOTES_CANDIDATE.md). No new GitHub Release is claimed by this note.
 
-### What is in this repo
+### One GitHub repository — independently governed source domains
 
-Two separate datasets live here. The dbt pipeline is the main body of work; the
-Olist notebooks are a standalone analysis kept alongside it.
+| Component | Path | Scope |
+| --- | --- | --- |
+| Historical E-Commerce / TheLook | [models/](models/) · [analyses/](analyses/) | Historical clickstream, session and order marts |
+| Greenweez finance and campaigns | [integrations/greenweez/](integrations/greenweez/README.md) | Complete, independently executable dbt models, tests, quality gates |
+| NEXUS Streamlit dashboard | [dashboard/](dashboard/README.md) | Nine-group source registry and separated business dashboards |
+| Power BI PBIP | [powerbi/](powerbi/PBIP_PIPELINE.md) | Seven-page generated report from source-validated local aggregates |
+| Commerce Lab | [storefront/](storefront/README.md) | Test-only storefront with optional opted-in analytics |
+| Google measurements | [scripts/](scripts/) | GA4, GSC, PSI and local Lighthouse evidence |
+| Olist notebooks | [notebooks/](notebooks/) | Separate public historical analysis |
 
-| Dataset | Scale | Used by | Tooling |
-|---------|-------|---------|---------|
-| **E-commerce clickstream and orders** — the main project | 2.4 M events, 180 K order lines, 100 K users | dbt models, `analyses/`, all three Power BI pages | dbt, BigQuery, DuckDB, Power BI |
-| **Olist Brazilian e-commerce** (public Kaggle set) | 99 K orders | `notebooks/` | Python, DuckDB |
+**Release gates:** GitHub CI is synthetic/offline. Real BigQuery extraction, finance reconciliation and Power BI Desktop verification remain HOLD.
 
 ---
 
 ## Power BI Dashboard
 
-> **Historical evidence / Desktop review pending (12 October 2026):** The repository includes three original PNG captures and an importable NEXUS navy-blue [Power BI theme](powerbi/README.md), but **no editable `.pbix` or `.pbip` report**. The updated theme has **not** been applied to the captured report or independently rendered. Current screenshot labels and historical figures require a real Desktop refresh and reconciliation before publication as new evidence. [Full visual and semantic QA checklist](docs/POWER_BI_VISUAL_QA.md).
+> **Historical screenshot evidence / Desktop review pending:** The three PNG captures below are from a historical dashboard, not verified renders of the current NEXUS report. The [native seven-page PBIP generator](powerbi/PBIP_PIPELINE.md) now exists, but its generated files remain local/gitignored and still require an authorized Desktop refresh and visual/financial acceptance. [Full QA checklist](docs/POWER_BI_VISUAL_QA.md).
 
 Three-page dashboard built on `fct_marketing_web_performance`,
 `fct_order_marketing`, `dim_user` and `dim_products`.
@@ -109,7 +117,7 @@ revenue against **40.6%** from new.
 
 ## Historical E-Commerce reporting in unified NEXUS
 
-The E-Commerce master repository also includes an independent [historical E-Commerce dbt-mart adapter](docs/NEXUS_HISTORICAL_MART_BRIDGE.md) and **E-Commerce · Historical** dashboard tab. It shows completed distinct orders, completed-line revenue, returned orders, sessions and view events from the existing root dbt marts. No raw user/order IDs are exported; no Greenweez or NEXUS Lab data are attributed to this historical source. Root CI seed data remain explicitly synthetic.
+This unified NEXUS repository also includes an independent [historical E-Commerce dbt-mart adapter](docs/NEXUS_HISTORICAL_MART_BRIDGE.md) and **E-Commerce · Historical** dashboard tab. It shows completed distinct orders, completed-line revenue, returned orders, sessions and view events from the existing root dbt marts. No raw user/order IDs are exported; no Greenweez or NEXUS Lab data are attributed to this historical source. Root CI seed data remain explicitly synthetic.
 
 ## Observed Greenweez Google Sheets
 
@@ -124,7 +132,7 @@ locally; order IDs and campaign names are not published.
 
 Both independent E-Commerce and Greenweez dbt projects are integrated in this
 repo and share one Streamlit application. The new **Overview · Sources**
-evidence registry audits eight local source groups and makes absent,
+evidence registry audits nine local source groups and makes absent,
 synthetic, unaudited and API-sourced data explicit. From the E-Commerce root:
 
 ~~~cmd
@@ -138,7 +146,7 @@ provenance and fail-before-publication validation. See
 
 ## Unified NEXUS Commerce Intelligence workspace
 
-**E-Commerce is the master application repository.** The existing local [NEXUS Streamlit application](dashboard/README.md) now also contains **Greenweez · Finance** and **Overview · Sources** tabs. The Greenweez visual module, aggregate mart adapter and **complete upstream dbt source** now live in this repository: models and independent test project are under [integrations/greenweez](integrations/README.md). The original repository remains a separate historical upstream source; no cross-business transactional merge is performed.
+**NEXUS Commerce Intelligence is the sole maintained product repository.** The existing local [NEXUS Streamlit application](dashboard/README.md) now also contains **Greenweez · Finance** and **Overview · Sources** tabs. The Greenweez visual module, aggregate mart adapter and **complete upstream dbt source** now live in this repository: models and independent test project are under [integrations/greenweez](integrations/README.md). The former standalone Greenweez GitHub repository is pending administrator deletion after migration checks; it is not required at runtime. No cross-business transactional merge is performed.
 
 The adapter accepts only recognized Greenweez finance/marketing DuckDB dbt marts and checks schema, row grain, daily/monthly totals, ad-margin definitions, source spend totals and SHA-256 provenance. Missing sources show *Not imported*. Synthetic inputs are visibly marked; independent external snapshots are marked *UNVERIFIED* until the original warehouse and refund semantics are reconciled. TheLook order revenue, Greenweez finance, Olist and Commerce Lab opt-in interactions are **never summed or presented as one merchant's sales**.
 

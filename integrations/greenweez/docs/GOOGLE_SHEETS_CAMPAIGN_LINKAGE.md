@@ -53,4 +53,4 @@ The audit rejects schema drift, duplicate order IDs, duplicate platform/day/key 
 - Reconcile source costs to authoritative ad invoices or spend exports and data-quality anomalies.
 - Only after these gates, consider a separate clearly labeled provisional source linkage view in Greenweez's Streamlit app. Keep existing blended ROAS metrics independent.
 
-The script is at scripts/audit_sheet_campaign_links.py. The offline tests run from tests/test_audit_sheet_campaign_links.py. The independent E-Commerce Google measurement integration is documented at https://github.com/senanurcetin/E-commerce/blob/main/docs/GOOGLE_MEASUREMENT_INTEGRATION.md .
+The script is at scripts/audit_sheet_campaign_links.py. The offline tests run from tests/test_audit_sheet_campaign_links.py. The separate NEXUS Google measurement integration is documented in this repository at [Google measurement integration](../../../docs/GOOGLE_MEASUREMENT_INTEGRATION.md).

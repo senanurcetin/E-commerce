@@ -1,6 +1,6 @@
 # Unified NEXUS source audit & import
 
-The NEXUS Commerce Intelligence master repository contains **both** E-Commerce
+The single NEXUS Commerce Intelligence product repository contains **both** E-Commerce
 and Greenweez independent dbt projects and the combined Streamlit presentation.
 This milestone adds an operational source registry and safer source ingestion.
 The following tools use **only local files**: no API calls, credentials or
