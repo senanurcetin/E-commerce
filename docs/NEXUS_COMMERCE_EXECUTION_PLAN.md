@@ -7,7 +7,7 @@ GA4/GSC properties and Power BI Desktop evidence not yet accepted.
 
 ## P0 — GitHub OIDC and pinned BigQuery source gate (BLOCKING)
 
-- [x] WorkinTech `nexus-gha` pool, `nexus-main` provider, `nexus-bq-readonly`
+- [x] WorkinTech `nexus-gha` pool, `nexus-github-main` provider, `nexus-bq-readonly`
   service account and repository 1217831974 impersonation binding
   confirmed by the user from the Google Cloud UI.
 - [x] Add manual main-branch-only GitHub Actions OIDC workflow and
