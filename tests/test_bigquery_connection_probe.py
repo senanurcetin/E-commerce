@@ -2,7 +2,7 @@
 from pathlib import Path
 import unittest
 
-from scripts.bigquery_connection_probe import DATA_PROJECT, SOURCES, probe
+from scripts.bigquery_connection_probe import DATA_PROJECT, SOURCES, REQUIRED_FIELDS, probe
 
 
 class Dataset:
@@ -17,7 +17,11 @@ class Client:
         return Dataset()
     def get_table(self, name):
         self.calls.append(("table", name))
-        schema = () if self.missing == name else ("id",)
+        dataset, table = name.removeprefix(DATA_PROJECT + ".").split(".", 1)
+        required = set(REQUIRED_FIELDS[dataset][table])
+        if self.missing == name:
+            required.clear()
+        schema = tuple(type("Field", (), {"name": col})() for col in required)
         return type("Table", (), {"schema": schema})()
     def query(self, query, *, location, job_config):
         self.calls.append(("query", query, location, job_config))
@@ -35,6 +39,10 @@ class BigQueryConnectionTests(unittest.TestCase):
         client = Client()
         report = probe(client, BQ())
         self.assertEqual(report["table_metadata_count"], 8)
+        self.assertTrue(report["schema_contract_verified"])
+        self.assertEqual(report["required_field_count"],
+                         sum(len(cols) for ds in REQUIRED_FIELDS.values()
+                             for cols in ds.values()))
         self.assertEqual(len(SOURCES), 2)
         self.assertFalse(report["rows_downloaded"])
         self.assertFalse(report["business_data_verified"])
@@ -52,6 +60,28 @@ class BigQueryConnectionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "metadata unavailable"):
             probe(client, BQ())
         self.assertFalse(any(x[0] == "query" for x in client.calls))
+
+    def test_missing_one_required_column_blocks_connection(self):
+        class Incomplete(Client):
+            def get_table(self, name):
+                obj = super().get_table(name)
+                if name == "workintech-working.e_ticaret.events":
+                    obj.schema = obj.schema[1:]
+                return obj
+        client = Incomplete()
+        with self.assertRaisesRegex(ValueError, "required columns missing"):
+            probe(client, BQ())
+        self.assertFalse(any(x[0] == "query" for x in client.calls))
+
+    def test_greenweez_required_columns_not_silently_omitted(self):
+        class Incomplete(Client):
+            def get_table(self, name):
+                obj = super().get_table(name)
+                if name == "workintech-working.fvt_gsheet.gwz_finance_campaign":
+                    obj.schema = obj.schema[:1]
+                return obj
+        with self.assertRaisesRegex(ValueError, "required columns missing"):
+            probe(Incomplete(), BQ())
 
     def test_misreported_bytes_rejected(self):
         with self.assertRaisesRegex(ValueError, "zero bytes"):

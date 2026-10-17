@@ -13,7 +13,7 @@
 
 **NEXUS Commerce Intelligence** is the unified analytics-engineering workspace for historical E-Commerce, Greenweez finance/campaign data, Commerce Lab experiments, and separate GA4/GSC/PSI measurements. It combines their engineering pipelines and reporting interface—not the merchants' revenue, customer populations or unverified financial attribution.
 
-**Target GitHub name:** nexus-commerce-intelligence. The actual GitHub repository is still E-commerce until an administrator renames it. The legacy standalone Greenweez repository is pending administrator deletion; no runtime code depends on it. See the [migration runbook](docs/REPOSITORY_CONSOLIDATION.md).
+**Canonical GitHub repository:** [`senanurcetin/nexus-commerce-intelligence`](https://github.com/senanurcetin/nexus-commerce-intelligence). The rename is complete. The former standalone Greenweez repository is inaccessible through the checked URL, but administrator confirmation of its deletion/history retention is still outstanding. See the [migration runbook](docs/REPOSITORY_CONSOLIDATION.md).
 
 The historical E-Commerce dbt pipeline has staging → intermediate → marts with BigQuery production targets and DuckDB-based offline CI. The separate Greenweez dbt project lives at [integrations/greenweez/](integrations/greenweez/README.md) and is tested by the same root CI. The NEXUS dashboard and Power BI PBIP generator keep business sources isolated and financial claims explicitly unverified.
 
@@ -23,7 +23,7 @@ The repo also runs fully on **DuckDB** (CI and local) using Jinja adapter dispat
 
 **Technical review:** [Project case study](https://senanur-cetin.vercel.app/projects/e-commerce-marketing-web-performance) · [Power BI screenshots and QA status](docs/POWER_BI_VISUAL_QA.md) · [NEXUS navy-blue theme source](powerbi/themes/nexus-commerce.json) · [DAX measure documentation](docs/dax-measures.md).
 
-**Release readiness:** [Evidence-scoped candidate notes](docs/RELEASE_NOTES_CANDIDATE.md). No new GitHub Release is claimed by this note.
+**Delivery plan:** [P0–P6 work packages and acceptance criteria](docs/NEXUS_COMMERCE_EXECUTION_PLAN.md) · [keyless GitHub-to-BigQuery connection](docs/GITHUB_ACTIONS_BIGQUERY_OIDC.md). **Release readiness:** [Evidence-scoped candidate notes](docs/RELEASE_NOTES_CANDIDATE.md); no real-data release is claimed.
 
 ### One GitHub repository — independently governed source domains
 
