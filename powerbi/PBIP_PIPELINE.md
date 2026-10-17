@@ -139,3 +139,14 @@ local `gsheet_real.duckdb` exists with a valid embedded
 `import_audit.source_quality` record. Missing/invalid source evidence is
 reported separately by `SourceRegistry`; it does not synthesize records,
 mark external finance as certified or substitute for Power BI Desktop refresh.
+
+
+## Import-audit table consistency gate
+
+The `Greenweez Import Evidence` page now uses a physical aggregate
+cross-check rather than trusting the DuckDB JSON receipt in isolation.
+If source rows, required columns, calendar dates, amount zero/negative
+counts, order keys, or join coverage diverge from the receipt, the audit
+table exports no rows and the ninth SourceRegistry group is `invalid`.
+No raw transaction identifiers are exported and no financial claims
+are promoted to verified status.
