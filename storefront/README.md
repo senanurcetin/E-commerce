@@ -4,7 +4,7 @@
 
 ## Local Windows start (no npm install or paid plan)
 
-From a local checkout of the E-Commerce GitHub repository:
+From a local checkout of the NEXUS Commerce Intelligence GitHub repository:
 
 ~~~cmd
 cd /d C:\Users\MONSTER\E-commerce
