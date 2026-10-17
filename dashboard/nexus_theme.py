@@ -1,7 +1,13 @@
 """NEXUS visual system shared by all Commerce Intelligence tabs."""
 from __future__ import annotations
 
+import base64
+from pathlib import Path
+
 import streamlit as st
+
+ROOT = Path(__file__).resolve().parents[1]
+OFFICIAL_LOGO = ROOT / "branding" / "nexus_official_transparent.png"
 
 COLORS = {
     "page": "#080F20",
@@ -62,6 +68,8 @@ a {color:#47DFF2;}
     box-shadow: 0 18px 50px rgba(0,0,0,.17);
     margin: .2rem 0 1.2rem;
 }
+.nexus-brand-mark {width:min(290px,66vw);height:auto;object-fit:contain;display:block;
+    margin:0 0 .95rem;filter:drop-shadow(0 4px 18px rgba(71,223,242,.08));}
 .nexus-hero h1 {margin:.4rem 0;font-size:clamp(1.65rem,2.8vw,2.55rem);line-height:1.13;}
 .nexus-hero p {color:#C3D1E8;margin:.6rem 0 0;max-width:900px;font-size:.95rem;line-height:1.6;}
 .nexus-pill {
@@ -93,8 +101,16 @@ def apply_theme() -> None:
 
 
 def hero() -> None:
+    """Show the original owner-owned NEXUS logo, never a generated placeholder."""
+    if not OFFICIAL_LOGO.is_file():
+        raise FileNotFoundError("Official NEXUS logo missing from branding/")
+    png = base64.b64encode(OFFICIAL_LOGO.read_bytes()).decode("ascii")
+    mark = ('<img class="nexus-brand-mark" '
+            'src="data:image/png;base64,' + png + '" '
+            'alt="NEXUS official logo" />')
     st.markdown(
         '<div class="nexus-hero">'
+        + mark +
         '<span class="nexus-eyebrow">NEXUS / DATA PRODUCTS / COMMERCE</span>'
         '<h1>Commerce Intelligence</h1>'
         '<p>Historical E-Commerce performance, Greenweez financial evidence, '

@@ -1,5 +1,22 @@
 # NEXUS Commerce — reproducible native Power BI PBIP pipeline
 
+## Registered NEXUS brand assets
+
+The PBIP generator automatically copies the original owner-approved
+`branding/nexus_official_transparent.png` into the report's
+`StaticResources/RegisteredResources` folder, registers a native image visual
+on **each of the six pages**, packages the dark navy/cyan/purple theme and
+points `definition/report.json` at that registered custom theme. The PNG asset
+matches the user's original Google Drive file; no replacement generated logo
+or unsecured remote image URL is used.
+
+The report is still a **PBIP source/development project**, not a verified
+Power BI Desktop export. Actual theme/visual rendering, refresh, DAX and
+licensing acceptance must be checked in Power BI Desktop. Missing E-Commerce
+and Greenweez finance source marts remain blank, and Greenweez Sheets
+observations are not certified transaction totals.
+
+
 ## Deliverable
 
 This repository can generate a NEW native Power BI Desktop **.pbip** project

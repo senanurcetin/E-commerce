@@ -1,5 +1,17 @@
 # NEXUS Commerce Intelligence Dashboard
 
+## Official NEXUS logo and visual identity
+
+The dashboard hero now renders the **exact owner-approved**
+`branding/nexus_official_transparent.png` downloaded from the user's
+Google Drive (`NEXUS_Official_Transparent_Logo.png`).
+No synthesized/dummy logo, third-party remote asset or external font is used.
+The existing source-first midnight/cyan/purple theme remains shared across tabs.
+
+The logo is included in the repository so it works offline, on Windows, and
+in local Streamlit AppTest. Verified Power BI report branding is separate:
+see [PBIP Pipeline](../powerbi/PBIP_PIPELINE.md).
+
 Status: **implemented as a local web application** with a source-verification gate and an **explicit user-triggered PageSpeed Insights API call**. It is **not deployed** and does not automatically poll Google, and does not represent historical E-Commerce/Olist/Greenweez sales as Google-measured events. No demo or synthetic business metrics are substituted for absent accounts.
 
 ## Original Greenweez source worksheets
