@@ -6,16 +6,18 @@
 | --- | --- |
 | Product | **NEXUS Commerce Intelligence** |
 | Target GitHub repository | **senanurcetin/nexus-commerce-intelligence** |
-| Current, still-live GitHub repository | **senanurcetin/E-commerce** |
+| Current live GitHub repository | **senanurcetin/nexus-commerce-intelligence** (rename independently confirmed via GitHub API) |
 | Standalone repository scheduled for deletion | **senanurcetin/greenweez-finance-campaign-analytics** |
 | Maintained Greenweez source | [integrations/greenweez/](../integrations/greenweez/README.md) |
 | Active CI | [Root GitHub Actions CI](../.github/workflows/ci.yml) |
-| GitHub administration | **RENAME and DELETE PENDING; not performed by this documentation change** |
+| GitHub administration | **RENAME CONFIRMED; standalone Greenweez URL currently inaccessible (404), deletion not independently proven** |
 
-The repo slug is a planned migration target; changing files and headings does
-**not** rename the GitHub repository. The connected GitHub source/PR API
-available during this implementation did not expose repository rename/delete
-operations. Those actions must be performed by a GitHub administrator.
+The GitHub main repository name `nexus-commerce-intelligence` is now live.
+The previous `E-commerce` API path returns a redirect. The former standalone
+Greenweez repository returned GitHub **404** when checked, but a 404 is not
+independent evidence of irreversible deletion (private/restricted visibility
+can also cause 404). Keep administrator confirmation and external link reviews
+open until verified. The connector does not support destructive repo deletion.
 
 ## Before deleting the standalone Greenweez repository
 
@@ -47,10 +49,9 @@ bundle and export relevant issues/PRs *before* deletion.
 
 ## Required GitHub administrator actions
 
-1. **Rename the main repository.** On GitHub open the currently live
-   E-commerce repository, choose **Settings → General → Repository name**,
-   and enter **nexus-commerce-intelligence**. Verify that the new repository
-   URL resolves and that existing issues/PRs were preserved.
+1. **Rename: COMPLETED.** The GitHub API now resolves the full repository
+   `senanurcetin/nexus-commerce-intelligence`; original `E-commerce`
+   repository API URLs return a redirect. Existing PRs and issues are visible.
 2. **Update Git remotes.** In the local Windows checkout run:
 
    ~~~powershell
@@ -67,10 +68,10 @@ bundle and export relevant issues/PRs *before* deletion.
    Do not assume all external services follow GitHub redirects.
 4. **Verify final source preservation and green CI** on the newly named repo.
    Confirm that integrations/greenweez still contains the 80 source paths.
-5. **Delete the old standalone Greenweez repository.** In the standalone
-   repository open **Settings → General → Danger Zone → Delete this
-   repository** and follow GitHub's typed-name administrator confirmation.
-   Perform this only once any required historical backup is complete.
+5. **Confirm old standalone Greenweez repository state.** The old URL
+   currently returns 404. Confirm with an authorized repository administrator
+   that it was actually deleted (rather than made private), and whether its
+   historical issues/branches/PR records were backed up if necessary.
 6. **Verify deletion and external links.** After deletion, standalone
    Greenweez repository URLs will no longer work. All active project docs
    should refer to the internal integrations/greenweez subtree. The
