@@ -1,6 +1,6 @@
 """NEXUS Commerce Intelligence | Greenweez dbt DuckDB bridge.
 
-Source upstream: senanurcetin/greenweez-finance-campaign-analytics
+Source dbt project: integrations/greenweez (within the same NEXUS repository)
 Reads ONLY vetted aggregate mart columns from an existing DuckDB dbt build.
 Does not import raw order/customer data or assume a BigQuery connection.
 
