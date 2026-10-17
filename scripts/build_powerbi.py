@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 import re
+import shutil
 
 from scripts.ecommerce_marts_bridge import load_snapshot as load_ecommerce
 from scripts.greenweez_bridge import load_snapshot as load_greenweez
@@ -24,6 +25,8 @@ from scripts.nexus_workspace import inspect_sources
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL_NAME = "NEXUS_Commerce"
+BRAND_LOGO_NAME = "NEXUS_Official_Transparent_Logo_20261017.png"
+BRAND_THEME_NAME = "NEXUS_Commerce_20261017.json"
 SCHEMA_ROOT = "https://developer.microsoft.com/json-schemas/fabric/"
 TABLES = {
     "ECommerceOrders": [
@@ -267,6 +270,35 @@ def visual_json(visual_id: str, typ: str, table: str, columns: list[str],
     }
 
 
+def official_logo_visual() -> dict:
+    """Power BI image visual sourced from the owner's original PNG in RegisteredResources."""
+    item = {
+        "name": {"expr": {"Literal": {"Value": "'NEXUS Official Transparent Logo'"}}},
+        "url": {"expr": {"ResourcePackageItem": {
+            "PackageName": "RegisteredResources",
+            "PackageType": 1,
+            "ItemName": BRAND_LOGO_NAME,
+        }}},
+        "scaling": {"expr": {"Literal": {"Value": "'Fit'"}}},
+    }
+    return {
+        "$schema": SCHEMA_ROOT + "item/report/definition/visualContainer/2.7.0/schema.json",
+        "name": "nexus_brand_logo",
+        "position": {"x": 24, "y": 14, "z": 9000, "width": 242, "height": 79, "tabOrder": 90},
+        "visual": {
+            "visualType": "image",
+            "objects": {
+                "general": [{"properties": {}}],
+                "image": [{"properties": {"sourceFile": {"image": item}}}],
+            },
+            "visualContainerObjects": {
+                "title": [{"properties": {"show": {"expr": {"Literal": {"Value": "false"}}}}}]
+            },
+            "drillFilterOtherVisuals": True,
+        },
+    }
+
+
 def build_project(base: Path, data_dir: Path) -> Path:
     proj_dir = base / "project"
     model = proj_dir / (MODEL_NAME + ".SemanticModel")
@@ -312,12 +344,40 @@ def build_project(base: Path, data_dir: Path) -> Path:
         "$schema": SCHEMA_ROOT + "item/report/definition/versionMetadata/1.0.0/schema.json",
         "version": "2.0.0",
     })
-    # A minimal PBIR report definition. The branded theme is importable
-    # from powerbi/themes/nexus-commerce.json once Desktop opens the project.
+    # Bundle original NEXUS assets and apply the custom theme directly.
+    # This ensures the brand is visible after Desktop opens the generated PBIP,
+    # instead of requiring an additional manual theme import.
+    resource_dir = report / "StaticResources" / "RegisteredResources"
+    resource_dir.mkdir(parents=True, exist_ok=True)
+    logo_file = ROOT / "branding" / "nexus_official_transparent.png"
+    theme_file = ROOT / "powerbi" / "themes" / "nexus-commerce.json"
+    if not logo_file.is_file() or not theme_file.is_file():
+        raise FileNotFoundError("Official NEXUS logo or report theme is missing")
+    shutil.copyfile(logo_file, resource_dir / BRAND_LOGO_NAME)
+    theme = json.loads(theme_file.read_text(encoding="utf-8"))
+    # Power BI's registered theme name must equal the asset filename.
+    theme["name"] = BRAND_THEME_NAME
+    _write_json(resource_dir / BRAND_THEME_NAME, theme)
     _write_json(definition / "report.json", {
         "$schema": SCHEMA_ROOT + "item/report/definition/report/3.0.0/schema.json",
         "settings": {},
         "annotations": [],
+        "themeCollection": {
+            "customTheme": {
+                "name": BRAND_THEME_NAME,
+                "type": "RegisteredResources",
+                "reportVersionAtImport": {
+                    "visual": "2.7.0", "report": "3.0.0", "page": "2.1.0",
+                },
+            },
+        },
+        "resourcePackages": [{
+            "name": "RegisteredResources", "type": "RegisteredResources",
+            "items": [
+                {"name": BRAND_THEME_NAME, "path": BRAND_THEME_NAME, "type": "CustomTheme"},
+                {"name": BRAND_LOGO_NAME, "path": BRAND_LOGO_NAME, "type": "Image"},
+            ],
+        }],
     })
     _write_json(definition / "pages/pages.json", {
         "$schema": SCHEMA_ROOT + "item/report/definition/pagesMetadata/1.0.0/schema.json",
@@ -332,13 +392,20 @@ def build_project(base: Path, data_dir: Path) -> Path:
             "name": pid, "displayName": page["title"],
             "displayOption": "FitToPage",
             "height": 720, "width": 1280,
+            "objects": {
+                "background": [{"properties": {
+                    "color": {"solid": {"color": {"expr": {"Literal": {"Value": "'#080F20'"}}}}},
+                    "transparency": {"expr": {"Literal": {"Value": "0D"}}},
+                }}],
+            },
         })
+        _write_json(page_dir / "visuals/nexus_brand_logo/visual.json", official_logo_visual())
         index = 0
         for n, (table, measure) in enumerate(page["cards"]):
             vid = f"{index + 1:020x}"
             _write_json(page_dir / "visuals" / vid / "visual.json",
                         visual_json(vid, "cardVisual", table, [], measure,
-                                    measure, 24 + n * 420, 24, 399, 142, index))
+                                    measure, 24 + n * 420, 107, 399, 140, index))
             index += 1
         for n, (typ, table, cols, measure, title) in enumerate(page["charts"]):
             vid = f"{index + 1:020x}"
