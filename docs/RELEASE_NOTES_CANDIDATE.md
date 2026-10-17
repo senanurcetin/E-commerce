@@ -1,28 +1,34 @@
-# E-commerce analytics milestone — candidate release notes
+# NEXUS Commerce Intelligence — release candidate (not published)
 
-**Status:** Not a published release. No tag or GitHub Release is created by this file. Review a stable snapshot and choose a version only after independent verification.
+**Status: HOLD.** This is a source-controlled milestone description, not a release tag, GitHub Release, real business certification or Power BI Desktop acceptance.
 
-## Included capabilities
+## Included code and product modules
 
-- Three-layer dbt architecture (staging, intermediate, marts) for e-commerce orders and clickstream analytics.
-- BigQuery-oriented transformations with a reproducible local DuckDB adapter/seed path.
-- Three genuine Power BI dashboard pages covering channel efficiency, acquisition/basket trends, and demographics.
-- A separate Olist Python notebook, explicitly **not** the same dataset as the main clickstream/order models.
-- Documented source-vs-signup traffic fields and conversion/attribution caveats.
+- Historical E-Commerce three-layer dbt marts for events/orders and Olist notebooks kept separate.
+- Complete isolated Greenweez dbt subproject under `integrations/greenweez/`, including the safe Sheets loader and quality gates.
+- One source-scoped NEXUS Streamlit dashboard, Greenweez source evidence and Commerce Lab test-only storefront.
+- Seven-page generated native PBIP/PBIR/TMDL with official NEXUS theme/logo and no cross-merchant total measures.
+- Metadata/source-scoped BigQuery preflight utilities; all real cloud use explicitly opt-in.
+- Five GitHub CI jobs: historical dbt, Greenweez dbt, dashboard/AppTest, Commerce Lab, and **cross-project offline integration**.
+- Credential-free PBIP structure audit for page identity, asset presence, and scoped visual model bindings.
 
-## Evidence and limitations
+## Evidence boundaries
 
-- Reproduction is based on synthetic DuckDB seed data; published warehouse-scale counts should not be misread as the seed's volume.
-- Traffic-channel revenue efficiency is **not acquisition cost** when advertising spend is missing.
-- The Turkish Power BI abbreviation `B` means *bin* (thousands), not billions.
-- A large embedded-output notebook is intentionally retained until reviewers decide which plots must remain. See [the audit helper](../scripts/notebook_output_audit.py).
+- All successful CI mart builds use synthetic/offline fixtures; neither Greenweez nor TheLook merchant amounts are independently certified.
+- Historical Power BI PNG assets show an older report, not screenshots of the generated seven-page PBIP.
+- No actual Power BI Desktop render/refresh acceptance or GA4/GSC property-bound export is asserted.
+- Marketing efficiency proxies are not ad spend, actual CAC or verified ROAS.
+- Cross-project code integration never combines unrelated merchants' customer/order populations.
+- The renamed GitHub repo is `senanurcetin/nexus-commerce-intelligence`; old Greenweez code is maintained inside `integrations/greenweez/`.
 
-## Checklist before tagging
+## Required before a business-data or BI release
 
-- [ ] Identify and review an immutable candidate commit.
-- [ ] Run `dbt deps`, `dbt seed`, `dbt run` and `dbt test` with `--profiles-dir .github/dbt-profiles` using the documented local environment.
-- [ ] Inspect three Power BI screenshots and check their numerical/unit captions.
-- [ ] Confirm external dataset rights and preserve the Olist analysis independently.
-- [ ] Include reproducibility details, limits and actual validation evidence in the GitHub Release.
+- [x] Both dbt domains build and pass their own source-specific CI suites.
+- [x] The offline cross-dbt → NEXUS → PBIP integration job passes without credentials.
+- [x] PBIP project structure and seven page bindings are statically checked.
+- [ ] Complete BigQuery/source row reconciliation with approved credentials and documented financial semantics.
+- [ ] Open generated PBIP in Power BI Desktop and approve actual visuals, refresh, slicers and DAX.
+- [ ] Obtain independent business acceptance of turnover, currency, refunds and campaign attribution.
+- [ ] Review data rights, real-data sharing rules and an immutable release commit; only then tag/publish.
 
-Related: [primary README](../README.md), [data models](../models/) and [Power BI report assets](assets/).
+Related: [README](../README.md), [offline integration](NEXUS_OFFLINE_INTEGRATION_ACCEPTANCE.md), [PBIP pipeline](../powerbi/PBIP_PIPELINE.md) and [Desktop QA](POWER_BI_VISUAL_QA.md).

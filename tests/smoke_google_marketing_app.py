@@ -223,5 +223,44 @@ class GoogleMeasurementAppSmokeTests(unittest.TestCase):
             self.assertIn("Performance", labels)
 
 
+    def test_switching_from_valid_export_to_absent_source_clears_old_kpis(self):
+        """No stale metrics when an operator changes the selected source."""
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            valid = root / "valid"
+            valid.mkdir()
+            empty = root / "empty"
+            empty.mkdir()
+            export_fixture(valid)
+            app = AppTest.from_file(str(APP), default_timeout=30).run()
+            source = next(x for x in app.text_input
+                          if x.label == "Validated export folder")
+            source.set_value(str(valid)).run()
+            self.assertEqual(len(app.exception), 0)
+            self.assertIn("Sessions", [metric.label for metric in app.metric])
+            source = next(x for x in app.text_input
+                          if x.label == "Validated export folder")
+            source.set_value(str(empty)).run()
+            self.assertEqual(len(app.exception), 0)
+            self.assertNotIn("Sessions", [metric.label for metric in app.metric])
+            self.assertNotIn("Organic CTR", [metric.label for metric in app.metric])
+            self.assertEqual(len(app.tabs), 9)
+
+    def test_gsc_device_filter_is_source_scoped(self):
+        """Removing GSC device rows must not hide independent GA4 counters."""
+        with tempfile.TemporaryDirectory() as folder:
+            export_fixture(Path(folder))
+            app = AppTest.from_file(str(APP), default_timeout=30).run()
+            next(x for x in app.text_input
+                 if x.label == "Validated export folder").set_value(folder).run()
+            devices = next(x for x in app.multiselect if x.label == "Devices")
+            devices.set_value([]).run()
+            self.assertEqual(len(app.exception), 0)
+            labels = [metric.label for metric in app.metric]
+            self.assertNotIn("Search clicks", labels)
+            self.assertNotIn("Organic CTR", labels)
+            self.assertIn("Sessions", labels)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -76,7 +76,7 @@ See [historical data release conditions](NEXUS_HISTORICAL_MART_BRIDGE.md).
 ### Operational source readiness and safer ingestion
 
 The unified NEXUS application now uses
-[the seven-source evidence registry](NEXUS_WORKSPACE_SOURCE_AUDIT.md)
+[the nine-source evidence registry](NEXUS_WORKSPACE_SOURCE_AUDIT.md)
 and a combined staged importer for existing independent E-Commerce and
 Greenweez DuckDB marts. File/schema errors are reported before publication
 and no source can declare itself business-verified by passing tests alone.
@@ -87,7 +87,7 @@ authorization remain separate release gates.
 
 ### Original Google Sheets source observations
 
-A separate eighth data group has been added for the original
+An independent Greenweez source group is tracked alongside other nine registry domains for the original
 owner-authorized Greenweez orders/campaigns Google Sheets workbooks.
 The source snapshot and visual page contain only date-grained aggregates;
 no raw order IDs, campaign names or customer details are exported. The original
@@ -101,14 +101,14 @@ dbt or TheLook revenue. See
 | Stage | Deliverable | Status |
 | --- | --- | --- |
 | 1 | Greenweez original schema audit, distinct source identity | Code complete |
-| 2 | E-Commerce-local read-only Greenweez finance mart bridge | Code complete, CI acceptance pending |
-| 3 | Greenweez charts + an overview tab in existing NEXUS app | Code complete, CI acceptance pending |
-| 4 | E-Commerce dbt, storefront, dashboard and bridge CI green | Pending |
+| 2 | Local read-only Greenweez finance mart bridge | Code complete, CI green |
+| 3 | Greenweez charts + NEXUS source overview | Code complete, Streamlit AppTest green |
+| 4 | E-Commerce dbt, Greenweez dbt, storefront, dashboard and offline integration CI | Five jobs green (synthetic/offline only) |
 | 5 | Original Greenweez DuckDB on authorized Windows machine; read-only snapshot created and visually inspected | Pending |
 | 6 | Upstream real Greenweez financial totals reconciled vs source; currency/refund semantics accepted | Pending |
 | 7 | Commerce Lab GA4 read-only Property ID authorization, actual event extraction and dashboard validation | Pending |
 | 8 | Original Power BI Desktop report source measures/screens reconciled | Pending |
-| 9 | Squashed Git subtree of original Greenweez dbt source integrated into E-Commerce integrations/greenweez/ | Added; full nested dbt CI acceptance pending |
+| 9 | Greenweez complete squashed subtree integrated under integrations/greenweez/ | Implemented and CI verified |
 | 10 | Final business/evidence and UI acceptance for presentation | Pending |
 
 Source schema tests use synthetic CI fixtures exclusively, never as real production numbers. The unified app is not presentation-ready until business data, original BI artifacts and source ownership are independently checked.

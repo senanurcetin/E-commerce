@@ -40,4 +40,5 @@ class SingleRepoIdentityTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("80 / 80", guide)
-        self.assertIn("RENAME and DELETE PENDING", guide)
+        self.assertIn("RENAME CONFIRMED", guide)
+        self.assertIn("deletion not independently proven", guide)

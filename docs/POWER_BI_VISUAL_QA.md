@@ -1,10 +1,10 @@
-# E-commerce Power BI visual QA — evidence and release gate (12 October 2026)
+# NEXUS Commerce Intelligence — Power BI visual and Desktop release gates
 
 ## Source of truth
 
 - **Data/model source:** repository dbt models, tests, Jinja macros and `analyses/` SQL, with BigQuery as the historical warehouse and DuckDB for reproducible local checks.
 - **Power BI evidence:** three **historical screenshots** under `docs/assets/`, [DAX measure documentation](dax-measures.md), and the [importable JSON theme](../powerbi/themes/nexus-commerce.json).
-- **Missing editable artifact:** the repository does **not** contain a `.pbix` or `.pbip` file. It is not possible to establish that the current report renders, refreshes or uses the new theme solely from these files.
+- **Generated source, Desktop acceptance pending:** the repository now includes a reproducible **seven-page native PBIP generator** (not a committed PBIX report); its output is created locally under the gitignored `target/powerbi/project/`. CI checks structural integrity and source isolation, **not** Microsoft Power BI Desktop rendering, model refresh, licenses or source-accounted finance. See [PBIP pipeline](../powerbi/PBIP_PIPELINE.md).
 - **Separate dataset:** the Olist notebooks are public dataset analysis, not the clickstream/order mart backing the three Power BI screenshots. Do not combine their results in one dashboard caption.
 
 ## Existing images (repository assets, not fresh report validation)
@@ -28,12 +28,14 @@ File presence, dimensions and chart labels must be checked against an actual rep
 
 ## Power BI Desktop acceptance checklist — not completed here
 
-- [ ] Import [`nexus-commerce.json`](../powerbi/themes/nexus-commerce.json) into the *original editable report*, save a versioned copy and verify the report still opens.
+- [x] Generate the seven-page PBIP from local source-scoped aggregate-only inputs and run `python -m scripts.powerbi_structure_audit --out target/powerbi` in CI; results are *structural* only.
+- [ ] Open the generated PBIP in **Power BI Desktop**, verify the registered NEXUS theme and original logo, save a versioned copy, and confirm import compatibility.
 - [ ] Refresh the model from an authorized data source and record successful/failed queries; verify calendar relationships and measure filter contexts.
-- [ ] Inspect the three pages at normal desktop and mobile widths: titles, cards, chart axes, legend readability, outliers, format strings, slicers, tooltips and interactivity.
+- [ ] Inspect **all seven generated pages** at desktop and mobile widths: source status, historical E-Commerce, sessions, Greenweez finance, source quality, import evidence and Commerce Lab. Check titles, card axes, legends, format strings, slicers, tooltips and interactions.
+- [ ] Separately inspect the three **historical screenshot** pages; they are not screenshots of the new seven-page report.
 - [ ] Run/reconcile SQL and DAX spot checks for core metrics: signups, conversions, session count, order revenue, average basket, returns and PE4 rankings.
 - [ ] Verify source/attribution semantics and ensure there is no mixing of Olist notebook figures with the main mart.
 - [ ] Re-capture genuine PNGs and record the Power BI report version, data refresh date and screenshot date.
 - [ ] Confirm the repository README, portfolio card and Social Preview label the version and source honestly.
 
-**Current release decision:** HOLD. A JSON theme update, existing PNG screenshots, and dbt/SQL test code cannot prove Power BI Desktop visuals or current live data are valid. No production data or report file was modified in this PR.
+**Current release decision: HOLD.** Offline CI now proves that seven generated PBIP pages have declared model bindings and isolated aggregate CSV inputs. It does NOT establish Desktop rendering, source refresh, human visual acceptance, currency units, refunds or independently verified finance. Existing historical PNGs remain archival evidence.
