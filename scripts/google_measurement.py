@@ -62,8 +62,11 @@ def lab_access_token(scope: str) -> str:
     if method != "1" or scope != GA4_SCOPE:
         raise ValueError("Unsupported NEXUS GA4 keyless auth configuration")
     try:
+        # On Windows, gcloud is normally a PowerShell wrapper. Subprocess
+        # must invoke the actual .cmd executable, not the shell alias.
+        cli = "gcloud.cmd" if os.name == "nt" else "gcloud"
         proc = subprocess.run(
-            ["gcloud", "auth", "print-access-token", "--project=workintech-working"],
+            [cli, "auth", "print-access-token", "--project=workintech-working"],
             check=False, capture_output=True, text=True, timeout=45,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
