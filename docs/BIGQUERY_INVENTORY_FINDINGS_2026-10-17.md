@@ -57,3 +57,16 @@ preview**. The final command is a BigQuery query *dry run* and does **not**
 download rows. Only a subsequent explicit `--execute` imports data. Real
 query cost/permissions, live schemas and the resulting Power BI refresh have
 not been verified in this conversation.
+
+
+## Prepublication row integrity and minimal source projection
+
+The safe BigQuery loader now selects only required dbt fields, rejecting other
+Fivetran/customer columns. During an authorized `--execute` read, it blocks
+duplicate or BIGINT-invalid order identifiers, invalid dates, nonfinite amounts
+and duplicate daily ad-cost rows **before** replacing the existing DuckDB.
+Observed zeros and negative amounts are counted, never silently removed.
+A private, aggregate-only `import_audit.source_quality` JSON record is
+stored inside the same staged DuckDB as the finance source tables, including
+period coverage and missing order-side shipping/refund links. These are
+technical checks, not financial certification or evidence of live execution.

@@ -159,3 +159,56 @@ class ScopedSheetsEvidenceTests(unittest.TestCase):
         inventory["results"][0]["datasets"].pop()
         with self.assertRaisesRegex(ValueError, "not listed once"):
             loader.checked_source(report, inventory)
+
+
+class PrepublicationRowContractsTests(unittest.TestCase):
+    @staticmethod
+    def orders():
+        import pandas as pd
+        return pd.DataFrame({"orders_id":[10,11],
+            "datetime":["2021-10-01 10:00:00UTC","2021-10-02 11:00:00UTC"],
+            "turnover":[0,50],"purchase_cost":[0,55],"ship_fee":[5,5]})
+
+    def test_bigquery_projection_excludes_extraneous_columns(self):
+        statement = loader.table_sql("workintech-working","fvt_gsheet",
+                                     "gwz_finance_orders_orders",20)
+        self.assertNotIn("SELECT *",statement)
+        self.assertNotIn("_fivetran_synced",statement)
+        for field in loader.TABLES["gwz_finance_orders_orders"]:
+            self.assertIn(chr(96)+field+chr(96),statement)
+
+    def test_zero_revenue_is_not_silently_removed(self):
+        summary=loader.validate_import_frame("gwz_finance_orders_orders",self.orders())
+        self.assertEqual(summary["rows"],2)
+        self.assertEqual(summary["zero_count"]["turnover"],1)
+        self.assertNotIn("orders_id",json.dumps(summary))
+
+    def test_duplicate_or_invalid_ids_fail(self):
+        data=self.orders()
+        data.loc[1,"orders_id"]=10
+        with self.assertRaisesRegex(ValueError,"duplicates 1"):
+            loader.validate_import_frame("gwz_finance_orders_orders",data)
+        data=self.orders()
+        data.loc[1,"orders_id"]="invalid"
+        with self.assertRaisesRegex(ValueError,"invalid order identifiers 1"):
+            loader.validate_import_frame("gwz_finance_orders_orders",data)
+
+    def test_invalid_dates_or_amounts_fail(self):
+        data=self.orders()
+        data.loc[0,"datetime"]="bad-date"
+        with self.assertRaisesRegex(ValueError,"calendar dates"):
+            loader.validate_import_frame("gwz_finance_orders_orders",data)
+        data=self.orders()
+        data.loc[0,"turnover"]=float("inf")
+        with self.assertRaisesRegex(ValueError,"nonfinite"):
+            loader.validate_import_frame("gwz_finance_orders_orders",data)
+
+    def test_campaign_duplicate_date_and_pii_extra_field_rejected(self):
+        import pandas as pd
+        frame=pd.DataFrame({"datetime":["2021-10-01","2021-10-01"],"cost":[1,2]})
+        with self.assertRaisesRegex(ValueError,"duplicate campaign day"):
+            loader.validate_import_frame("gwz_finance_campaign",frame)
+        data=self.orders()
+        data["customer_email"]="private@example.org"
+        with self.assertRaisesRegex(ValueError,"invalid projection"):
+            loader.validate_import_frame("gwz_finance_orders_orders",data)
