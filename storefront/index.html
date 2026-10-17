@@ -7,7 +7,19 @@
   <meta name="theme-color" content="#070d1a">
   <meta name="robots" content="noindex, nofollow">
   <meta name="description" content="NEXUS Commerce Lab — a consent-first storefront testing environment with test-only checkout. No real orders or payments.">
-  <title>NEXUS Commerce Lab — Measured by design</title>
+  <title>NEXUS Commerce Lab | Measured by Design</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=20261017">
+  <link rel="shortcut icon" type="image/svg+xml" href="./favicon.svg?v=20261017">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="NEXUS Commerce Lab">
+  <meta property="og:title" content="NEXUS Commerce Lab | Measured by Design">
+  <meta property="og:description" content="An independently measured, consent-first commerce UX laboratory. Illustrative catalog; no real transactions.">
+  <meta property="og:url" content="https://nexus-commerce-lab.vercel.app/">
+  <meta property="og:image" content="https://nexus-commerce-lab.vercel.app/nexus-logo.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="360">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://nexus-commerce-lab.vercel.app/nexus-logo.png">
   <link rel="stylesheet" href="./styles.css">
   <script src="./config.js" defer></script>
   <script type="module" src="./app.mjs"></script>
@@ -16,7 +28,7 @@
   <a class="skip-link" href="#catalog">Skip to products</a>
   <div class="lab-ribbon"><span class="status-dot"></span> LAB ENVIRONMENT <span class="ribbon-divider">/</span> TEST CHECKOUT ONLY <span class="ribbon-divider">/</span> NO REAL PAYMENTS</div>
   <header class="main-header">
-    <a class="brand" href="#top" aria-label="NEXUS Commerce Lab home"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span>NEXUS<span class="brand-micro">/ COMMERCE LAB</span></span></a>
+    <a class="brand" href="#top" aria-label="NEXUS Commerce Lab home"><img class="brand-logo" src="./nexus-logo.png" alt="NEXUS" width="170" height="51"><span class="brand-identity"><span class="brand-slash" aria-hidden="true">/</span><span class="brand-micro">COMMERCE<br>LAB</span></span></a>
     <nav class="desktop-nav" aria-label="Primary navigation">
       <a href="#catalog">Collection</a>
       <a href="#method">Our method</a>
@@ -33,6 +45,7 @@
   <main id="top">
     <section class="hero">
       <div class="hero-copy">
+        <div class="hero-lockup"><img src="./nexus-logo.png" alt="NEXUS" width="272" height="82"><span>EXPERIMENTAL COMMERCE</span></div>
         <p class="eyebrow"><span class="tiny-rule"></span> THE EXPERIMENTAL STOREFRONT / VOL. 01</p>
         <h1>Measured<br><em>by design.</em></h1>
         <p class="hero-lead">A better commerce experience starts with better evidence. Explore a considered collection built to test the journey, not fabricate sales.</p>
@@ -44,6 +57,7 @@
       </div>
       <div class="hero-art" aria-hidden="true">
         <div class="hero-grid"></div>
+        <div class="hero-brand-ghost"><img src="./nexus-logo.png" alt="" width="560" height="168"></div>
         <div class="hero-aura"></div>
         <div class="hero-circle ring-one"></div><div class="hero-circle ring-two"></div>
         <div class="hero-object"><span class="orb orb-a"></span><span class="orb orb-b"></span><span class="orb-center"></span></div>
@@ -83,7 +97,7 @@
       </div>
     </section>
   </main>
-  <footer class="footer"><span class="footer-brand">NEXUS / COMMERCE LAB</span><span>PROVENANCE OVER PRETENCE.</span><span>© 2026 · SANDBOX ONLY</span></footer>
+  <footer class="footer"><span class="footer-brand"><img src="./nexus-logo.png" alt="NEXUS" width="160" height="48"><span>/ COMMERCE LAB</span></span><span>PROVENANCE OVER PRETENCE.</span><span>© 2026 · SANDBOX ONLY</span></footer>
   <div id="shade" class="shade" hidden></div>
   <aside class="cart-panel" id="cart-panel" aria-label="Test shopping cart" aria-modal="true" role="dialog" hidden tabindex="-1">
     <div class="cart-header"><div><span class="eyebrow">YOUR SELECTION / LAB</span><h2>Test cart</h2></div><button class="icon-button" id="close-cart" aria-label="Close cart">×</button></div>
