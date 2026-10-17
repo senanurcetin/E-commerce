@@ -362,6 +362,41 @@ class LivePreflightEvidenceTests(unittest.TestCase):
             self.assertEqual(json.loads(output.read_text())["region"], "EU")
             self.assertFalse(output.with_name(output.name + ".staging").exists())
 
+    def test_schema_preview_rejects_bytes_and_repeated_fields_without_selects(self):
+        class Field:
+            def __init__(self, name, field_type="STRING", mode="NULLABLE"):
+                self.name, self.field_type, self.mode = name, field_type, mode
+        class Client:
+            def __init__(self, forbidden_type="BYTES", repeated=False):
+                self.forbidden_type, self.repeated, self.queries = forbidden_type, repeated, 0
+            def get_dataset(self, name):
+                return type("D", (), {"location": "EU"})()
+            def get_table(self, name):
+                table = name.rsplit(".", 1)[1]
+                fields = [Field(col) for col in loader.TABLES[table]]
+                if table == "gwz_finance_orders_orders":
+                    field = next(x for x in fields if x.name == "turnover")
+                    field.field_type = self.forbidden_type
+                    if self.repeated:
+                        field.mode = "REPEATED"
+                return type("T", (), {"schema": fields})()
+            def query(self, *args, **kwargs):
+                self.queries += 1
+                return type("J", (), {"total_bytes_processed": 10})()
+        class BQ:
+            @staticmethod
+            def QueryJobConfig(**kwargs):
+                return kwargs
+        for typ, repeated in (("BYTES", False), ("STRING", True)):
+            client = Client(typ, repeated)
+            with self.subTest(typ=typ, repeated=repeated), self.assertRaisesRegex(
+                    ValueError, "incompatible or repeated"):
+                loader.preview(client, BQ(), "workintech-working", "fvt_gsheet",
+                               cap=50_000_000, max_rows=50)
+            # Depending on iteration order, earlier tables may have been
+            # dry-run, but the unsafe table is always rejected before querying.
+            self.assertLess(client.queries, 4)
+
     def test_preview_is_actual_four_dry_runs_not_query_rows(self):
         class Field:
             def __init__(self, name):
