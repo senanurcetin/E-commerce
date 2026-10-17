@@ -56,7 +56,7 @@ class SourceGuardTests(unittest.TestCase):
 
     def test_reject_sql_identifier_injection(self):
         p = mapping()
-        p["sources"]["greenweez_gsheet"]["complete_candidates"][0]["dataset"] = "fvt_gsheet\` UNION SELECT"
+        p["sources"]["greenweez_gsheet"]["complete_candidates"][0]["dataset"] = "fvt_gsheet` UNION SELECT"
         with self.assertRaises(ValueError):
             loader.checked_source(p)
         with self.assertRaises(ValueError):
@@ -68,7 +68,7 @@ class SourceGuardTests(unittest.TestCase):
         sql = loader.table_sql("data-analiz-490513", "fvt_gsheet",
                                "gwz_finance_campaign", 10)
         self.assertIn("LIMIT 11", sql)
-        self.assertIn("\`data-analiz-490513.fvt_gsheet.gwz_finance_campaign\`", sql)
+        self.assertIn("`data-analiz-490513.fvt_gsheet.gwz_finance_campaign`", sql)
 
     def test_no_mapping_never_auths_and_never_touches_existing_database(self):
         with tempfile.TemporaryDirectory() as tmp:
