@@ -116,7 +116,7 @@ Source schema tests use synthetic CI fixtures exclusively, never as real product
 ## Implementation status — GitHub OIDC metadata gate (17 October 2026)
 
 The manual `bigquery-connection.yml` pipeline and source-pinned schema checker
-are now implemented. The user has confirmed `nexus-gha`, `nexus-main`, the
+are now implemented. The user has confirmed `nexus-gha`, `nexus-github-main`, the
 `nexus-bq-readonly` service account and its repository-ID federation binding
 in the Google Cloud UI. **No real GitHub-to-BigQuery connection has been
 accepted yet.** BigQuery `jobUser`, per-dataset metadata permissions, GitHub
