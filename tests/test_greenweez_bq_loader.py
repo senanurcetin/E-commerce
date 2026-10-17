@@ -295,3 +295,109 @@ class TransferAtomicityTests(unittest.TestCase):
                                 "EU", output=path, cap=100000, max_rows=1000)
             self.assertEqual(path.read_bytes(), b"ORIGINAL_DB")
             self.assertFalse(path.with_name(path.name + ".staging").exists())
+
+
+class LivePreflightEvidenceTests(unittest.TestCase):
+    """No credentials or Google imports: metadata-only dry-run receipt contracts."""
+
+    @staticmethod
+    def plan():
+        return {
+            table: {
+                "estimated_bytes_scanned": 10,
+                "schema_columns": len(fields),
+                "required_field_types": {field: "STRING" for field in fields},
+            } for table, fields in loader.TABLES.items()
+        }
+
+    def test_live_preflight_receipt_does_not_claim_business_verification(self):
+        evidence = loader.make_preflight_evidence(
+            project="workintech-working", dataset="fvt_gsheet",
+            billing_project="workintech-working",
+            location="EU", plan=self.plan(), cap=50_000_000, max_rows=250_000,
+        )
+        self.assertEqual(len(evidence["tables"]), 4)
+        self.assertEqual(evidence["status"], "live_schema_and_cost_dry_run_passed")
+        self.assertFalse(evidence["rows_downloaded_by_preflight"])
+        self.assertFalse(evidence["finance_data_reconciled"])
+        self.assertFalse(evidence["powerbi_desktop_accepted"])
+        encoded = json.dumps(evidence)
+        self.assertNotIn("access_token", encoded)
+        self.assertNotIn("customer_email", encoded)
+        self.assertNotIn("orders_id=10", encoded)
+
+    def test_cost_and_schema_fail_closed(self):
+        cases = [("cost", 50_000_001), ("negative", -1)]
+        for label, cost in cases:
+            plan = self.plan()
+            plan["gwz_finance_campaign"]["estimated_bytes_scanned"] = cost
+            with self.subTest(label=label), self.assertRaises(ValueError):
+                loader.make_preflight_evidence(
+                    project="workintech-working", dataset="fvt_gsheet",
+                    billing_project="workintech-working", location="EU",
+                    plan=plan, cap=50_000_000, max_rows=250_000,
+                )
+        plan = self.plan()
+        plan["gwz_finance_campaign"]["required_field_types"]["email"] = "STRING"
+        with self.assertRaises(ValueError):
+            loader.make_preflight_evidence(
+                project="workintech-working", dataset="fvt_gsheet",
+                billing_project="workintech-working", location="EU",
+                plan=plan, cap=50_000_000, max_rows=250_000,
+            )
+
+    def test_atomic_success_and_failed_receipt_preserves_existing(self):
+        evidence = loader.make_preflight_evidence(
+            project="workintech-working", dataset="fvt_gsheet",
+            billing_project="workintech-working",
+            location="EU", plan=self.plan(), cap=50_000_000, max_rows=250_000,
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "receipt.json"
+            output.write_text("OLD_RECEIPT", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Refusing"):
+                loader.write_preflight_evidence(output, {"status": "not_ready"})
+            self.assertEqual(output.read_text(), "OLD_RECEIPT")
+            loader.write_preflight_evidence(output, evidence)
+            self.assertEqual(json.loads(output.read_text())["region"], "EU")
+            self.assertFalse(output.with_name(output.name + ".staging").exists())
+
+    def test_preview_is_actual_four_dry_runs_not_query_rows(self):
+        class Field:
+            def __init__(self, name):
+                self.name = name
+                self.field_type = "STRING"
+        class Metadata:
+            def __init__(self, names):
+                self.schema = [Field(name) for name in names]
+        class Job:
+            total_bytes_processed = 1234
+        class Client:
+            def __init__(self):
+                self.requests = []
+            def get_dataset(self, key):
+                self.requests.append(("get_dataset", key))
+                return type("Dataset", (), {"location": "EU"})()
+            def get_table(self, key):
+                self.requests.append(("get_table", key))
+                name = key.rsplit(".", 1)[1]
+                return Metadata(loader.TABLES[name])
+            def query(self, sql, *, location, job_config):
+                self.requests.append(("query", sql, location, job_config))
+                return Job()
+        class BQ:
+            @staticmethod
+            def QueryJobConfig(**kwargs):
+                return kwargs
+        client = Client()
+        location, plan = loader.preview(
+            client, BQ(), "workintech-working", "fvt_gsheet",
+            cap=50_000_000, max_rows=250_000,
+        )
+        self.assertEqual(location, "EU")
+        self.assertEqual(len(plan), 4)
+        self.assertEqual(len([v for v in client.requests if v[0] == "query"]), 4)
+        self.assertTrue(all(req[3]["dry_run"] is True
+                            for req in client.requests if req[0] == "query"))
+        self.assertTrue(all("LIMIT 250001" in req[1]
+                            for req in client.requests if req[0] == "query"))

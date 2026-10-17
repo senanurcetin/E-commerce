@@ -107,3 +107,29 @@ financial KPIs until units, currency and business semantics reconcile.
 
 
 For dated, owner-supplied table-level findings and the explicit scoped-source policy, see [2026-10-17 BigQuery inventory findings](BIGQUERY_INVENTORY_FINDINGS_2026-10-17.md). The original raw JSON inventory is not committed.
+
+
+## Live P0 schema and cost dry-run evidence
+
+After pulling the current main branch, run the default Greenweez importer
+**without** `--execute`. It uses the pinned `workintech-working.fvt_gsheet`
+source and performs four BigQuery **dry-run** queries, validating the
+actual required column names and collecting sanitized field types and
+estimated bytes processed (with a per-query cap).
+
+A successful dry run writes a private, gitignored JSON receipt to
+`target/cloud_inventory/greenweez_live_preflight.json`. The artifact is
+written only after **all four** schema/cost dry runs succeed, using an
+atomic replacement. This does not download orders, grant write access,
+guarantee a zero-dollar BigQuery bill, or certify source amounts.
+An authorized `--execute` re-runs the same live preflight before any
+row transfer. The receipt's status is only
+`live_schema_and_cost_dry_run_passed`, with finance validation and
+Power BI Desktop acceptance explicitly false.
+
+The receipt includes four table names, their required field types,
+estimated query scan bytes, source project/dataset, billing project,
+location, scan timestamp and the row/byte limits. It excludes tokens,
+individual orders, unrelated source fields, customer information and
+financial amounts. Review it locally; do not commit the receipt or
+real data into this public repository.

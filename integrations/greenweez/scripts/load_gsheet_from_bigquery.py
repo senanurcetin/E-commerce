@@ -26,6 +26,7 @@ DEFAULT_INVENTORY = OWNER_ROOT / "target/cloud_inventory/bq_source_locations.jso
 # Do not infer a canonical source from the unrelated project with overlapping tables.
 SCOPED_SHEETS_SOURCE = ("workintech-working", "fvt_gsheet")
 DEFAULT_OUTPUT = GREENWEEZ_ROOT / "target/gsheet_real.duckdb"
+DEFAULT_PREFLIGHT = OWNER_ROOT / "target/cloud_inventory/greenweez_live_preflight.json"
 ALLOWED_PROJECTS = ("workintech-working", "data-analiz-490513")
 TABLES = {
     "gwz_finance_orders_orders": {"orders_id", "datetime", "turnover", "purchase_cost", "ship_fee"},
@@ -220,7 +221,8 @@ def preview(client, bigquery, project: str, dataset: str, *, cap: int, max_rows:
     plan = {}
     for table, required in TABLES.items():
         metadata = client.get_table(f"{project}.{dataset}.{table}")
-        columns = {field.name for field in metadata.schema}
+        schema = {field.name: field for field in metadata.schema}
+        columns = set(schema)
         missing = sorted(required - columns)
         if missing:
             raise ValueError(f"{table}: missing required source columns: {', '.join(missing)}")
@@ -231,8 +233,90 @@ def preview(client, bigquery, project: str, dataset: str, *, cap: int, max_rows:
         estimated = int(dry.total_bytes_processed or 0)
         if estimated > cap:
             raise ValueError(f"{table}: estimated bytes exceed the per-query cost ceiling")
-        plan[table] = {"estimated_bytes_scanned": estimated, "schema_columns": len(columns)}
+        plan[table] = {
+            "estimated_bytes_scanned": estimated,
+            "schema_columns": len(columns),
+            # Do not export unrelated columns, metadata, rows or sample values.
+            "required_field_types": {
+                name: str(getattr(schema[name], "field_type", "UNKNOWN"))
+                for name in sorted(required)
+            },
+        }
     return location, plan
+
+
+def make_preflight_evidence(
+    *, project: str, dataset: str, billing_project: str,
+    location: str, plan: dict, cap: int, max_rows: int,
+) -> dict:
+    """A narrow, nonfinancial receipt of *actual* live BigQuery schema/dry-runs.
+
+    A successful source name inventory alone cannot generate this evidence;
+    it is only constructed after client.get_table + client.query(dry_run=True)
+    returned for all four source tables.
+    """
+    if ((project, dataset) != SCOPED_SHEETS_SOURCE
+            or billing_project not in ALLOWED_PROJECTS
+            or not isinstance(location, str) or not location
+            or not isinstance(cap, int) or cap < 1
+            or not isinstance(max_rows, int) or not 1 <= max_rows <= 1_000_000
+            or not isinstance(plan, dict) or set(plan) != set(TABLES)):
+        raise ValueError("Incomplete or unapproved live preflight")
+    clean = {}
+    for table in sorted(TABLES):
+        entry = plan[table]
+        if not isinstance(entry, dict) or set(entry) != {
+            "estimated_bytes_scanned", "schema_columns", "required_field_types",
+        }:
+            raise ValueError("Incomplete BigQuery table preflight")
+        bytes_read = entry["estimated_bytes_scanned"]
+        fields = entry["required_field_types"]
+        if (type(bytes_read) is not int or not 0 <= bytes_read <= cap
+                or type(entry["schema_columns"]) is not int
+                or entry["schema_columns"] < len(TABLES[table])
+                or not isinstance(fields, dict) or set(fields) != TABLES[table]
+                or not all(isinstance(v, str) and v for v in fields.values())):
+            raise ValueError("Untrusted BigQuery dry-run/schema evidence")
+        clean[table] = {
+            "estimated_bytes_scanned": bytes_read,
+            "schema_columns": entry["schema_columns"],
+            "required_field_types": dict(sorted(fields.items())),
+        }
+    return {
+        "schema_version": 1,
+        "source": {"project": project, "dataset": dataset},
+        "billing_project": billing_project,
+        "region": location,
+        "observed_at_utc": datetime.now(timezone.utc).isoformat(),
+        "status": "live_schema_and_cost_dry_run_passed",
+        "per_query_maximum_bytes_billed": cap,
+        "max_rows_per_table_on_later_import": max_rows,
+        "tables": clean,
+        "rows_downloaded_by_preflight": False,
+        "finance_data_reconciled": False,
+        "powerbi_desktop_accepted": False,
+        "warning": (
+            "A live dry-run is not a real row extract, actual invoice, "
+            "permission proof for downloads or financial correctness."
+        ),
+    }
+
+
+def write_preflight_evidence(output: Path, evidence: dict) -> None:
+    """Write atomically; a failed schema check never overwrites earlier evidence."""
+    if not isinstance(evidence, dict) or evidence.get("status") != (
+            "live_schema_and_cost_dry_run_passed"):
+        raise ValueError("Refusing unvalidated live preflight receipt")
+    output = Path(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    stage = output.with_name(output.name + ".staging")
+    try:
+        stage.write_text(json.dumps(evidence, ensure_ascii=False,
+                                    allow_nan=False, indent=2) + "\n", encoding="utf-8")
+        os.replace(stage, output)
+    finally:
+        if stage.exists():
+            stage.unlink()
 
 
 def transfer(client, bigquery, project: str, dataset: str, location: str,
@@ -302,6 +386,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--mapping", type=Path, default=DEFAULT_MAPPING)
     parser.add_argument("--inventory", type=Path, default=DEFAULT_INVENTORY)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--preflight-output", type=Path, default=DEFAULT_PREFLIGHT,
+                        help="Gitignored metadata-only receipt of the live BigQuery dry-run")
     parser.add_argument("--billing-project", choices=ALLOWED_PROJECTS)
     parser.add_argument("--max-bytes-billed", type=int, default=50_000_000,
                         help="Hard cap per SELECT query; default 50MB (4 queries)")
@@ -327,6 +413,13 @@ def main(argv: list[str] | None = None) -> int:
         try:
             location, plan = preview(client, bigquery, project, dataset,
                                      cap=args.max_bytes_billed, max_rows=args.max_rows)
+            preflight = make_preflight_evidence(
+                project=project, dataset=dataset, billing_project=billing,
+                location=location, plan=plan, cap=args.max_bytes_billed,
+                max_rows=args.max_rows,
+            )
+            write_preflight_evidence(args.preflight_output, preflight)
+            print("Live schema/cost dry-run receipt:", args.preflight_output)
             print("Read-only preview:", f"{project}.{dataset}", "| billing:", billing,
                   "| region:", location)
             for table, evidence in plan.items():
