@@ -143,6 +143,7 @@ jobs:
           test -f storefront/dist/config.js
           test -s storefront/dist/favicon.svg
           test -s storefront/dist/nexus-logo.png
+          cmp branding/nexus_official_transparent.png storefront/nexus-logo.png
           cmp branding/nexus_official_transparent.png storefront/dist/nexus-logo.png
           grep -Fq 'rel="icon" type="image/svg+xml"' storefront/dist/index.html
           grep -Fq 'ga4MeasurementId: ""' storefront/dist/config.js
