@@ -1,4 +1,4 @@
-"""Read-only inventory of candidate BigQuery tables across the owner's two projects.
+r"""Read-only inventory of candidate BigQuery tables across the owner's two projects.
 
 No SQL queries, row contents, data exports, dataset mutations or credentials on disk.
 
