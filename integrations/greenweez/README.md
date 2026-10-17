@@ -1,4 +1,8 @@
-# Greenweez — Finance & Marketing Analytics Engineering
+# Greenweez finance/campaign module — NEXUS Commerce Intelligence
+
+The maintained source is **this integrated subproject**, not a second GitHub
+product repository. Build and tests remain isolated in integrations/greenweez/.
+See the [one-repo migration record](../../docs/REPOSITORY_CONSOLIDATION.md).
 
 **Reviewer quick brief:** [Technical evidence and business limitations](docs/hiring-summary.md).
 
@@ -7,7 +11,7 @@
 > Conceptual data-flow illustration—not actual Greenweez financial performance. The DuckDB demo uses synthetic test data; reported business metrics should be verified against the warehouse before use.
 
 
-[![CI](https://github.com/senanurcetin/greenweez-finance-campaign-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/senanurcetin/greenweez-finance-campaign-analytics/actions/workflows/ci.yml)
+**CI:** [NEXUS root GitHub Actions workflow](../../.github/workflows/ci.yml), including Greenweez's isolated dbt test job. Nested historical CI files are for reproducibility, not an independently maintained repository.
 
 **dbt Core · BigQuery · DuckDB · SQL testing · Streamlit**
 
@@ -108,9 +112,9 @@ The new [audit utility](scripts/audit_sheet_campaign_links.py) reads the authori
 |---|---|
 | `make demo` | synthetic default-mode data (`gwz_raw` shape) |
 | `make demo-gsheet` | synthetic copy of the Google Sheets export |
-| `make demo-gsheet-real` | the real Google Sheets data: `scripts/load_gsheet_from_bigquery.py` copies the four `fvt_gsheet` tables from BigQuery into `target/gsheet_real.duckdb` (read-only `SELECT`s, needs `GOOGLE_APPLICATION_CREDENTIALS`), then dbt builds the marts on it |
+| `make demo-gsheet-real` | the real Google Sheets data: `scripts/load_gsheet_from_bigquery.py` copies the four `fvt_gsheet` tables from BigQuery into `target/gsheet_real.duckdb` (read-only `SELECT`s, requires authorized `gcloud auth login` and bounded query preflight), then dbt builds the marts on it |
 
-The real data is business data: it stays under `target/` (gitignored), never commit it, and keep the service-account key file out of the repository. `demo/smoke_test.py` runs the app headlessly in both modes and is part of CI.
+The real data is business data: it stays under `target/` (gitignored), never commit it, and never store credentials or service-account keys in the repository. `demo/smoke_test.py` runs the app headlessly in both modes and is part of CI.
 
 ## Running against BigQuery
 
@@ -124,7 +128,7 @@ The BigQuery target parses without credentials, but CI does not execute it (that
 
 ## Quality checks (CI)
 
-`.github/workflows/ci.yml` runs on every PR: `yamllint`, `sqlfluff lint`, `dbt deps`, `dbt seed`, `dbt build` on DuckDB (default mode, then the `fvt_gsheet` mode), which runs the schema tests, the singular reconciliation tests in `tests/` and the unit tests, and uploads the dbt docs as an artifact.
+The [NEXUS root workflow](../../.github/workflows/ci.yml) runs Greenweez CI on each PR. The retained nested historical CI workflow originally ran: `yamllint`, `sqlfluff lint`, `dbt deps`, `dbt seed`, `dbt build` on DuckDB (default mode, then the `fvt_gsheet` mode), which runs the schema tests, the singular reconciliation tests in `tests/` and the unit tests, and uploads the dbt docs as an artifact.
 
 ## Layout
 
