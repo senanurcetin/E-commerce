@@ -42,4 +42,4 @@ The DAX documentation at `docs/dax-measures.md` now reflects these definitions. 
 4. Re-capture 3 Power BI images and update the portfolio only after a desktop refresh and numerical reconciliation.
 5. Preserve segmentation: E-Commerce session/order metrics must not be joined to Olist, Greenweez or GA4 Search Console records based solely on date/channel labels.
 
-Neither `greenweez-finance-campaign-analytics` nor the new Google measurement marts is modified by these semantic corrections.
+These historical E-Commerce semantic corrections do not modify the isolated Greenweez dbt project under `integrations/greenweez/` or the Google measurement marts.
