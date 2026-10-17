@@ -118,6 +118,9 @@ jobs:
       - name: Validate metadata-only P0 source readiness without BigQuery queries
         run: python -m unittest discover -s tests -p 'test_cloud_source_readiness.py' -v
 
+      - name: Guard keyless no-row BigQuery connectivity contracts
+        run: python -m unittest discover -s tests -p 'test_bigquery_connection_probe.py' -v
+
       - name: Guard real Greenweez BigQuery load behind unique sources and query bounds
         run: python -m unittest discover -s tests -p 'test_greenweez_bq_loader.py' -v
 

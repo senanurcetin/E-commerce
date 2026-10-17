@@ -161,9 +161,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.max_bytes_billed < 1:
             raise ValueError("Invalid BigQuery query limit")
         from google.cloud import bigquery
-        from google.oauth2.credentials import Credentials
-        client = bigquery.Client(project=SOURCE[0],
-                                 credentials=Credentials(token=token()))
+        if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+            # GitHub Actions Workload Identity Federation supplies refreshable ADC.
+            client = bigquery.Client(project=SOURCE[0])
+        else:
+            from google.oauth2.credentials import Credentials
+            client = bigquery.Client(project=SOURCE[0],
+                                     credentials=Credentials(token=token()))
         try:
             result = preflight(client, bigquery, cap=args.max_bytes_billed)
         finally:
