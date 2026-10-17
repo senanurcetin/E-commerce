@@ -9,6 +9,13 @@ import os
 import re
 from typing import Any
 
+# Use the SAME required-column contracts as the later source-specific
+# preflights. A metadata-only connection must not pass on arbitrary tables.
+from scripts.ecommerce_bigquery_preflight import CONTRACT as ECOMMERCE_FIELDS
+from integrations.greenweez.scripts.load_gsheet_from_bigquery import (
+    TABLES as GREENWEEZ_FIELDS,
+)
+
 DATA_PROJECT = "workintech-working"
 SOURCES = {
     "e_ticaret": ("events", "order_items", "products", "users"),
@@ -18,10 +25,21 @@ SOURCES = {
     ),
 }
 PROJECT_RE = re.compile(r"^[a-z][a-z0-9-]{4,62}$")
+REQUIRED_FIELDS = {
+    "e_ticaret": {
+        table: frozenset(field.casefold() for field in ECOMMERCE_FIELDS[table])
+        for table in SOURCES["e_ticaret"]
+    },
+    "fvt_gsheet": {
+        table: frozenset(field.casefold() for field in GREENWEEZ_FIELDS[table])
+        for table in SOURCES["fvt_gsheet"]
+    },
+}
 
 
 def probe(client: Any, bigquery: Any) -> dict:
     count = 0
+    fields_checked = 0
     locations = set()
     for dataset, names in SOURCES.items():
         metadata = client.get_dataset(f"{DATA_PROJECT}.{dataset}")
@@ -33,6 +51,16 @@ def probe(client: Any, bigquery: Any) -> dict:
             schema = client.get_table(f"{DATA_PROJECT}.{dataset}.{table}").schema
             if not schema:
                 raise ValueError(f"{dataset}.{table}: required metadata unavailable")
+            observed = {str(getattr(field, "name", "")).casefold() for field in schema}
+            required = REQUIRED_FIELDS[dataset][table]
+            missing = required - observed
+            if missing:
+                # Column names are nonsecret schema metadata, not customer values.
+                raise ValueError(
+                    f"{dataset}.{table}: {len(missing)} required columns missing: "
+                    + ", ".join(sorted(missing))
+                )
+            fields_checked += len(required)
             count += 1
         print(f"OK: {DATA_PROJECT}.{dataset} — {len(names)} table schemas, region {location}")
     # SELECT 1 has no source FROM. Dry run is checked for nonzero bytes.
@@ -51,6 +79,8 @@ def probe(client: Any, bigquery: Any) -> dict:
         "source_project": DATA_PROJECT,
         "dataset_count": len(SOURCES),
         "table_metadata_count": count,
+        "required_field_count": fields_checked,
+        "schema_contract_verified": True,
         "rows_downloaded": False,
         "business_data_verified": False,
         "real_source_dry_run_passed": False,
@@ -74,7 +104,8 @@ def main() -> int:
             client.close()
         print(
             "PASS: OIDC connection and metadata check — "
-            f"{result['table_metadata_count']} tables; no business rows"
+            f"{result['table_metadata_count']} tables, "
+            f"{result['required_field_count']} required fields; no business rows"
         )
         print("HOLD: real source queries, finance reconciliation, Power BI Desktop")
         return 0
