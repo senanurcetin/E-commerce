@@ -10,7 +10,7 @@ billing bytes, row quality, currency and refunds require additional gates.
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
 
@@ -21,6 +21,16 @@ ROOT = Path(__file__).resolve().parents[1]
 INVENTORY = ROOT / "target/cloud_inventory/bq_source_locations.json"
 MAPPING = ROOT / "target/cloud_inventory/source_mapping_candidates.json"
 OUTPUT = ROOT / "target/cloud_inventory/p0_readiness.json"
+LIVE_PREFLIGHT = ROOT / "target/cloud_inventory/greenweez_live_preflight.json"
+PREFLIGHT_MAX_AGE_HOURS = 24
+# Contract of only the four projected BigQuery source tables (never customer fields).
+GSHEET_FIELDS = {
+    "gwz_finance_orders_orders": ("orders_id", "datetime", "turnover", "purchase_cost", "ship_fee"),
+    "gwz_finance_shipping_shipping": ("orders_id", "date_date", "log_cost", "ship_cost"),
+    "gwz_finance_refund_sheet_1": ("orders_id", "datetime", "refund"),
+    "gwz_finance_campaign": ("datetime", "cost"),
+}
+
 PINNED = {
     "ecommerce": ("workintech-working", "e_ticaret"),
     "greenweez_gsheet": ("workintech-working", "fvt_gsheet"),
@@ -73,7 +83,79 @@ def _coverage(entries: dict, identity: tuple[str, str], domain: str) -> dict:
     }
 
 
-def evaluate(inventory: dict, mapping: dict) -> dict:
+def read_live_receipt(receipt: dict | None) -> dict:
+    """Interpret an *unattested local* dry-run receipt without cloud requests.
+
+    A locally editable JSON is NOT equivalent to independent GCP evidence.
+    Never mark P0 complete from this file alone.
+    """
+    missing = {"status": "missing", "receipt_table_count": 0,
+               "estimated_bytes_total": None, "operator_verification_required": True}
+    if receipt is None:
+        return missing
+    if not isinstance(receipt, dict) or set(receipt) != {
+        "schema_version", "source", "billing_project", "region",
+        "observed_at_utc", "status", "per_query_maximum_bytes_billed",
+        "max_rows_per_table_on_later_import", "tables",
+        "rows_downloaded_by_preflight", "finance_data_reconciled",
+        "powerbi_desktop_accepted", "warning",
+    }:
+        raise ValueError("Unsupported or incomplete live preflight receipt")
+    if (receipt["schema_version"] != 1 or
+            receipt["source"] != {
+                "project": PINNED["greenweez_gsheet"][0],
+                "dataset": PINNED["greenweez_gsheet"][1],
+            } or receipt["billing_project"] not in PROJECTS or
+            receipt["status"] != "live_schema_and_cost_dry_run_passed" or
+            receipt["rows_downloaded_by_preflight"] is not False or
+            receipt["finance_data_reconciled"] is not False or
+            receipt["powerbi_desktop_accepted"] is not False or
+            not isinstance(receipt["region"], str) or not receipt["region"]):
+        raise ValueError("Unapproved source or inflated verification claim")
+    budget = receipt["per_query_maximum_bytes_billed"]
+    limit = receipt["max_rows_per_table_on_later_import"]
+    if type(budget) is not int or budget < 1 or type(limit) is not int or not 1 <= limit <= 1_000_000:
+        raise ValueError("Invalid BigQuery receipt query caps")
+    table_data = receipt["tables"]
+    if not isinstance(table_data, dict) or set(table_data) != set(GSHEET_FIELDS):
+        raise ValueError("Invalid Greenweez BigQuery receipt tables")
+    total = 0
+    for table, required in GSHEET_FIELDS.items():
+        fields = table_data[table]
+        if not isinstance(fields, dict) or set(fields) != {
+            "estimated_bytes_scanned", "schema_columns", "required_field_types",
+        }:
+            raise ValueError("Invalid BigQuery source receipt entry")
+        types = fields["required_field_types"]
+        if (not isinstance(types, dict) or set(types) != set(required)
+                or any(not isinstance(v, str) or not v for v in types.values())):
+            raise ValueError("Untrusted BigQuery receipt column types")
+        scanned = fields["estimated_bytes_scanned"]
+        if (type(scanned) is not int or not 0 <= scanned <= budget
+                or type(fields["schema_columns"]) is not int
+                or fields["schema_columns"] < len(required)):
+            raise ValueError("Out-of-bounds BigQuery schema/scan receipt")
+        total += scanned
+    try:
+        stamp = datetime.fromisoformat(receipt["observed_at_utc"].replace("Z", "+00:00"))
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise ValueError("Invalid live preflight receipt timestamp") from exc
+    now = datetime.now(timezone.utc)
+    if stamp.tzinfo is None or stamp > now + timedelta(minutes=5):
+        raise ValueError("Live preflight receipt timestamp missing timezone or in future")
+    age = now - stamp
+    status = ("recent_local_receipt_requires_operator_verification"
+              if age <= timedelta(hours=PREFLIGHT_MAX_AGE_HOURS)
+              else "stale_local_receipt")
+    return {
+        "status": status,
+        "receipt_table_count": len(table_data),
+        "estimated_bytes_total": total,
+        "operator_verification_required": True,
+    }
+
+
+def evaluate(inventory: dict, mapping: dict, live_receipt: dict | None = None) -> dict:
     if not isinstance(inventory, dict) or inventory.get("schema_version") != 1:
         raise ValueError("Unsupported BigQuery inventory")
     if not isinstance(mapping, dict) or mapping.get("schema_version") != 1:
@@ -99,6 +181,9 @@ def evaluate(inventory: dict, mapping: dict) -> dict:
     sheets = _coverage(entries, PINNED["greenweez_gsheet"], "greenweez_gsheet")
     alt = _coverage(entries, ALTERNATIVE, "ecommerce")
     raw = _coverage(entries, RAW_PARTIAL, "greenweez_raw")
+    live = read_live_receipt(live_receipt)
+    if live_receipt is not None and not sheets["table_names_confirmed"]:
+        raise ValueError("Live preflight receipt cannot override missing pinned source tables")
     return {
         "schema_version": 1,
         "evidence_scanned_at_utc": inventory["scanned_at_utc"],
@@ -109,6 +194,7 @@ def evaluate(inventory: dict, mapping: dict) -> dict:
         "bigquery_cost_checked": False,
         "financial_semantics_verified": False,
         "p0_live_preflight_complete": False,
+        "greenweez_live_preflight_receipt": live,
         "sources": {
             "ecommerce": {
                 "project": PINNED["ecommerce"][0],
@@ -143,11 +229,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--inventory", type=Path, default=INVENTORY)
     parser.add_argument("--mapping", type=Path, default=MAPPING)
     parser.add_argument("--output", type=Path, default=OUTPUT)
+    parser.add_argument("--live-preflight", type=Path, default=LIVE_PREFLIGHT,
+                        help="Optional gitignored live dry-run receipt; no API calls")
     args = parser.parse_args(argv)
     try:
+        receipt = (json.loads(args.live_preflight.read_text(encoding="utf-8"))
+                   if args.live_preflight.is_file() else None)
         report = evaluate(
             json.loads(args.inventory.read_text(encoding="utf-8")),
             json.loads(args.mapping.read_text(encoding="utf-8")),
+            live_receipt=receipt,
         )
     except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
         print("BLOCKED: local P0 source evidence invalid: " + str(exc))
@@ -157,7 +248,8 @@ def main(argv: list[str] | None = None) -> int:
                            encoding="utf-8")
     for name, value in report["sources"].items():
         print(f"{name}: {value['tables_found']}/{value['tables_required']} table names; {value['status']}")
-    print("LIVE PREFLIGHT: HOLD; no data rows or BigQuery queries run.")
+    print("LIVE PREFLIGHT: HOLD; no BigQuery calls or row reads performed by this report.")
+    print("Local dry-run receipt:", report["greenweez_live_preflight_receipt"]["status"])
     print("Aggregate metadata report written:", args.output)
     return 0
 

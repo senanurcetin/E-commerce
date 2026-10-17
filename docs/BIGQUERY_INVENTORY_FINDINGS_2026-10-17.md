@@ -94,3 +94,23 @@ The report intentionally sets `p0_live_preflight_complete=false`,
 The next gate remains a **separately authorized** live BigQuery schema
 and cost dry-run. Do not mistake an offline source identity match for
 BigQuery read permissions or an approved financial KPI.
+
+
+## Cross-check the optional live dry-run receipt without cloud access
+
+The offline `python -m scripts.cloud_source_readiness` command now also
+checks whether the local gitignored
+`target/cloud_inventory/greenweez_live_preflight.json` receipt exists.
+If present, it validates source pin, four expected tables and required
+fields, per-query byte ceilings, nonfinancial status and timestamp.
+Receipts older than **24 hours** are classified as stale; a mismatched or
+tampered receipt is rejected. Only aggregate total estimated scan bytes
+and table counts are carried into `p0_readiness.json`.
+
+A locally editable JSON is **not** independent evidence that Google Cloud
+authorized the query. Even a recent receipt stays
+`recent_local_receipt_requires_operator_verification`, while
+`p0_live_preflight_complete` and `financial_semantics_verified`
+remain false. The CLI makes **zero Google API calls**; it never
+automatically promotes business metrics or bypasses the real `--execute`
+loader guard.
