@@ -118,6 +118,11 @@ jobs:
       - name: Validate metadata-only P0 source readiness without BigQuery queries
         run: python -m unittest discover -s tests -p 'test_cloud_source_readiness.py' -v
 
+      - name: Reject Git-tracked credential files and raw source database artifacts
+        run: |
+          python -m unittest discover -s tests -p 'test_repo_hygiene_guard.py' -v
+          python -m scripts.repo_hygiene_guard
+
       - name: Guard keyless no-row BigQuery connectivity contracts
         run: python -m unittest discover -s tests -p 'test_bigquery_connection_probe.py' -v
 
