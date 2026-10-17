@@ -1,9 +1,9 @@
 """NEXUS visual system shared by all Commerce Intelligence tabs."""
 from __future__ import annotations
 
-import base64
 from pathlib import Path
 
+from PIL import Image
 import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -70,6 +70,23 @@ a {color:#47DFF2;}
 }
 .nexus-brand-mark {width:min(290px,66vw);height:auto;object-fit:contain;display:block;
     margin:0 0 .95rem;filter:drop-shadow(0 4px 18px rgba(71,223,242,.08));}
+.nexus-hero-kicker{display:flex;align-items:center;gap:.65rem;letter-spacing:.11em;font-size:.69rem;
+    font-weight:800;color:#D6E5F7;padding-bottom:1.1rem;margin-bottom:1.3rem;border-bottom:1px solid #45618255;}
+.nexus-live-point{width:7px;height:7px;background:#47DFF2;border-radius:100%;
+    box-shadow:0 0 0 4px #47DFF220,0 0 20px #47DFF290;}
+.nexus-kicker-sep{color:#6387A4;}
+.nexus-hero-edition{margin-left:auto;font-variant-numeric:tabular-nums;color:#9FAFCE;}
+.nexus-gradient-title{color:#47DFF2;
+    background:linear-gradient(102deg,#54EDF3,#9AA1FF 80%,#C1A5FA);background-clip:text;
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.nexus-hero-tags{display:flex;flex-wrap:wrap;gap:.2rem;margin-top:.35rem;}
+[data-testid="stSidebar"] [data-testid="stImage"]{padding:.8rem 0 1rem;margin-bottom:.6rem;
+    border-bottom:1px solid #324A68;}
+.nexus-hero:before{content:"";position:absolute;right:-4.5rem;top:-3rem;width:320px;height:320px;
+    border-radius:50%;border:1px solid #8298E935;box-shadow:0 0 0 50px #7F8CF014,0 0 0 100px #47DFF209;
+    pointer-events:none;}
+.nexus-hero{position:relative;overflow:hidden;}
+
 .nexus-hero h1 {margin:.4rem 0;font-size:clamp(1.65rem,2.8vw,2.55rem);line-height:1.13;}
 .nexus-hero p {color:#C3D1E8;margin:.6rem 0 0;max-width:900px;font-size:.95rem;line-height:1.6;}
 .nexus-pill {
@@ -88,6 +105,8 @@ a {color:#47DFF2;}
 @media (max-width:750px) {
     [data-testid="stMainBlockContainer"] {padding:1.2rem .8rem 3rem;}
     .nexus-hero {border-radius:15px;padding:1rem;}
+    .nexus-hero:before{display:none;}
+    .nexus-hero-kicker{gap:.35rem;flex-wrap:wrap;font-size:.6rem;}
     .nexus-hero h1 {line-height:1.2;}
     .nexus-source {min-height:96px;}
     [data-testid="stMetric"] {min-height:94px;}
@@ -96,30 +115,44 @@ a {color:#47DFF2;}
 """
 
 
+def brand_icon() -> Image.Image:
+    """Crop the genuine gradient X of the owner's official logo into a square icon."""
+    if not OFFICIAL_LOGO.is_file():
+        raise FileNotFoundError("Original NEXUS brand asset is missing")
+    with Image.open(OFFICIAL_LOGO) as original:
+        source = original.convert("RGBA")
+    if source.size != (1200, 360):
+        raise ValueError("Unexpected NEXUS official logo dimensions")
+    mark = source.crop((440, 68, 684, 293))
+    mark.thumbnail((212, 210), Image.Resampling.LANCZOS)
+    square = Image.new("RGBA", (256, 256), "#0A1428")
+    square.alpha_composite(mark, ((256 - mark.width) // 2, (256 - mark.height) // 2))
+    return square
+
+
 def apply_theme() -> None:
     st.markdown(CSS, unsafe_allow_html=True)
+    st.sidebar.image(str(OFFICIAL_LOGO), width=215)
 
 
 def hero() -> None:
-    """Show the original owner-owned NEXUS logo, never a generated placeholder."""
-    if not OFFICIAL_LOGO.is_file():
-        raise FileNotFoundError("Official NEXUS logo missing from branding/")
-    png = base64.b64encode(OFFICIAL_LOGO.read_bytes()).decode("ascii")
-    mark = ('<img class="nexus-brand-mark" '
-            'src="data:image/png;base64,' + png + '" '
-            'alt="NEXUS official logo" />')
+    """Use native image widgets to ensure the official logo is rendered."""
+    st.image(str(OFFICIAL_LOGO), width=340)
     st.markdown(
-        '<div class="nexus-hero">'
-        + mark +
-        '<span class="nexus-eyebrow">NEXUS / DATA PRODUCTS / COMMERCE</span>'
-        '<h1>Commerce Intelligence</h1>'
-        '<p>Historical E-Commerce performance, Greenweez financial evidence, '
-        'and first-party Commerce Lab telemetry in one controlled workspace. '
-        'Independent sources remain independent: no synthetic revenue, '
-        'cross-merchant sales totals or unverified attribution.</p>'
+        '<section class="nexus-hero">'
+        '<div class="nexus-hero-kicker"><span class="nexus-live-point"></span>'
+        '<span>NEXUS PLATFORM</span><span class="nexus-kicker-sep">/</span>'
+        '<span>COMMERCE INTELLIGENCE</span><span class="nexus-hero-edition">2026.10</span></div>'
+        '<span class="nexus-eyebrow">ANALYTICS / SOURCE INTEGRITY / BUSINESS INTELLIGENCE</span>'
+        '<h1>Every source. <span class="nexus-gradient-title">One workspace.</span></h1>'
+        '<p>Historical E-Commerce, Greenweez source observations, and independently '
+        'verified Commerce Lab telemetry — organized in one decision workspace. '
+        'Unavailable or unverified financial data are clearly identified; '
+        'sources are never falsely merged into a single merchant revenue total.</p>'
+        '<div class="nexus-hero-tags">'
         '<span class="nexus-pill">SOURCE-FIRST ANALYTICS</span>'
-        '<span class="nexus-pill nexus-pill-secondary">AUDITABLE · TESTABLE · LOCAL</span>'
-        '</div>',
+        '<span class="nexus-pill nexus-pill-secondary">AUDITABLE / LOCAL / TESTED</span>'
+        '</div></section>',
         unsafe_allow_html=True,
     )
 
