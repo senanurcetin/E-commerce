@@ -1,4 +1,4 @@
-# Contributing to E-commerce Analytics Engineering
+# Contributing to NEXUS Commerce Intelligence
 
 Contributions to dbt model correctness, documentation, reproducible SQL analyses and test coverage are welcome.
 
