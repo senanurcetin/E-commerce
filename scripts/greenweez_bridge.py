@@ -4,9 +4,9 @@ Source dbt project: integrations/greenweez (within the same NEXUS repository)
 Reads ONLY vetted aggregate mart columns from an existing DuckDB dbt build.
 Does not import raw order/customer data or assume a BigQuery connection.
 
-Example (from E-Commerce checkout):
+Example (from NEXUS Commerce Intelligence repository root):
   pip install duckdb
-  python -m scripts.greenweez_bridge --db "../greenweez-finance-campaign-analytics/target/gsheet_real.duckdb" --provenance external_unverified
+  python -m scripts.greenweez_bridge --db "integrations/greenweez/target/gsheet_real.duckdb" --provenance external_unverified
 
 Claims of independently audited/verified production origin are intentionally
 not supported by this adapter. External sources remain labeled UNVERIFIED.
