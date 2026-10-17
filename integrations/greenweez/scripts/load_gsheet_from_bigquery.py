@@ -10,7 +10,9 @@ Do not commit output data or print credentials/order IDs.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -123,7 +125,79 @@ def table_sql(project: str, dataset: str, table: str, max_rows: int) -> str:
             or not DATASET_ID.fullmatch(dataset) or table not in TABLES
             or not isinstance(max_rows, int) or not 1 <= max_rows <= 1000000):
         raise ValueError("Invalid source identifier or row cap")
-    return f"SELECT * FROM " + chr(96) + f"{project}.{dataset}.{table}" + chr(96) + f" LIMIT {max_rows + 1}"
+    fields = ", ".join(chr(96) + name + chr(96) for name in sorted(TABLES[table]))
+    identifier = chr(96) + f"{project}.{dataset}.{table}" + chr(96)
+    return f"SELECT {fields} FROM {identifier} LIMIT {max_rows + 1}"
+
+
+# Actual finance identifiers are never emitted in audit results or exceptions.
+ROW_CONTRACTS = {
+    "gwz_finance_orders_orders": ("orders_id", "datetime", ("turnover", "purchase_cost", "ship_fee")),
+    "gwz_finance_shipping_shipping": ("orders_id", "date_date", ("log_cost", "ship_cost")),
+    "gwz_finance_refund_sheet_1": ("orders_id", "datetime", ("refund",)),
+    "gwz_finance_campaign": (None, "datetime", ("cost",)),
+}
+
+
+def _order_key(value: object) -> str | None:
+    if value is None or isinstance(value, bool):
+        return None
+    raw = str(value).strip()
+    if not re.fullmatch(r"[0-9]+(?:\.0+)?", raw):
+        return None
+    digits = raw.split(".", 1)[0].lstrip("0") or "0"
+    return digits if int(digits) <= 2**63 - 1 else None
+
+
+def validate_import_frame(table: str, frame) -> dict:
+    """Fail before publishing bad data; report ONLY counts and date ranges."""
+    import pandas as pd
+    if table not in TABLES or set(frame.columns) != TABLES[table] or frame.empty:
+        raise ValueError(f"{table}: invalid projection or empty source")
+    key, date_col, numeric_cols = ROW_CONTRACTS[table]
+    if key is not None:
+        keys = frame[key].map(_order_key)
+        invalid = int(keys.isna().sum())
+        duplicate = int(keys.dropna().duplicated().sum())
+        if invalid or duplicate:
+            raise ValueError(f"{table}: invalid order identifiers {invalid}; duplicates {duplicate}")
+    dates = pd.to_datetime(frame[date_col].astype(str).str[:10],
+                           format="%Y-%m-%d", errors="coerce", utc=True)
+    if dates.isna().any():
+        raise ValueError(f"{table}: unparseable source calendar dates")
+    if key is None and dates.duplicated().any():
+        raise ValueError(f"{table}: duplicate campaign day")
+    summary = {
+        "rows": len(frame),
+        "start_date": dates.min().date().isoformat(),
+        "end_date": dates.max().date().isoformat(),
+        "negative_count": {},
+        "zero_count": {},
+    }
+    for name in numeric_cols:
+        numbers = pd.to_numeric(frame[name], errors="coerce")
+        if not numbers.map(lambda v: pd.notna(v) and math.isfinite(float(v))).all():
+            raise ValueError(f"{table}: invalid or nonfinite amount in {name}")
+        summary["negative_count"][name] = int((numbers < 0).sum())
+        summary["zero_count"][name] = int((numbers == 0).sum())
+    return summary
+
+
+def audit_join_coverage(con) -> dict:
+    """Counts only; does not expose raw order identifiers."""
+    output = {}
+    for label, other in (
+        ("shipping", "gwz_finance_shipping_shipping"),
+        ("refund", "gwz_finance_refund_sheet_1"),
+    ):
+        missing = con.execute(
+            "SELECT COUNT(*) FROM analytics.gwz_finance_orders_orders AS o "
+            f"LEFT JOIN analytics.{other} AS x "
+            "ON CAST(o.orders_id AS BIGINT) = CAST(x.orders_id AS BIGINT) "
+            "WHERE x.orders_id IS NULL"
+        ).fetchone()[0]
+        output["orders_without_" + label] = int(missing)
+    return output
 
 
 def access_token() -> str:
@@ -173,6 +247,7 @@ def transfer(client, bigquery, project: str, dataset: str, location: str,
         # Staging file is exclusively ours; never touch the last published DB here.
         temp.unlink()
     counts = {}
+    quality = {}
     con = None
     try:
         con = duckdb.connect(str(temp))
@@ -187,6 +262,7 @@ def transfer(client, bigquery, project: str, dataset: str, location: str,
                 raise ValueError(f"{table}: row cap exceeded; no partial snapshot published")
             if len(frame) == 0:
                 raise ValueError(f"{table}: empty required source; no snapshot published")
+            quality[table] = validate_import_frame(table, frame)
             for col in frame.columns:
                 if str(frame[col].dtype) == "dbdate":
                     frame[col] = pd.to_datetime(frame[col].astype(str)).dt.date
@@ -196,6 +272,20 @@ def transfer(client, bigquery, project: str, dataset: str, location: str,
             finally:
                 con.unregister("source_frame")
             counts[table] = len(frame)
+        audit = {
+            "schema_version": 1,
+            "source_project": project,
+            "source_dataset": dataset,
+            "provenance": "external_unverified",
+            "financial_semantics_verified": False,
+            "extracted_at_utc": datetime.now(timezone.utc).isoformat(),
+            "tables": quality,
+            "join_coverage": audit_join_coverage(con),
+        }
+        con.execute("CREATE SCHEMA import_audit")
+        con.execute("CREATE TABLE import_audit.source_quality(report JSON)")
+        con.execute("INSERT INTO import_audit.source_quality VALUES (?)",
+                    [json.dumps(audit, allow_nan=False)])
         con.close()
         con = None
         os.replace(temp, output)
@@ -204,7 +294,7 @@ def transfer(client, bigquery, project: str, dataset: str, location: str,
             con.close()
         if temp.exists():
             temp.unlink()
-    return counts
+    return {"row_counts": counts, "quality_audit": audit}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -244,13 +334,15 @@ def main(argv: list[str] | None = None) -> int:
             if not args.execute:
                 print("DRY RUN: no data rows downloaded; existing DuckDB untouched.")
                 return 0
-            counts = transfer(client, bigquery, project, dataset, location,
-                              output=args.output, cap=args.max_bytes_billed,
-                              max_rows=args.max_rows)
+            outcome = transfer(client, bigquery, project, dataset, location,
+                               output=args.output, cap=args.max_bytes_billed,
+                               max_rows=args.max_rows)
         finally:
             client.close()
         print("Published local DuckDB after all four tables succeeded:", args.output)
-        print("Rows per source:", ", ".join(f"{k}={v}" for k, v in counts.items()))
+        print("Rows per source:", ", ".join(f"{k}={v}" for k, v in outcome["row_counts"].items()))
+        print("Private aggregate-only import audit saved inside DuckDB: import_audit.source_quality")
+        print("Missing order-side relations:", outcome["quality_audit"]["join_coverage"])
         print("Financial semantics/currency still unverified; never commit this local database.")
         return 0
     except (OSError, RuntimeError, ValueError, KeyError, ImportError) as exc:

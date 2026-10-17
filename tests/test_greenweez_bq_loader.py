@@ -159,3 +159,139 @@ class ScopedSheetsEvidenceTests(unittest.TestCase):
         inventory["results"][0]["datasets"].pop()
         with self.assertRaisesRegex(ValueError, "not listed once"):
             loader.checked_source(report, inventory)
+
+
+class PrepublicationRowContractsTests(unittest.TestCase):
+    @staticmethod
+    def orders():
+        import pandas as pd
+        return pd.DataFrame({"orders_id":[10,11],
+            "datetime":["2021-10-01 10:00:00UTC","2021-10-02 11:00:00UTC"],
+            "turnover":[0,50],"purchase_cost":[0,55],"ship_fee":[5,5]})
+
+    def test_bigquery_projection_excludes_extraneous_columns(self):
+        statement = loader.table_sql("workintech-working","fvt_gsheet",
+                                     "gwz_finance_orders_orders",20)
+        self.assertNotIn("SELECT *",statement)
+        self.assertNotIn("_fivetran_synced",statement)
+        for field in loader.TABLES["gwz_finance_orders_orders"]:
+            self.assertIn(chr(96)+field+chr(96),statement)
+
+    def test_zero_revenue_is_not_silently_removed(self):
+        summary=loader.validate_import_frame("gwz_finance_orders_orders",self.orders())
+        self.assertEqual(summary["rows"],2)
+        self.assertEqual(summary["zero_count"]["turnover"],1)
+        self.assertNotIn("orders_id",json.dumps(summary))
+
+    def test_duplicate_or_invalid_ids_fail(self):
+        data=self.orders()
+        data.loc[1,"orders_id"]=10
+        with self.assertRaisesRegex(ValueError,"duplicates 1"):
+            loader.validate_import_frame("gwz_finance_orders_orders",data)
+        data=self.orders()
+        data.loc[1,"orders_id"]="invalid"
+        with self.assertRaisesRegex(ValueError,"invalid order identifiers 1"):
+            loader.validate_import_frame("gwz_finance_orders_orders",data)
+
+    def test_invalid_dates_or_amounts_fail(self):
+        data=self.orders()
+        data.loc[0,"datetime"]="bad-date"
+        with self.assertRaisesRegex(ValueError,"calendar dates"):
+            loader.validate_import_frame("gwz_finance_orders_orders",data)
+        data=self.orders()
+        data.loc[0,"turnover"]=float("inf")
+        with self.assertRaisesRegex(ValueError,"nonfinite"):
+            loader.validate_import_frame("gwz_finance_orders_orders",data)
+
+    def test_campaign_duplicate_date_and_pii_extra_field_rejected(self):
+        import pandas as pd
+        frame=pd.DataFrame({"datetime":["2021-10-01","2021-10-01"],"cost":[1,2]})
+        with self.assertRaisesRegex(ValueError,"duplicate campaign day"):
+            loader.validate_import_frame("gwz_finance_campaign",frame)
+        data=self.orders()
+        data["customer_email"]="private@example.org"
+        with self.assertRaisesRegex(ValueError,"invalid projection"):
+            loader.validate_import_frame("gwz_finance_orders_orders",data)
+
+
+
+class TransferAtomicityTests(unittest.TestCase):
+    """End-to-end import tests use only synthetic DataFrames and a fake BQ client."""
+
+    @staticmethod
+    def data():
+        import pandas as pd
+        return {
+            "gwz_finance_orders_orders": pd.DataFrame({
+                "orders_id":[10,11], "datetime":["2021-10-01 12:00:00UTC","2021-10-02 12:00:00UTC"],
+                "turnover":[0,100], "purchase_cost":[0,90], "ship_fee":[5,5],
+            }),
+            "gwz_finance_shipping_shipping": pd.DataFrame({
+                "orders_id":[10,11], "date_date":["2021-10-01","2021-10-02"],
+                "log_cost":[2,3], "ship_cost":[1,2],
+            }),
+            "gwz_finance_refund_sheet_1": pd.DataFrame({
+                "orders_id":[10,11], "datetime":["2021-10-01","2021-10-02"],
+                "refund":[50,100],
+            }),
+            "gwz_finance_campaign": pd.DataFrame({
+                "datetime":["2021-10-01","2021-10-02"], "cost":[10,20],
+            }),
+        }
+
+    @staticmethod
+    def client(data):
+        class Result:
+            def __init__(self, frame):
+                self.frame = frame
+            def result(self):
+                return self
+            def to_dataframe(self, **kwargs):
+                return self.frame.copy()
+        class Client:
+            def query(self, sql, **kwargs):
+                matches = [table for table in data
+                           if "." + table + chr(96) in sql]
+                if len(matches) != 1:
+                    raise AssertionError("Unexpected source SQL")
+                return Result(data[matches[0]])
+        class BQ:
+            @staticmethod
+            def QueryJobConfig(**kwargs):
+                return kwargs
+        return Client(), BQ()
+
+    def test_all_four_sources_publish_quality_evidence_in_same_db(self):
+        import duckdb
+        source, bq = self.client(self.data())
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "real.duckdb"
+            result = loader.transfer(source, bq, "workintech-working", "fvt_gsheet",
+                                     "EU", output=path, cap=100000, max_rows=1000)
+            self.assertEqual(result["row_counts"]["gwz_finance_orders_orders"], 2)
+            con = duckdb.connect(str(path), read_only=True)
+            try:
+                raw = con.execute("SELECT report FROM import_audit.source_quality").fetchone()[0]
+                audit = json.loads(raw)
+                self.assertEqual(audit["provenance"], "external_unverified")
+                self.assertFalse(audit["financial_semantics_verified"])
+                self.assertEqual(audit["join_coverage"]["orders_without_shipping"], 0)
+                self.assertEqual(audit["tables"]["gwz_finance_orders_orders"]["zero_count"]["turnover"], 1)
+                columns = [col[1] for col in con.execute(
+                    "PRAGMA table_info('analytics.gwz_finance_orders_orders')").fetchall()]
+                self.assertNotIn("customer_email", columns)
+            finally:
+                con.close()
+
+    def test_failed_later_table_preserves_existing_database(self):
+        data = self.data()
+        data["gwz_finance_shipping_shipping"].loc[1,"orders_id"] = 10
+        source, bq = self.client(data)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "real.duckdb"
+            path.write_bytes(b"ORIGINAL_DB")
+            with self.assertRaisesRegex(ValueError, "duplicates"):
+                loader.transfer(source, bq, "workintech-working", "fvt_gsheet",
+                                "EU", output=path, cap=100000, max_rows=1000)
+            self.assertEqual(path.read_bytes(), b"ORIGINAL_DB")
+            self.assertFalse(path.with_name(path.name + ".staging").exists())
