@@ -268,7 +268,8 @@ def make_preflight_evidence(
     it is only constructed after client.get_table + client.query(dry_run=True)
     returned for all four source tables.
     """
-    if ((project, dataset) != SCOPED_SHEETS_SOURCE
+    if (project not in ALLOWED_PROJECTS or not PROJECT_ID.fullmatch(project)
+            or not isinstance(dataset, str) or not DATASET_ID.fullmatch(dataset)
             or billing_project not in ALLOWED_PROJECTS
             or not isinstance(location, str) or not location
             or not isinstance(cap, int) or cap < 1
