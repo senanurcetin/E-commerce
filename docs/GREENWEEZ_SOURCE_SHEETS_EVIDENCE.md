@@ -1,7 +1,7 @@
 # Original Greenweez Google Sheets — source observations, not certified finance
 
 This is a **separate authenticated source-observation product** inside the
-E-Commerce master repo. It does NOT alter the original Greenweez dbt models
+NEXUS Commerce Intelligence product repository. It does NOT alter the original Greenweez dbt models
 or certify their finances.
 
 The authorized owner account exposes two Google Sheets workbooks:
