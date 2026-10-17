@@ -15,7 +15,6 @@ from scripts.greenweez_bridge import load_snapshot
 CYAN = COLORS["cyan"]
 PURPLE = COLORS["purple"]
 PINK = "#EC6DCB"
-DBT_UPSTREAM = "https://github.com/senanurcetin/greenweez-finance-campaign-analytics"
 
 
 def greenweez_snapshot(default_path: Path) -> dict | None:
@@ -39,16 +38,19 @@ def greenweez_finance_tab(path: Path) -> None:
     if snapshot is None:
         st.info(
             "Greenweez finance is not yet imported. Export an EXISTING read-only "
-            "dbt DuckDB mart from the Greenweez project, then refresh this tab. "
+            "dbt DuckDB mart from integrations/greenweez/, then refresh this tab. "
             "No sample revenue is substituted."
         )
         st.code(
             'python -m scripts.greenweez_bridge --db '
-            '"../greenweez-finance-campaign-analytics/target/demo.duckdb" '
+            '"integrations/greenweez/target/demo.duckdb" '
             '--provenance synthetic_demo',
             language="bash",
         )
-        st.markdown(f"Upstream dbt models and real-source instructions: [Greenweez repo]({DBT_UPSTREAM})")
+        st.caption(
+            "Models and real-source instructions: integrations/greenweez/README.md "
+            "(maintained inside this NEXUS repository)."
+        )
         return
 
     provenance = snapshot["provenance"]
