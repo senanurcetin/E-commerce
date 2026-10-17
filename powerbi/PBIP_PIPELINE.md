@@ -5,7 +5,7 @@
 The PBIP generator automatically copies the original owner-approved
 `branding/nexus_official_transparent.png` into the report's
 `StaticResources/RegisteredResources` folder, registers a native image visual
-on **each of the six pages**, packages the dark navy/cyan/purple theme and
+on **each of the seven pages**, packages the dark navy/cyan/purple theme and
 points `definition/report.json` at that registered custom theme. The PNG asset
 matches the user's original Google Drive file; no replacement generated logo
 or unsecured remote image URL is used.
@@ -33,7 +33,7 @@ Read from:
 - target/greenweez_bridge/snapshot.json
 - target/greenweez_bridge/google_sheets_observed.json
 - target/google_measurement/lab_ga4_events.json
-- the eight-source workspace evidence registry
+- the nine-source workspace evidence registry
 
 A missing source yields a CSV **header only**, not a synthetic order or fake
 revenue. A missing source must not be interpreted as zero business activity.
@@ -56,14 +56,15 @@ C:\Users\MONSTER\E-commerce\target\powerbi\project\NEXUS_Commerce.pbip
 The project contains:
 - \`NEXUS_Commerce.SemanticModel/definition/\` with a TMDL model and
   seven fully source-isolated import tables.
-- \`NEXUS_Commerce.Report/definition/\` with six source-specific PBIR report
+- \`NEXUS_Commerce.Report/definition/\` with seven source-specific PBIR report
   pages and ready-defined native card / line / column / table visuals.
 - \`target/powerbi/marts/\` with seven **local gitignored CSV sources**.
 - \`target/powerbi/build_evidence.json\` capturing row counts, source
   provenance, page list, and open acceptance gates.
 
 Pages: Source Assurance, Historical E-Commerce, E-Commerce Sessions,
-Greenweez Finance, Greenweez Source Quality, Commerce Lab Tests.
+Greenweez Finance, Greenweez Source Quality, Greenweez Import Evidence,
+Commerce Lab Tests.
 
 The \`pDataFolder\` **Power Query parameter** references the absolute local
 folder of these aggregate CSVs. Rebuild on a different computer to update
@@ -150,3 +151,19 @@ counts, order keys, or join coverage diverge from the receipt, the audit
 table exports no rows and the ninth SourceRegistry group is `invalid`.
 No raw transaction identifiers are exported and no financial claims
 are promoted to verified status.
+
+
+## Strict offline PBIP structure audit (no Desktop)
+
+After `python -m scripts.build_powerbi`, run:
+
+```powershell
+python -m scripts.powerbi_structure_audit --out target/powerbi
+```
+
+This verifies exactly seven page directories, required NEXUS logo/theme assets,
+semantic model tables, scoped DAX measure references, CSV headings, and every
+visual binding. Legacy pages, missing resources, cross-business table bindings
+and falsely verified build evidence fail closed. The audit emits only structure
+counts and always reports `release_decision: HOLD` because Microsoft Power BI
+Desktop rendering, refresh and financial semantics require independent proof.

@@ -74,6 +74,8 @@ jobs:
           python -m unittest discover -s tests -p 'test_build_powerbi.py' -v
           python -m scripts.build_powerbi --out target/powerbi
           python -m scripts.powerbi_acceptance --output target/powerbi/desktop_qa.json
+          python -m unittest discover -s tests -p 'test_powerbi_structure_audit.py' -v
+          python -m scripts.powerbi_structure_audit --out target/powerbi
 
       - name: Compile dashboard source
         run: python -m py_compile dashboard/google_marketing_app.py dashboard/greenweez_finance.py scripts/google_dashboard_data.py scripts/lab_ga4_events.py scripts/greenweez_bridge.py scripts/ecommerce_marts_bridge.py dashboard/ecommerce_historical.py scripts/nexus_workspace.py scripts/greenweez_sheets_observed.py scripts/greenweez_import_audit.py dashboard/greenweez_sheets.py dashboard/nexus_theme.py scripts/ga4_property_preflight.py scripts/powerbi_acceptance.py scripts/build_powerbi.py
